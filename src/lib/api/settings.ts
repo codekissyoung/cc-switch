@@ -30,6 +30,13 @@ export interface WebDavSyncResult {
   status: string;
 }
 
+export interface AppVersionCheckResult {
+  hasUpdate: boolean;
+  latestVersion: string | null;
+  downloadUrl: string | null;
+  notes: string | null;
+}
+
 export const settingsApi = {
   async get(): Promise<Settings> {
     return await invoke("get_settings");
@@ -53,8 +60,9 @@ export const settingsApi = {
     return await invoke("restart_app");
   },
 
-  async installUpdateAndRestart(): Promise<boolean> {
-    return await invoke("install_update_and_restart");
+  /** 轻量版本检查：GET 远端 version.json 比对版本，任何失败都返回 hasUpdate=false */
+  async checkAppVersion(): Promise<AppVersionCheckResult> {
+    return await invoke("check_app_version");
   },
 
   async checkUpdates(): Promise<void> {

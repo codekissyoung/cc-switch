@@ -1,6 +1,6 @@
 //! Deep link import functionality for CC Switch
 //!
-//! This module implements the ccswitch:// protocol for importing configurations
+//! This module implements the icodeeasy:// protocol for importing configurations
 //! via deep links. Supports importing:
 //! - Provider configurations (Claude/Codex/Gemini)
 //! - MCP server configurations
@@ -27,9 +27,12 @@ pub use prompt::import_prompt_from_deeplink;
 pub use provider::{import_provider_from_deeplink, parse_and_merge_config};
 pub use skill::import_skill_from_deeplink;
 
+/// Deep link URL scheme（与 tauri.conf.json 的 plugins.deep-link.desktop.schemes 保持一致）。
+pub const DEEPLINK_SCHEME: &str = "icodeeasy";
+
 /// Deep link import request model
 ///
-/// Represents a parsed ccswitch:// URL ready for processing.
+/// Represents a parsed icodeeasy:// URL ready for processing.
 /// This struct contains all possible fields for all resource types.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]

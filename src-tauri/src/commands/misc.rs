@@ -50,18 +50,95 @@ pub async fn copy_text_to_clipboard(text: String) -> Result<bool, String> {
     .map_err(|e| format!("剪贴板任务执行失败: {e}"))?
 }
 
-/// 检查更新
+/// icodeeasy 分发版下载页（手动更新入口）。
+pub const DOWNLOAD_PAGE_URL: &str = "https://icodeeasy.cc/cc-switch/download/";
+/// 轻量版本检查清单地址（见 `check_app_version`）。
+const VERSION_CHECK_URL: &str = "https://icodeeasy.cc/cc-switch/version.json";
+
+/// 检查更新（打开下载页，由用户手动下载安装包覆盖安装）。
 #[tauri::command]
 pub async fn check_for_updates(handle: AppHandle) -> Result<bool, String> {
     handle
         .opener()
-        .open_url(
-            "https://github.com/farion1231/cc-switch/releases/latest",
-            None::<String>,
-        )
+        .open_url(DOWNLOAD_PAGE_URL, None::<String>)
         .map_err(|e| format!("打开更新页面失败: {e}"))?;
 
     Ok(true)
+}
+
+/// 远端版本清单（version.json）。
+#[derive(serde::Deserialize)]
+struct RemoteVersionManifest {
+    version: String,
+    url: Option<String>,
+    notes: Option<String>,
+}
+
+/// 版本检查结果。
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AppVersionCheckResult {
+    pub has_update: bool,
+    pub latest_version: Option<String>,
+    pub download_url: Option<String>,
+    pub notes: Option<String>,
+}
+
+/// 轻量版本检查（fork 分发版，无自动更新）。
+///
+/// GET 远端 version.json 与当前版本比对。任何失败（网络/解析/版本格式）都静默
+/// 返回 `has_update: false`——版本检查是旁路功能，绝不能阻塞或打扰用户。
+#[tauri::command]
+pub async fn check_app_version(app: AppHandle) -> Result<AppVersionCheckResult, String> {
+    let fallback = AppVersionCheckResult {
+        has_update: false,
+        latest_version: None,
+        download_url: Some(DOWNLOAD_PAGE_URL.to_string()),
+        notes: None,
+    };
+
+    let resp = match crate::proxy::http_client::get()
+        .get(VERSION_CHECK_URL)
+        .timeout(std::time::Duration::from_secs(6))
+        .send()
+        .await
+    {
+        Ok(resp) => resp,
+        Err(e) => {
+            log::debug!("版本检查：请求 {VERSION_CHECK_URL} 失败，按无更新处理：{e}");
+            return Ok(fallback);
+        }
+    };
+
+    let manifest: RemoteVersionManifest = match resp.json().await {
+        Ok(m) => m,
+        Err(e) => {
+            log::debug!("版本检查：解析 version.json 失败，按无更新处理：{e}");
+            return Ok(fallback);
+        }
+    };
+
+    let current = app.package_info().version.to_string();
+    let has_update = match (
+        semver::Version::parse(manifest.version.trim()),
+        semver::Version::parse(&current),
+    ) {
+        (Ok(remote), Ok(local)) => remote > local,
+        _ => {
+            log::debug!(
+                "版本检查：版本号无法解析（远端={}，本地={current}），按无更新处理",
+                manifest.version
+            );
+            false
+        }
+    };
+
+    Ok(AppVersionCheckResult {
+        has_update,
+        latest_version: Some(manifest.version),
+        download_url: Some(manifest.url.unwrap_or_else(|| DOWNLOAD_PAGE_URL.to_string())),
+        notes: manifest.notes,
+    })
 }
 
 /// 判断是否为便携版（绿色版）运行
