@@ -31,14 +31,14 @@ describe("GrokBuildProviderForm", () => {
       />,
     );
 
-    await user.click(screen.getByRole("button", { name: /PatewayAI/ }));
+    await user.click(screen.getByRole("button", { name: /PackyCode/ }));
 
     const baseUrlInput =
       container.querySelector<HTMLInputElement>("#codexBaseUrl");
     const nameInput =
       container.querySelector<HTMLInputElement>('input[name="name"]');
-    expect(baseUrlInput?.value).toBe("https://api.pateway.ai/v1");
-    expect(nameInput?.value).toBe("PatewayAI");
+    expect(baseUrlInput?.value).toBe("https://www.packyapi.com/v1");
+    expect(nameInput?.value).toBe("PackyCode");
   });
 
   it("submits a complete config.toml payload with Grok defaults", async () => {

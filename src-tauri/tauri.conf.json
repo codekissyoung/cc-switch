@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "CC Switch",
+  "productName": "ICodeEasy",
   "version": "3.17.0",
   "identifier": "cc.icodeeasy.desktop",
   "build": {
