@@ -1,5 +1,5 @@
 // icodeeasy 分发版下载地址（版本检查与手动更新入口）
-export const DOWNLOAD_PAGE_URL = "https://icodeeasy.cc/cc-switch/download/";
+export const DOWNLOAD_PAGE_URL = "https://icodeeasy.cc/download/";
 
 // Provider 类型常量
 export const PROVIDER_TYPES = {

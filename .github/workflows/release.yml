@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -501,13 +501,21 @@ jobs:
             security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true
           fi
 
-  publish-release:
-    name: Publish GitHub Release
+  prepare-website-release:
+    name: Prepare Website Release
     runs-on: ubuntu-22.04
     needs: release
     permissions:
-      contents: write
+      contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
       - name: Download built release artifacts
         uses: actions/download-artifact@v8
         with:
@@ -515,35 +523,18 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: List downloaded release artifacts
+      - name: Build website manifest and checksums
         shell: bash
         run: |
           set -euo pipefail
+          node scripts/build-release-manifest.mjs release-assets "${GITHUB_REF_NAME}"
+          (cd release-assets && sha256sum -c SHA256SUMS)
           ls -la release-assets
 
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v3
+      - name: Store website release bundle
+        uses: actions/upload-artifact@v7
         with:
-          tag_name: ${{ github.ref_name }}
-          name: ICodeEasy ${{ github.ref_name }}
-          prerelease: ${{ contains(github.ref_name, '-') }}
-          body: |
-            ## ICodeEasy ${{ github.ref_name }}
-
-            🌐 **Only Official Website / 唯一官方网站 / 唯一の公式サイト**: [icodeeasy.cc](https://icodeeasy.cc)
-
-            Claude Code 供应商切换工具
-
-            ### 下载
-
-            - **macOS**: `ICodeEasy-${{ github.ref_name }}-macOS.dmg`（推荐）或 `ICodeEasy-${{ github.ref_name }}-macOS.zip`（解压即用）
-            - **Windows (x86_64)**: `ICodeEasy-${{ github.ref_name }}-Windows.msi`（安装版）或 `ICodeEasy-${{ github.ref_name }}-Windows-Portable.zip`（绿色版）
-            - **Windows (ARM64)**: `ICodeEasy-${{ github.ref_name }}-Windows-arm64.msi`（安装版）或 `ICodeEasy-${{ github.ref_name }}-Windows-arm64-Portable.zip`（绿色版）
-            - **Linux (x86_64)**: `ICodeEasy-${{ github.ref_name }}-Linux-x86_64.AppImage` / `.deb` / `.rpm`
-            - **Linux (ARM64)**: `ICodeEasy-${{ github.ref_name }}-Linux-arm64.AppImage` / `.deb` / `.rpm`
-
-            ---
-            macOS 版本已通过 Apple 代码签名和公证，可直接安装使用。
-          files: release-assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: website-release-${{ github.ref_name }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 30

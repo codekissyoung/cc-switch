@@ -51,9 +51,9 @@ pub async fn copy_text_to_clipboard(text: String) -> Result<bool, String> {
 }
 
 /// icodeeasy 分发版下载页（手动更新入口）。
-pub const DOWNLOAD_PAGE_URL: &str = "https://icodeeasy.cc/cc-switch/download/";
+pub const DOWNLOAD_PAGE_URL: &str = "https://icodeeasy.cc/download/";
 /// 轻量版本检查清单地址（见 `check_app_version`）。
-const VERSION_CHECK_URL: &str = "https://icodeeasy.cc/cc-switch/version.json";
+const VERSION_CHECK_URL: &str = "https://icodeeasy.cc/api/public/app-release";
 
 /// 检查更新（打开下载页，由用户手动下载安装包覆盖安装）。
 #[tauri::command]
@@ -66,7 +66,7 @@ pub async fn check_for_updates(handle: AppHandle) -> Result<bool, String> {
     Ok(true)
 }
 
-/// 远端版本清单（version.json）。
+/// 远端版本清单（官网公开发布 API）。
 #[derive(serde::Deserialize)]
 struct RemoteVersionManifest {
     version: String,
@@ -86,7 +86,7 @@ pub struct AppVersionCheckResult {
 
 /// 轻量版本检查（fork 分发版，无自动更新）。
 ///
-/// GET 远端 version.json 与当前版本比对。任何失败（网络/解析/版本格式）都静默
+/// GET 官网公开发布 API 与当前版本比对。任何失败（网络/解析/版本格式）都静默
 /// 返回 `has_update: false`——版本检查是旁路功能，绝不能阻塞或打扰用户。
 #[tauri::command]
 pub async fn check_app_version(app: AppHandle) -> Result<AppVersionCheckResult, String> {
@@ -113,7 +113,7 @@ pub async fn check_app_version(app: AppHandle) -> Result<AppVersionCheckResult, 
     let manifest: RemoteVersionManifest = match resp.json().await {
         Ok(m) => m,
         Err(e) => {
-            log::debug!("版本检查：解析 version.json 失败，按无更新处理：{e}");
+            log::debug!("版本检查：解析发布清单失败，按无更新处理：{e}");
             return Ok(fallback);
         }
     };
