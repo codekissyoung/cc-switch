@@ -136,7 +136,11 @@ pub async fn check_app_version(app: AppHandle) -> Result<AppVersionCheckResult, 
     Ok(AppVersionCheckResult {
         has_update,
         latest_version: Some(manifest.version),
-        download_url: Some(manifest.url.unwrap_or_else(|| DOWNLOAD_PAGE_URL.to_string())),
+        download_url: Some(
+            manifest
+                .url
+                .unwrap_or_else(|| DOWNLOAD_PAGE_URL.to_string()),
+        ),
         notes: manifest.notes,
     })
 }

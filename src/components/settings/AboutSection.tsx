@@ -452,7 +452,9 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
     if (appUpdate?.hasUpdate) {
       // 已有检查结果且存在新版本：直接打开下载页
       try {
-        await settingsApi.openExternal(appUpdate.downloadUrl ?? DOWNLOAD_PAGE_URL);
+        await settingsApi.openExternal(
+          appUpdate.downloadUrl ?? DOWNLOAD_PAGE_URL,
+        );
       } catch (error) {
         console.error("[AboutSection] Failed to open download page", error);
       }
