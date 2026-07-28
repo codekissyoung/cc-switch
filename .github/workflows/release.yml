@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 permissions:
   contents: write
@@ -35,7 +35,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
@@ -264,16 +264,16 @@ jobs:
           DMG_STAGE_DIR="$RUNNER_TEMP/dmg-stage"
           rm -rf "$DMG_STAGE_DIR"
           mkdir -p "$DMG_STAGE_DIR"
-          ditto "$APP_PATH" "$DMG_STAGE_DIR/CC Switch.app"
+          ditto "$APP_PATH" "$DMG_STAGE_DIR/ICodeEasy.app"
 
           create-dmg \
-            --volname "CC Switch" \
+            --volname "ICodeEasy" \
             --background "src-tauri/icons/dmg-background.png" \
             --window-size 660 400 \
             --window-pos 200 120 \
             --icon-size 80 \
-            --icon "CC Switch.app" 180 220 \
-            --hide-extension "CC Switch.app" \
+            --icon "ICodeEasy.app" 180 220 \
+            --hide-extension "ICodeEasy.app" \
             --app-drop-link 480 220 \
             --codesign "$APPLE_SIGNING_IDENTITY" \
             --no-internet-enable \
@@ -383,7 +383,7 @@ jobs:
           $targetRoot = if ($isArm64) { 'src-tauri/target/aarch64-pc-windows-msvc/release' } else { 'src-tauri/target/release' }
           $assetSuffix = if ($isArm64) { '-arm64' } else { '' }
 
-          # 仅打包 MSI 安装器 + .sig（用于 Updater）
+          # 打包 MSI 安装器
           $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle/msi') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($null -eq $msi) {
             # 兜底：全局搜索 .msi
@@ -393,22 +393,13 @@ jobs:
             $dest = "ICodeEasy-$VERSION-Windows$assetSuffix.msi"
             Copy-Item $msi.FullName (Join-Path release-assets $dest)
             Write-Host "Installer copied: $dest"
-            $sigPath = "$($msi.FullName).sig"
-            if (Test-Path $sigPath) {
-              Copy-Item $sigPath (Join-Path release-assets ("$dest.sig"))
-              Write-Host "Signature copied: $dest.sig"
-            } elseif ($isArm64) {
-              throw "Signature not found for $($msi.Name)"
-            } else {
-              Write-Warning "Signature not found for $($msi.Name)"
-            }
           } elseif ($isArm64) {
             throw 'No Windows ARM64 MSI installer found'
           } else {
             Write-Warning 'No Windows MSI installer found'
           }
 
-          # 绿色版（portable）：仅可执行文件打 zip（不参与 Updater）
+          # 绿色版（portable）：仅可执行文件打 zip
           $exeCandidates = if ($isArm64) {
             @('src-tauri/target/aarch64-pc-windows-msvc/release/cc-switch.exe')
           } else {
@@ -425,13 +416,13 @@ jobs:
             $portableIniPath = Join-Path $portableDir 'portable.ini'
             $portableContent = if ($isArm64) {
               @(
-                '# CC Switch portable ARM64 build marker',
+                '# ICodeEasy portable ARM64 build marker',
                 'portable=true',
                 'arch=arm64'
               )
             } else {
               @(
-                '# CC Switch portable build marker',
+                '# ICodeEasy portable build marker',
                 'portable=true'
               )
             }
@@ -454,17 +445,16 @@ jobs:
           mkdir -p release-assets
           VERSION="${GITHUB_REF_NAME}"  # e.g., v3.5.0
           ARCH="${{ matrix.arch || 'x86_64' }}"
-          # Updater artifact: AppImage（含对应 .sig）
+          # AppImage portable package
           APPIMAGE=$(find src-tauri/target/release/bundle -name "*.AppImage" | head -1 || true)
           if [ -n "$APPIMAGE" ]; then
             NEW_APPIMAGE="ICodeEasy-${VERSION}-Linux-${ARCH}.AppImage"
             cp "$APPIMAGE" "release-assets/$NEW_APPIMAGE"
-            [ -f "$APPIMAGE.sig" ] && cp "$APPIMAGE.sig" "release-assets/$NEW_APPIMAGE.sig" || echo ".sig for AppImage not found"
             echo "AppImage copied: $NEW_APPIMAGE"
           else
             echo "No AppImage found under target/release/bundle" >&2
           fi
-          # 额外上传 .deb（用于手动安装，不参与 Updater）
+          # 额外上传 .deb（用于手动安装）
           DEB=$(find src-tauri/target/release/bundle -name "*.deb" | head -1 || true)
           if [ -n "$DEB" ]; then
             cp "$DEB" "release-assets/ICodeEasy-${VERSION}-Linux-${ARCH}.deb"
@@ -472,7 +462,7 @@ jobs:
           else
             echo "No .deb found (optional)"
           fi
-          # 额外上传 .rpm（用于 Fedora/RHEL/openSUSE 等，不参与 Updater）
+          # 额外上传 .rpm（用于 Fedora/RHEL/openSUSE 等）
           RPM=$(find src-tauri/target/release/bundle -name "*.rpm" | head -1 || true)
           if [ -n "$RPM" ]; then
             cp "$RPM" "release-assets/ICodeEasy-${VERSION}-Linux-${ARCH}.rpm"
@@ -485,13 +475,6 @@ jobs:
         shell: bash
         run: |
           ls -la release-assets || true
-
-      - name: Collect Signatures
-        shell: bash
-        run: |
-          set -euo pipefail
-          echo "Collected signatures (if any alongside artifacts):"
-          ls -la release-assets/*.sig || echo "No signatures found"
 
       - name: Upload release artifacts to workflow
         uses: actions/upload-artifact@v7
@@ -518,13 +501,21 @@ jobs:
             security delete-keychain "$RUNNER_TEMP/build.keychain-db" || true
           fi
 
-  publish-release:
-    name: Publish GitHub Release
+  prepare-website-release:
+    name: Prepare Website Release
     runs-on: ubuntu-22.04
     needs: release
     permissions:
-      contents: write
+      contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "20"
+
       - name: Download built release artifacts
         uses: actions/download-artifact@v8
         with:
@@ -532,36 +523,18 @@ jobs:
           path: release-assets
           merge-multiple: true
 
-      - name: List downloaded release artifacts
+      - name: Build website manifest and checksums
         shell: bash
         run: |
           set -euo pipefail
+          node scripts/build-release-manifest.mjs release-assets "${GITHUB_REF_NAME}"
+          (cd release-assets && sha256sum -c SHA256SUMS)
           ls -la release-assets
 
-      - name: Upload Release Assets
-        uses: softprops/action-gh-release@v3
+      - name: Store website release bundle
+        uses: actions/upload-artifact@v7
         with:
-          tag_name: ${{ github.ref_name }}
-          name: CC Switch ${{ github.ref_name }}
-          prerelease: true
-          body: |
-            ## CC Switch ${{ github.ref_name }}
-
-            🌐 **Only Official Website / 唯一官方网站 / 唯一の公式サイト**: [ccswitch.io](https://ccswitch.io)
-
-            Claude Code 供应商切换工具
-
-            ### 下载
-
-            - **macOS**: `ICodeEasy-${{ github.ref_name }}-macOS.dmg`（推荐）或 `ICodeEasy-${{ github.ref_name }}-macOS.zip`（解压即用）
-            - **Windows (x86_64)**: `ICodeEasy-${{ github.ref_name }}-Windows.msi`（安装版）或 `ICodeEasy-${{ github.ref_name }}-Windows-Portable.zip`（绿色版）
-            - **Windows (ARM64)**: `ICodeEasy-${{ github.ref_name }}-Windows-arm64.msi`（安装版）或 `ICodeEasy-${{ github.ref_name }}-Windows-arm64-Portable.zip`（绿色版）
-            - **Linux (x86_64)**: `ICodeEasy-${{ github.ref_name }}-Linux-x86_64.AppImage` / `.deb` / `.rpm`
-            - **Linux (ARM64)**: `ICodeEasy-${{ github.ref_name }}-Linux-arm64.AppImage` / `.deb` / `.rpm`
-
-            ---
-            macOS 版本已通过 Apple 代码签名和公证，可直接安装使用。
-          files: release-assets/*
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          name: website-release-${{ github.ref_name }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 30
