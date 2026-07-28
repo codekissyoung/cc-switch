@@ -1,0 +1,102 @@
+name: Windows x64 Preview
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - ice
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-x64-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[windows-x64]')
+    runs-on: windows-2022
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22.12.0"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+        with:
+          version: 10.12.3
+          run_install: false
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Windows x64 bundles
+        run: pnpm tauri build --bundles "msi,nsis"
+
+      - name: Prepare preview artifacts
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $version = (Get-Content 'src-tauri/tauri.conf.json' -Raw | ConvertFrom-Json).version
+          $releaseRoot = 'src-tauri/target/release'
+          $rawExe = Join-Path $releaseRoot 'cc-switch.exe'
+          $msi = Get-ChildItem (Join-Path $releaseRoot 'bundle/msi') -Filter '*.msi' -Recurse | Select-Object -First 1
+          $nsis = Get-ChildItem (Join-Path $releaseRoot 'bundle/nsis') -Filter '*.exe' -Recurse | Select-Object -First 1
+
+          if (-not (Test-Path $rawExe)) {
+            throw "Windows executable not found: $rawExe"
+          }
+          if ($null -eq $msi) {
+            throw 'Windows x64 MSI installer not found'
+          }
+          if ($null -eq $nsis) {
+            throw 'Windows x64 NSIS installer not found'
+          }
+
+          $bytes = [System.IO.File]::ReadAllBytes($rawExe)
+          $peOffset = [BitConverter]::ToInt32($bytes, 0x3c)
+          $machine = [BitConverter]::ToUInt16($bytes, $peOffset + 4)
+          if ($machine -ne 0x8664) {
+            throw ('Expected AMD64 PE machine 0x8664, got 0x{0:x4}' -f $machine)
+          }
+
+          New-Item -ItemType Directory -Force -Path 'release-assets' | Out-Null
+          Copy-Item $msi.FullName "release-assets/ICodeEasy-v$version-Windows-x64.msi"
+          Copy-Item $nsis.FullName "release-assets/ICodeEasy-v$version-Windows-x64-Setup.exe"
+
+          $portableDir = Join-Path $env:RUNNER_TEMP 'ICodeEasy-Portable'
+          New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
+          Copy-Item $rawExe (Join-Path $portableDir 'ICodeEasy.exe')
+          @(
+            '# ICodeEasy portable Windows x64 build marker'
+            'portable=true'
+            'arch=x86_64'
+          ) | Set-Content (Join-Path $portableDir 'portable.ini') -Encoding utf8
+          Compress-Archive -Path "$portableDir/*" -DestinationPath "release-assets/ICodeEasy-v$version-Windows-x64-Portable.zip" -Force
+
+          Get-ChildItem 'release-assets' -File |
+            Sort-Object Name |
+            ForEach-Object {
+              $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+              "$hash  $($_.Name)"
+            } | Set-Content 'release-assets/SHA256SUMS' -Encoding ascii
+
+          Get-ChildItem 'release-assets' -File | Select-Object Name, Length
+
+      - name: Upload Windows x64 preview
+        uses: actions/upload-artifact@v7
+        with:
+          name: ICodeEasy-Windows-x64-${{ github.sha }}
+          path: release-assets/*
+          if-no-files-found: error
+          retention-days: 7

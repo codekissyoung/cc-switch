@@ -4,15 +4,12 @@
 
 ### Der All-in-One-Manager für Claude Code, Claude Desktop, Codex, Gemini CLI, Grok Build, OpenCode, OpenClaw & Hermes Agent
 
-[![Version](https://img.shields.io/github/v/release/farion1231/cc-switch?color=blue&label=version)](https://github.com/farion1231/cc-switch/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/farion1231/cc-switch/releases)
+[![Version](https://img.shields.io/badge/version-3.18.0-blue.svg)](CHANGELOG.md)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://icodeeasy.cc/download/)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-orange.svg)](https://tauri.app/)
-[![Downloads](https://img.shields.io/github/downloads/farion1231/cc-switch/total)](https://github.com/farion1231/cc-switch/releases/latest)
+[![Download](https://img.shields.io/badge/download-icodeeasy.cc-4c8bf5.svg)](https://icodeeasy.cc/download/)
 
-<a href="https://trendshift.io/repositories/15372" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15372" alt="farion1231%2Fcc-switch | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-<a href="https://www.star-history.com/#farion1231/cc-switch&Date"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=farion1231/cc-switch&theme=dark" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=farion1231/cc-switch" width="196" height="55" /></picture></a>
-
-### 🌐 Die einzige offizielle Website: **[ccswitch.io](https://ccswitch.io)**
+### 🌐 Offizielle Website: **[icodeeasy.cc](https://icodeeasy.cc)** · **[Download](https://icodeeasy.cc/download/)**
 
 [English](README.md) | [中文](README_ZH.md) | [日本語](README_JA.md) | Deutsch | [Changelog](CHANGELOG.md)
 
@@ -72,7 +69,7 @@ Modernes KI-gestütztes Programmieren stützt sich auf Werkzeuge wie Claude Code
 
 - **Cloud-Synchronisierung** — Eigenes Konfigurationsverzeichnis (Dropbox, OneDrive, iCloud, NAS) und WebDAV-Server-Synchronisierung
 - **Deep Link** (`ccswitch://`) — Importieren Sie Anbieter, MCP-Server, Prompts und Skills per URL
-- Dunkles / Helles / System-Theme, automatischer Start, automatischer Updater, atomare Schreibvorgänge, automatische Backups, i18n (zh/zh-TW/en/ja)
+- Dunkles / Helles / System-Theme, automatischer Start, schlanke Versionsprüfung mit manuellem Download, atomare Schreibvorgänge, automatische Backups, i18n (zh/zh-TW/en/ja)
 
 ## FAQ
 
@@ -100,7 +97,7 @@ ICodeEasy bietet eine Funktion „Gemeinsames Konfigurations-Snippet", um gemein
 <details>
 <summary><strong>Installation unter macOS</strong></summary>
 
-ICodeEasy für macOS ist von Apple code-signiert und notarisiert. Sie können es direkt herunterladen und installieren — es sind keine zusätzlichen Schritte erforderlich. Wir empfehlen die Verwendung des `.dmg`-Installationsprogramms.
+Den aktuellen macOS-Installer und die Installationshinweise finden Sie auf der [offiziellen Downloadseite](https://icodeeasy.cc/download/). macOS-Pakete werden erst veröffentlicht, nachdem die erforderlichen Signatur- und Notarisierungsprüfungen erfolgreich waren.
 
 </details>
 
@@ -121,11 +118,13 @@ Fügen Sie einen offiziellen Anbieter aus der Preset-Liste hinzu. Führen Sie na
 <details>
 <summary><strong>Wo werden meine Daten gespeichert?</strong></summary>
 
-- **Datenbank**: `~/.cc-switch/cc-switch.db` (SQLite — Anbieter, MCP, Prompts, Skills)
-- **Lokale Einstellungen**: `~/.cc-switch/settings.json` (gerätebezogene UI-Einstellungen)
-- **Backups**: `~/.cc-switch/backups/` (automatisch rotiert, behält die 10 neuesten)
-- **Skills**: `~/.cc-switch/skills/` (standardmäßig per Symlink mit den entsprechenden Apps verbunden)
-- **Skill-Backups**: `~/.cc-switch/skill-backups/` (vor der Deinstallation automatisch erstellt, behält die 20 neuesten)
+- **Datenbank**: `~/.icodeeasy/cc-switch.db` (SQLite — Anbieter, MCP, Prompts, Skills)
+- **Lokale Einstellungen**: `~/.icodeeasy/settings.json` (gerätebezogene UI-Einstellungen)
+- **Backups**: `~/.icodeeasy/backups/` (automatisch rotiert, behält die 10 neuesten)
+- **Skills**: `~/.icodeeasy/skills/` (standardmäßig per Symlink mit den entsprechenden Apps verbunden)
+- **Skill-Backups**: `~/.icodeeasy/skill-backups/` (vor der Deinstallation automatisch erstellt, behält die 20 neuesten)
+
+Beim Upgrade von einer älteren Version kopiert ICodeEasy `~/.cc-switch` sicher nach `~/.icodeeasy` und behält das alte Verzeichnis als Rückfallkopie bei.
 
 </details>
 
@@ -174,47 +173,9 @@ Ausführliche Anleitungen zu jeder Funktion finden Sie im **[Benutzerhandbuch](d
 - **macOS**: macOS 12 (Monterey) und höher
 - **Linux**: Ubuntu 22.04+ / Debian 11+ / Fedora 34+ und andere gängige Distributionen
 
-### Windows-Nutzer
+Laden Sie ICodeEasy für Ihre Plattform von der **[offiziellen Downloadseite](https://icodeeasy.cc/download/)** herunter. ICodeEasy wird über die eigene Website und nicht über öffentliche GitHub Releases verteilt; verfügbare Plattformen, Prüfsummen und Installationshinweise sind dort aufgeführt.
 
-Laden Sie das neueste Installationsprogramm `CC-Switch-v{version}-Windows.msi` oder die portable Version `CC-Switch-v{version}-Windows-Portable.zip` von der Seite [Releases](../../releases) herunter.
-
-### macOS-Nutzer
-
-**Methode 1: Installation über Homebrew (empfohlen)**
-
-```bash
-brew install --cask cc-switch
-```
-
-Aktualisieren:
-
-```bash
-brew upgrade --cask cc-switch
-```
-
-**Methode 2: Manueller Download**
-
-Laden Sie `CC-Switch-v{version}-macOS.dmg` (empfohlen) oder `.zip` von der Seite [Releases](../../releases) herunter.
-
-> **Hinweis**: ICodeEasy für macOS ist von Apple code-signiert und notarisiert. Sie können es direkt installieren und öffnen.
-
-### Arch-Linux-Nutzer
-
-**Installation über paru (empfohlen)**
-
-```bash
-paru -S cc-switch-bin
-```
-
-### Linux-Nutzer
-
-Laden Sie den neuesten Linux-Build von der Seite [Releases](../../releases) herunter:
-
-- `CC-Switch-v{version}-Linux.deb` (Debian/Ubuntu)
-- `CC-Switch-v{version}-Linux.rpm` (Fedora/RHEL/openSUSE)
-- `CC-Switch-v{version}-Linux.AppImage` (universell)
-
-> **Flatpak**: Nicht in den offiziellen Releases enthalten. Sie können es selbst aus dem `.deb` bauen — eine Anleitung finden Sie unter [`flatpak/README.md`](flatpak/README.md).
+ICodeEasy verwendet eine schlanke Versionsprüfung anstelle eines automatischen Updaters. Wenn eine neue Version verfügbar ist, laden Sie den Installer von der offiziellen Seite herunter und installieren Sie ihn über die vorhandene App. Ihre bestehenden Benutzerdaten bleiben erhalten.
 
 <details>
 <summary><strong>Architekturüberblick</strong></summary>
@@ -241,7 +202,7 @@ Laden Sie den neuesten Linux-Build von der Seite [Releases](../../releases) heru
 
 **Kern-Designmuster**
 
-- **SSOT** (Single Source of Truth): Alle Daten werden in `~/.cc-switch/cc-switch.db` (SQLite) gespeichert
+- **SSOT** (Single Source of Truth): Alle Daten werden in `~/.icodeeasy/cc-switch.db` (SQLite) gespeichert
 - **Zweischichtiger Speicher**: SQLite für synchronisierbare Daten, JSON für gerätebezogene Einstellungen
 - **Bidirektionale Synchronisierung**: Schreiben in Live-Dateien beim Umschalten, Backfill aus den Live-Dateien beim Bearbeiten des aktiven Anbieters
 - **Atomare Schreibvorgänge**: Das Muster aus temporärer Datei + Umbenennen verhindert die Beschädigung von Konfigurationen
@@ -404,10 +365,6 @@ Bitte stellen Sie vor dem Einreichen von PRs Folgendes sicher:
 - Unit-Tests bestehen: `pnpm test:unit`
 
 Eröffnen Sie für neue Funktionen bitte vor dem Einreichen eines PR ein Issue zur Diskussion. PRs für Funktionen, die nicht gut zum Projekt passen, können geschlossen werden.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=farion1231/cc-switch&type=Date)](https://www.star-history.com/#farion1231/cc-switch&Date)
 
 ## Lizenz
 

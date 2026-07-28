@@ -3922,6 +3922,10 @@ impl ProviderService {
             .get_universal_provider(id)?
             .ok_or_else(|| AppError::Message(format!("统一供应商 {id} 不存在")))?;
 
+        if provider.provider_type == "icodeeasy" && provider.api_key.trim().is_empty() {
+            return Err(AppError::Message("ICodeEasy API Key 不能为空".to_string()));
+        }
+
         // 同步到 Claude
         if let Some(mut claude_provider) = provider.to_claude_provider() {
             // 合并已有配置

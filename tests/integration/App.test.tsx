@@ -128,6 +128,12 @@ vi.mock("@/components/AppSwitcher", () => ({
   ),
 }));
 
+vi.mock("@/components/icodeeasy/ICodeEasySetupPage", () => ({
+  ICodeEasySetupPage: () => (
+    <div data-testid="icodeeasy-setup">ICodeEasy setup</div>
+  ),
+}));
+
 vi.mock("@/components/mcp/McpPanel", () => ({
   default: ({ open, onOpenChange }: any) =>
     open ? (
@@ -139,12 +145,19 @@ vi.mock("@/components/mcp/McpPanel", () => ({
     ),
 }));
 
-const renderApp = (AppComponent: ComponentType) => {
+const renderApp = (
+  AppComponent: ComponentType<{
+    compatibilityProviderManager?: boolean;
+  }>,
+  compatibilityProviderManager = true,
+) => {
   const client = new QueryClient();
   return render(
     <QueryClientProvider client={client}>
       <Suspense fallback={<div data-testid="loading">loading</div>}>
-        <AppComponent />
+        <AppComponent
+          compatibilityProviderManager={compatibilityProviderManager}
+        />
       </Suspense>
     </QueryClientProvider>,
   );
@@ -155,6 +168,15 @@ describe("App integration with MSW", () => {
     resetProviderState();
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
+  });
+
+  it("uses the single-provider ICodeEasy product surface by default", async () => {
+    const { default: App } = await import("@/App");
+    renderApp(App, false);
+
+    expect(await screen.findByTestId("icodeeasy-setup")).toBeInTheDocument();
+    expect(screen.queryByTestId("provider-list")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("app-switcher")).not.toBeInTheDocument();
   });
 
   it("covers basic provider flows via real hooks", async () => {

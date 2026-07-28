@@ -321,7 +321,7 @@ fn macos_tray_icon() -> Option<Image<'static>> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    // 设置 panic hook，在应用崩溃时记录日志到 <app_config_dir>/crash.log（默认 ~/.cc-switch/crash.log）
+    // 设置 panic hook，在应用崩溃时记录日志到 <app_config_dir>/crash.log（默认 ~/.icodeeasy/crash.log）
     panic_hook::setup_panic_hook();
 
     let mut builder = tauri::Builder::default();
@@ -416,7 +416,52 @@ pub fn run() {
 
             // 预先刷新 Store 覆盖配置，确保后续路径读取正确（日志/数据库等）
             app_store::refresh_app_config_dir_override(app.handle());
-            panic_hook::init_app_config_dir(crate::config::get_app_config_dir());
+            let prepared_app_config_dir = crate::config::prepare_app_config_dir();
+            let migrated_app_config_dir = prepared_app_config_dir
+                .migration
+                .migrated_from_legacy();
+            if let crate::config::AppConfigDirMigration::Failed {
+                from,
+                target,
+                error,
+            } = &prepared_app_config_dir.migration
+            {
+                eprintln!(
+                    "ICodeEasy could not migrate its data directory from {} to {}: {}. Continuing with the legacy directory.",
+                    from.display(),
+                    target.display(),
+                    error
+                );
+                let (title, message) = if is_chinese_locale() {
+                    (
+                        "ICodeEasy 数据目录迁移失败".to_string(),
+                        format!(
+                            "无法将应用数据从\n{}\n迁移到\n{}\n\n原因：{}\n\nICodeEasy 将继续使用旧目录，本次启动不会创建空数据库。请检查磁盘空间和目录权限。",
+                            from.display(),
+                            target.display(),
+                            error
+                        ),
+                    )
+                } else {
+                    (
+                        "ICodeEasy Data Migration Failed".to_string(),
+                        format!(
+                            "ICodeEasy could not migrate its data from\n{}\nto\n{}\n\nReason: {}\n\nICodeEasy will continue using the legacy directory and will not create an empty database for this launch. Check disk space and directory permissions.",
+                            from.display(),
+                            target.display(),
+                            error
+                        ),
+                    )
+                };
+                let _ = app
+                    .handle()
+                    .dialog()
+                    .message(message)
+                    .title(title)
+                    .kind(MessageDialogKind::Warning)
+                    .blocking_show();
+            }
+            panic_hook::init_app_config_dir(prepared_app_config_dir.path.clone());
 
             // 初始化日志（输出到 <app_config_dir>/logs/cc-switch.log）
             {
@@ -456,7 +501,28 @@ pub fn run() {
 
                 // 用户配置存在数据库中，数据库尚未打开时使用保守的 Info 级别。
                 log::set_max_level(log::LevelFilter::Info);
-                log::info!("=== CC Switch v{} started ===", env!("CARGO_PKG_VERSION"));
+                log::info!("=== ICodeEasy v{} started ===", env!("CARGO_PKG_VERSION"));
+            }
+
+            match &prepared_app_config_dir.migration {
+                crate::config::AppConfigDirMigration::Migrated { from } => log::info!(
+                    "Migrated ICodeEasy data from {} to {}; the legacy directory was retained as a rollback copy",
+                    from.display(),
+                    prepared_app_config_dir.path.display()
+                ),
+                crate::config::AppConfigDirMigration::Failed {
+                    from,
+                    target,
+                    error,
+                } => log::error!(
+                    "Failed to migrate ICodeEasy data from {} to {}: {}. Continuing with {}",
+                    from.display(),
+                    target.display(),
+                    error,
+                    prepared_app_config_dir.path.display()
+                ),
+                crate::config::AppConfigDirMigration::NotNeeded
+                | crate::config::AppConfigDirMigration::SkippedForOverride => {}
             }
 
             // 首次读取覆盖路径时 logger 尚未可用；此处重放一次，
@@ -660,6 +726,24 @@ pub fn run() {
                 Err(e) => log::warn!("✗ Failed to read skills migration flag: {e}"),
             }
 
+            // 旧应用目录中的 Skills 可能是指向 ~/.cc-switch/skills 的符号链接。
+            // 根目录迁移成功后重建已启用 Skill 的同步目标，使其改为指向 ~/.icodeeasy/skills。
+            if migrated_app_config_dir
+                && matches!(
+                    crate::settings::get_skill_storage_location(),
+                    crate::services::skill::SkillStorageLocation::CcSwitch
+                )
+            {
+                for app_type in crate::app_config::AppType::all() {
+                    if let Err(error) = SkillService::sync_to_app(&app_state.db, &app_type) {
+                        log::warn!(
+                            "Failed to refresh migrated Skill links for {}: {error}",
+                            app_type.as_str()
+                        );
+                    }
+                }
+            }
+
             // 1.5. 自动导入 live 配置 + seed 官方预设供应商（Claude / Codex / Gemini）
             //
             // 先 import 后 seed 是有意为之：先把用户手动配置的 settings.json / auth.json / .env
@@ -715,6 +799,12 @@ pub fn run() {
                 }
                 Ok(_) => {}
                 Err(e) => log::warn!("✗ Failed to seed official providers: {e}"),
+            }
+
+            match app_state.db.ensure_icodeeasy_universal_provider() {
+                Ok(true) => log::info!("✓ Initialized the ICodeEasy provider"),
+                Ok(false) => {}
+                Err(e) => log::warn!("✗ Failed to initialize the ICodeEasy provider: {e}"),
             }
 
             {

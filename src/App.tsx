@@ -81,6 +81,7 @@ import { DeepLinkImportDialog } from "@/components/DeepLinkImportDialog";
 import { FirstRunNoticeDialog } from "@/components/FirstRunNoticeDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
+import { ICodeEasySetupPage } from "@/components/icodeeasy/ICodeEasySetupPage";
 import { McpIcon } from "@/components/BrandIcons";
 import { Button } from "@/components/ui/button";
 import { SessionManagerPage } from "@/components/sessions/SessionManagerPage";
@@ -119,6 +120,9 @@ interface SyncStatusUpdatedPayload {
 
 const DEFAULT_DRAG_BAR_HEIGHT = isWindows() || isLinux() ? 0 : 28; // px
 const HEADER_HEIGHT = 64; // px
+// ICodeEasy 发行版的用户侧产品只有一个固定供应商。旧 Provider Manager 仍保留在
+// 代码与数据层，供升级兼容、导入、上游合并和自动化回归使用，但不进入正常用户流程。
+const DEFAULT_SINGLE_PROVIDER_PRODUCT_MODE = true;
 
 const STORAGE_KEY = "cc-switch-last-app";
 const VALID_APPS: AppId[] = [
@@ -132,7 +136,12 @@ const VALID_APPS: AppId[] = [
   "hermes",
 ];
 
-const getInitialApp = (): AppId => {
+const getInitialApp = (
+  singleProviderProductMode = DEFAULT_SINGLE_PROVIDER_PRODUCT_MODE,
+): AppId => {
+  if (singleProviderProductMode) {
+    return "claude";
+  }
   const saved = localStorage.getItem(STORAGE_KEY) as AppId | null;
   if (saved && VALID_APPS.includes(saved)) {
     return saved;
@@ -158,22 +167,37 @@ const VALID_VIEWS: View[] = [
   "hermesMemory",
 ];
 
-const getInitialView = (): View => {
+const getInitialView = (
+  singleProviderProductMode = DEFAULT_SINGLE_PROVIDER_PRODUCT_MODE,
+): View => {
   const saved = localStorage.getItem(VIEW_STORAGE_KEY) as View | null;
+  if (singleProviderProductMode && saved === "universal") {
+    return "providers";
+  }
   if (saved && VALID_VIEWS.includes(saved)) {
     return saved;
   }
   return "providers";
 };
 
-function App() {
+interface AppProps {
+  /** 仅供兼容层自动化回归使用；产品入口不得传入此参数。 */
+  compatibilityProviderManager?: boolean;
+}
+
+function App({ compatibilityProviderManager = false }: AppProps) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
+  const singleProviderProductMode = !compatibilityProviderManager;
 
-  const [activeApp, setActiveApp] = useState<AppId>(getInitialApp);
+  const [activeApp, setActiveApp] = useState<AppId>(() =>
+    getInitialApp(singleProviderProductMode),
+  );
   const sharedFeatureApp: AppId =
     activeApp === "claude-desktop" ? "claude" : activeApp;
-  const [currentView, setCurrentView] = useState<View>(getInitialView);
+  const [currentView, setCurrentView] = useState<View>(() =>
+    getInitialView(singleProviderProductMode),
+  );
   const [skillsDiscoverySource, setSkillsDiscoverySource] =
     useState<SkillsPageSource>("repos");
   const [settingsDefaultTab, setSettingsDefaultTab] = useState("general");
@@ -213,10 +237,14 @@ function App() {
   };
 
   useEffect(() => {
+    if (singleProviderProductMode) {
+      if (activeApp !== "claude") setActiveApp("claude");
+      return;
+    }
     if (!visibleApps[activeApp]) {
       setActiveApp(getFirstVisibleApp());
     }
-  }, [visibleApps, activeApp]);
+  }, [visibleApps, activeApp, singleProviderProductMode]);
 
   // Fallback from sessions view when switching to an app without session support
   useEffect(() => {
@@ -967,6 +995,9 @@ function App() {
         case "openclawAgents":
           return <AgentsDefaultsPanel />;
         default:
+          if (singleProviderProductMode) {
+            return <ICodeEasySetupPage />;
+          }
           return (
             <div className="px-6 flex flex-col flex-1 min-h-0 overflow-hidden">
               <div className="flex-1 overflow-y-auto overflow-x-hidden pb-12 px-1">
@@ -1241,6 +1272,7 @@ function App() {
 
           <div className="flex flex-1 min-w-0 items-center justify-end gap-1.5">
             {currentView === "providers" &&
+              !singleProviderProductMode &&
               activeApp !== "opencode" &&
               activeApp !== "openclaw" &&
               activeApp !== "hermes" && (
@@ -1262,6 +1294,7 @@ function App() {
                 </div>
               )}
             {currentView === "providers" &&
+              !singleProviderProductMode &&
               (settingsData?.showProfileSwitcher ?? true) && (
                 <div
                   className="flex shrink-0 items-center"
@@ -1386,7 +1419,7 @@ function App() {
                     )}
                   </>
                 )}
-                {currentView === "providers" && (
+                {currentView === "providers" && !singleProviderProductMode && (
                   <>
                     <AppSwitcher
                       activeApp={activeApp}

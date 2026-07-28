@@ -44,9 +44,47 @@
   },
   "firstRunNotice": {
     "title": "欢迎使用 ICodeEasy",
-    "bodyDefault": "ICodeEasy 可以帮你在 Claude Code / Codex / Gemini CLI 的多个供应商之间一键切换。如果你之前已经配置过这些工具，ICodeEasy 会自动把现有设置保存为名为 “default” 的供应商，保证你的配置不会丢失。",
-    "bodyOfficial": "列表里还预置了 “官方（Official）” 供应商，随时点一下即可切回官方默认配置。切换前 ICodeEasy 会自动把当前配置备份回 default，可以放心来回切。ICodeEasy 就是这样工作的 😊",
+    "bodyDefault": "ICodeEasy 是面向 Claude Code、Codex 和 Gemini CLI 的一键配置客户端。填入一把 ICodeEasy API Key，选择要使用的工具，即可完成接入。",
+    "bodyOfficial": "如果你之前已经配置过这些工具，原有数据会继续保留，不会被启动过程静默删除或覆盖。每次写入新配置前，ICodeEasy 仍会沿用原有备份与失败回滚机制。",
     "confirm": "我知道了"
+  },
+  "icodeeasySetup": {
+    "badge": "ICodeEasy 一键配置",
+    "title": "一把 Key，配置你的 AI 编程工具",
+    "description": "ICodeEasy 已经是唯一且默认的服务商。无需选择供应商或填写接口地址，只需粘贴 API Key 并选择要配置的 CLI。",
+    "apiKeyTitle": "填写 ICodeEasy API Key",
+    "apiKeyDescription": "将从 ICodeEasy 控制台复制的 API Key 粘贴到这里。",
+    "apiKeyLabel": "ICodeEasy API Key",
+    "apiKeyPlaceholder": "粘贴你的 ICodeEasy API Key",
+    "showApiKey": "显示 API Key",
+    "hideApiKey": "隐藏 API Key",
+    "getApiKey": "获取 API Key",
+    "localStorageHint": "Key 仅写入本机 ICodeEasy 数据库和所选 CLI 的本地配置。",
+    "selectAppsTitle": "选择要配置的工具",
+    "selectAppsDescription": "可以一次配置一个或多个工具；未选中的工具不会改动当前运行配置。",
+    "apps": {
+      "claude": {
+        "name": "Claude Code",
+        "description": "配置 Anthropic 兼容接入，并保留 Claude Code 自身的模型选择。"
+      },
+      "codex": {
+        "name": "Codex",
+        "description": "配置 ICodeEasy Responses 接入和推荐模型 gpt-5.6-sol。"
+      },
+      "gemini": {
+        "name": "Gemini CLI",
+        "description": "配置 Gemini 原生 v1beta 接入和推荐模型 gemini-3.6-flash。"
+      }
+    },
+    "configured": "已使用 ICodeEasy",
+    "configureFailed": "本次配置失败",
+    "compatibilityHint": "升级用户的历史供应商和配置会继续保留在兼容层中，但不会出现在普通用户界面。写入前会备份当前 CLI 配置，单个工具失败时会自动回滚该工具。",
+    "configureButton": "配置所选工具（{{count}}）",
+    "configureSuccess": "所选工具已配置为 ICodeEasy",
+    "configurePartial": "配置完成，但有 {{count}} 个工具失败并已保留原配置",
+    "configureError": "保存 ICodeEasy 配置失败：{{error}}",
+    "loadError": "读取 ICodeEasy 配置失败：{{error}}",
+    "openKeysError": "无法打开 API Key 页面：{{error}}"
   },
   "apiKeyInput": {
     "placeholder": "请输入API Key",
@@ -290,7 +328,7 @@
     },
     "unifyCodexHistory": {
       "title": "统一 Codex 会话历史",
-      "message": "开启后，官方订阅与第三方将共用同一个会话历史列表。注意：跨供应商继续旧会话时，可能因对方后端无法解密 encrypted_content 推理内容而失败。\n\n可选择同时把现有官方会话历史迁入共享列表（迁移前自动备份到 ~/.cc-switch/backups，关闭开关时可选择恢复）。",
+      "message": "开启后，官方订阅与第三方将共用同一个会话历史列表。注意：跨供应商继续旧会话时，可能因对方后端无法解密 encrypted_content 推理内容而失败。\n\n可选择同时把现有官方会话历史迁入共享列表（迁移前自动备份到 ~/.icodeeasy/backups，关闭开关时可选择恢复）。",
       "migrateExisting": "同时迁入现有官方会话历史",
       "confirm": "我已了解，继续开启"
     },
@@ -705,7 +743,7 @@
       "description": "选择 ICodeEasy 存放 Skills 主副本的目录",
       "ccSwitch": "ICodeEasy",
       "unified": "~/.agents/skills",
-      "ccSwitchHint": "技能存储在 ~/.cc-switch/skills/，由 ICodeEasy 统一管理并同步到各应用。",
+      "ccSwitchHint": "技能存储在 ~/.icodeeasy/skills/，由 ICodeEasy 统一管理并同步到各应用。",
       "unifiedHint": "技能存储在 ~/.agents/skills/，遵循 Agent Skills 开放标准。兼容的工具（Claude Code、Codex、Gemini CLI 等）可直接发现此目录中的技能。",
       "confirmTitle": "迁移技能存储",
       "confirmMessage": "将移动 {{count}} 个技能到新位置，是否继续？",
@@ -753,7 +791,7 @@
     "configDirectoryDescription": "在 WSL 等环境使用 Claude Code 或 Codex 的时候，可手动指定为 WSL 里的配置目录，供应商数据与主环境保持一致。",
     "appConfigDir": "ICodeEasy 配置目录",
     "appConfigDirDescription": "自定义 ICodeEasy 的配置存储位置（指定到云同步文件夹即可云同步配置）",
-    "browsePlaceholderApp": "例如：C:\\Users\\Administrator\\.cc-switch",
+    "browsePlaceholderApp": "例如：C:\\Users\\Administrator\\.icodeeasy",
     "claudeConfigDir": "Claude Code 配置目录",
     "claudeConfigDirDescription": "覆盖 Claude 配置目录 (settings.json)。真正自定义目录会在目录内存放 Claude MCP 的 .claude.json；默认 ~/.claude 目录仍使用 Claude 默认的 ~/.claude.json。",
     "codexConfigDir": "Codex 配置目录",

@@ -44,9 +44,47 @@
   },
   "firstRunNotice": {
     "title": "Welcome to ICodeEasy",
-    "bodyDefault": "ICodeEasy lets you switch between multiple Claude Code / Codex / Gemini CLI providers with a single click. If you already had these tools configured, ICodeEasy has saved your existing setup as a provider named “default” so none of your previous configuration is lost.",
-    "bodyOfficial": "An “Official” preset is also included in the list — click it any time you want to switch back to the official default. ICodeEasy automatically backs up your current config to “default” before switching, so you can move back and forth freely. That's how ICodeEasy works 😊",
+    "bodyDefault": "ICodeEasy is a one-click setup client for Claude Code, Codex, and Gemini CLI. Enter your ICodeEasy API Key, choose the tools you use, and they are ready to connect.",
+    "bodyOfficial": "If these tools were already configured, your existing data remains intact and is never silently deleted or overwritten at startup. ICodeEasy still backs up the current configuration before every write and rolls it back if that tool fails.",
     "confirm": "Got it"
+  },
+  "icodeeasySetup": {
+    "badge": "ICodeEasy one-click setup",
+    "title": "One key for your AI coding tools",
+    "description": "ICodeEasy is the only and default service. There is no provider or endpoint to choose—paste your API Key and select the CLIs to configure.",
+    "apiKeyTitle": "Enter your ICodeEasy API Key",
+    "apiKeyDescription": "Paste the API Key copied from your ICodeEasy dashboard.",
+    "apiKeyLabel": "ICodeEasy API Key",
+    "apiKeyPlaceholder": "Paste your ICodeEasy API Key",
+    "showApiKey": "Show API Key",
+    "hideApiKey": "Hide API Key",
+    "getApiKey": "Get API Key",
+    "localStorageHint": "The key is written only to the local ICodeEasy database and the selected CLI configuration files.",
+    "selectAppsTitle": "Choose tools to configure",
+    "selectAppsDescription": "Configure one or several tools at once. Unselected tools keep their current live configuration.",
+    "apps": {
+      "claude": {
+        "name": "Claude Code",
+        "description": "Sets up the Anthropic-compatible endpoint while preserving Claude Code's model selection."
+      },
+      "codex": {
+        "name": "Codex",
+        "description": "Sets up ICodeEasy Responses with the recommended gpt-5.6-sol model."
+      },
+      "gemini": {
+        "name": "Gemini CLI",
+        "description": "Sets up native Gemini v1beta with the recommended gemini-3.6-flash model."
+      }
+    },
+    "configured": "Using ICodeEasy",
+    "configureFailed": "Setup failed this time",
+    "compatibilityHint": "Existing providers and settings remain in the compatibility layer for upgrades, but are hidden from the normal interface. The current CLI config is backed up before writing, and a failed tool is rolled back automatically.",
+    "configureButton": "Configure selected ({{count}})",
+    "configureSuccess": "The selected tools now use ICodeEasy",
+    "configurePartial": "Setup finished, but {{count}} tool(s) failed and kept their previous configuration",
+    "configureError": "Failed to save ICodeEasy configuration: {{error}}",
+    "loadError": "Failed to load ICodeEasy configuration: {{error}}",
+    "openKeysError": "Could not open the API Key page: {{error}}"
   },
   "apiKeyInput": {
     "placeholder": "Enter API Key",
@@ -290,7 +328,7 @@
     },
     "unifyCodexHistory": {
       "title": "Unified Codex session history",
-      "message": "When enabled, the official subscription and third-party providers share one session history list. Note: resuming an old session across providers may fail because its encrypted_content reasoning cannot be decrypted by another backend.\n\nYou can also migrate your existing official session history into the shared list (originals are backed up to ~/.cc-switch/backups first and can be restored when you turn this off).",
+      "message": "When enabled, the official subscription and third-party providers share one session history list. Note: resuming an old session across providers may fail because its encrypted_content reasoning cannot be decrypted by another backend.\n\nYou can also migrate your existing official session history into the shared list (originals are backed up to ~/.icodeeasy/backups first and can be restored when you turn this off).",
       "migrateExisting": "Also migrate existing official session history",
       "confirm": "I understand, enable"
     },
@@ -705,7 +743,7 @@
       "description": "Choose where ICodeEasy stores the master copies of your skills",
       "ccSwitch": "ICodeEasy",
       "unified": "~/.agents/skills",
-      "ccSwitchHint": "Skills are stored in ~/.cc-switch/skills/ and synced to each app via symlink or copy.",
+      "ccSwitchHint": "Skills are stored in ~/.icodeeasy/skills/ and synced to each app via symlink or copy.",
       "unifiedHint": "Skills are stored in ~/.agents/skills/, the Agent Skills open standard. Compatible tools (Claude Code, Codex, Gemini CLI, etc.) discover skills here natively.",
       "confirmTitle": "Migrate Skill Storage",
       "confirmMessage": "{{count}} skill(s) will be moved to the new location. Continue?",
@@ -753,7 +791,7 @@
     "configDirectoryDescription": "When using Claude Code or Codex in environments like WSL, you can manually specify the configuration directory to the one in WSL to keep provider data consistent with the main environment.",
     "appConfigDir": "ICodeEasy Configuration Directory",
     "appConfigDirDescription": "Customize the storage location for ICodeEasy configuration (point to cloud sync folder to enable config sync)",
-    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.cc-switch",
+    "browsePlaceholderApp": "e.g., C:\\Users\\Administrator\\.icodeeasy",
     "claudeConfigDir": "Claude Code Configuration Directory",
     "claudeConfigDirDescription": "Override Claude configuration directory (settings.json). Custom directories store .claude.json (MCP) inside the directory; the default ~/.claude directory keeps Claude Code's split ~/.claude.json path.",
     "codexConfigDir": "Codex Configuration Directory",

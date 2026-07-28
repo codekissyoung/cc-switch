@@ -2,7 +2,8 @@
  * 统一供应商（Universal Provider）预设配置
  *
  * 统一供应商是跨应用共享的配置，修改后会自动同步到 Claude、Codex、Gemini 三个应用。
- * 适用于 NewAPI 等支持多种协议的 API 网关。
+ * ICodeEasy 分发版只向用户暴露 ICodeEasy 网关；底层 Universal Provider
+ * 数据结构继续保留，以兼容历史数据和上游同步逻辑。
  */
 
 import type {
@@ -37,15 +38,16 @@ export interface UniversalProviderPreset {
 }
 
 /**
- * NewAPI 默认模型配置
+ * ICodeEasy 固定配置
  */
-const NEWAPI_DEFAULT_MODELS: UniversalProviderModels = {
-  claude: {
-    model: "claude-sonnet-5",
-    haikuModel: "claude-haiku-4-5-20251001",
-    sonnetModel: "claude-sonnet-5",
-    opusModel: "claude-opus-5",
-  },
+export const ICODEEASY_UNIVERSAL_PROVIDER_ID = "icodeeasy";
+export const ICODEEASY_API_BASE_URL = "https://api.icodeeasy.cc";
+export const ICODEEASY_WEBSITE_URL = "https://icodeeasy.cc";
+export const ICODEEASY_KEYS_URL = "https://icodeeasy.cc/dashboard/keys";
+
+const ICODEEASY_DEFAULT_MODELS: UniversalProviderModels = {
+  // Claude Code 使用客户端模型名，由服务端完成别名路由。
+  claude: {},
   codex: {
     model: "gpt-5.6-sol",
     reasoningEffort: "high",
@@ -60,35 +62,45 @@ const NEWAPI_DEFAULT_MODELS: UniversalProviderModels = {
  */
 export const universalProviderPresets: UniversalProviderPreset[] = [
   {
-    name: "NewAPI",
-    providerType: "newapi",
+    name: "ICodeEasy",
+    providerType: "icodeeasy",
     defaultApps: {
       claude: true,
       codex: true,
       gemini: true,
     },
-    defaultModels: NEWAPI_DEFAULT_MODELS,
-    websiteUrl: "https://www.newapi.pro",
-    icon: "newapi",
-    iconColor: "#00A67E",
-    description:
-      "NewAPI 是一个可自部署的 API 网关，支持 Anthropic、OpenAI、Gemini 等多种协议",
-  },
-  {
-    name: "自定义网关",
-    providerType: "custom_gateway",
-    defaultApps: {
-      claude: true,
-      codex: true,
-      gemini: true,
-    },
-    defaultModels: NEWAPI_DEFAULT_MODELS,
-    icon: "openai",
-    iconColor: "#6366F1",
-    description: "自定义配置的 API 网关",
-    isCustomTemplate: true,
+    defaultModels: ICODEEASY_DEFAULT_MODELS,
+    websiteUrl: ICODEEASY_WEBSITE_URL,
+    iconColor: "#3B82F6",
+    description: "ICodeEasy 官方 AI CLI 接入服务",
   },
 ];
+
+export const icodeEasyUniversalProviderPreset = universalProviderPresets[0];
+
+/**
+ * 创建或规范化用户侧唯一的 ICodeEasy 供应商。
+ *
+ * 只保留首次创建时间；名称、端点、模型和启用应用始终回到发行版契约，避免
+ * UI 或旧版本把固定供应商漂移为自定义网关。
+ */
+export function createICodeEasyUniversalProvider(
+  apiKey: string,
+  existing?: UniversalProvider | null,
+): UniversalProvider {
+  return {
+    id: ICODEEASY_UNIVERSAL_PROVIDER_ID,
+    name: "ICodeEasy",
+    providerType: "icodeeasy",
+    apps: { ...icodeEasyUniversalProviderPreset.defaultApps },
+    baseUrl: ICODEEASY_API_BASE_URL,
+    apiKey: apiKey.trim(),
+    models: deepClone(icodeEasyUniversalProviderPreset.defaultModels),
+    websiteUrl: ICODEEASY_WEBSITE_URL,
+    iconColor: icodeEasyUniversalProviderPreset.iconColor,
+    createdAt: existing?.createdAt ?? Date.now(),
+  };
+}
 
 /**
  * 根据预设创建统一供应商
