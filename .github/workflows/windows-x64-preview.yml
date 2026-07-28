@@ -84,12 +84,15 @@ jobs:
           ) | Set-Content (Join-Path $portableDir 'portable.ini') -Encoding utf8
           Compress-Archive -Path "$portableDir/*" -DestinationPath "release-assets/ICodeEasy-v$version-Windows-x64-Portable.zip" -Force
 
-          Get-ChildItem 'release-assets' -File |
+          $checksumLines = Get-ChildItem 'release-assets' -File |
             Sort-Object Name |
             ForEach-Object {
               $hash = (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
               "$hash  $($_.Name)"
-            } | Set-Content 'release-assets/SHA256SUMS' -Encoding ascii
+            }
+          $checksumPath = Join-Path (Resolve-Path 'release-assets') 'SHA256SUMS'
+          $checksumText = ($checksumLines -join "`n") + "`n"
+          [System.IO.File]::WriteAllText($checksumPath, $checksumText, [System.Text.ASCIIEncoding]::new())
 
           Get-ChildItem 'release-assets' -File | Select-Object Name, Length
 
