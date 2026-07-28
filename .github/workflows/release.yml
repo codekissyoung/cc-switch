@@ -249,7 +249,7 @@ jobs:
 
 
           # 2) Collect .app as zip
-          NEW_ZIP="CC-Switch-${VERSION}-macOS.zip"
+          NEW_ZIP="ICodeEasy-${VERSION}-macOS.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "release-assets/$NEW_ZIP"
           echo "macOS zip ready: $NEW_ZIP"
 
@@ -260,7 +260,7 @@ jobs:
           fi
 
           HOMEBREW_NO_AUTO_UPDATE=1 brew install create-dmg
-          NEW_DMG="CC-Switch-${VERSION}-macOS.dmg"
+          NEW_DMG="ICodeEasy-${VERSION}-macOS.dmg"
           DMG_STAGE_DIR="$RUNNER_TEMP/dmg-stage"
           rm -rf "$DMG_STAGE_DIR"
           mkdir -p "$DMG_STAGE_DIR"
@@ -390,7 +390,7 @@ jobs:
             $msi = Get-ChildItem -Path (Join-Path $targetRoot 'bundle') -Recurse -Include *.msi -ErrorAction SilentlyContinue | Select-Object -First 1
           }
           if ($null -ne $msi) {
-            $dest = "CC-Switch-$VERSION-Windows$assetSuffix.msi"
+            $dest = "ICodeEasy-$VERSION-Windows$assetSuffix.msi"
             Copy-Item $msi.FullName (Join-Path release-assets $dest)
             Write-Host "Installer copied: $dest"
             $sigPath = "$($msi.FullName).sig"
@@ -419,7 +419,7 @@ jobs:
           }
           $exePath = $exeCandidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           if ($null -ne $exePath) {
-            $portableDir = 'release-assets/CC-Switch-Portable'
+            $portableDir = 'release-assets/ICodeEasy-Portable'
             New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
             Copy-Item $exePath $portableDir
             $portableIniPath = Join-Path $portableDir 'portable.ini'
@@ -436,10 +436,10 @@ jobs:
               )
             }
             $portableContent | Set-Content -Path $portableIniPath -Encoding UTF8
-            $portableZip = "release-assets/CC-Switch-$VERSION-Windows$assetSuffix-Portable.zip"
+            $portableZip = "release-assets/ICodeEasy-$VERSION-Windows$assetSuffix-Portable.zip"
             Compress-Archive -Path "$portableDir/*" -DestinationPath $portableZip -Force
             Remove-Item -Recurse -Force $portableDir
-            Write-Host "Windows portable zip created: CC-Switch-$VERSION-Windows$assetSuffix-Portable.zip"
+            Write-Host "Windows portable zip created: ICodeEasy-$VERSION-Windows$assetSuffix-Portable.zip"
           } elseif ($isArm64) {
             throw 'Portable ARM64 exe not found'
           } else {
@@ -457,7 +457,7 @@ jobs:
           # Updater artifact: AppImage（含对应 .sig）
           APPIMAGE=$(find src-tauri/target/release/bundle -name "*.AppImage" | head -1 || true)
           if [ -n "$APPIMAGE" ]; then
-            NEW_APPIMAGE="CC-Switch-${VERSION}-Linux-${ARCH}.AppImage"
+            NEW_APPIMAGE="ICodeEasy-${VERSION}-Linux-${ARCH}.AppImage"
             cp "$APPIMAGE" "release-assets/$NEW_APPIMAGE"
             [ -f "$APPIMAGE.sig" ] && cp "$APPIMAGE.sig" "release-assets/$NEW_APPIMAGE.sig" || echo ".sig for AppImage not found"
             echo "AppImage copied: $NEW_APPIMAGE"
@@ -467,16 +467,16 @@ jobs:
           # 额外上传 .deb（用于手动安装，不参与 Updater）
           DEB=$(find src-tauri/target/release/bundle -name "*.deb" | head -1 || true)
           if [ -n "$DEB" ]; then
-            cp "$DEB" "release-assets/CC-Switch-${VERSION}-Linux-${ARCH}.deb"
-            echo "Deb package copied: CC-Switch-${VERSION}-Linux-${ARCH}.deb"
+            cp "$DEB" "release-assets/ICodeEasy-${VERSION}-Linux-${ARCH}.deb"
+            echo "Deb package copied: ICodeEasy-${VERSION}-Linux-${ARCH}.deb"
           else
             echo "No .deb found (optional)"
           fi
           # 额外上传 .rpm（用于 Fedora/RHEL/openSUSE 等，不参与 Updater）
           RPM=$(find src-tauri/target/release/bundle -name "*.rpm" | head -1 || true)
           if [ -n "$RPM" ]; then
-            cp "$RPM" "release-assets/CC-Switch-${VERSION}-Linux-${ARCH}.rpm"
-            echo "RPM package copied: CC-Switch-${VERSION}-Linux-${ARCH}.rpm"
+            cp "$RPM" "release-assets/ICodeEasy-${VERSION}-Linux-${ARCH}.rpm"
+            echo "RPM package copied: ICodeEasy-${VERSION}-Linux-${ARCH}.rpm"
           else
             echo "No .rpm found (optional)"
           fi
@@ -553,14 +553,15 @@ jobs:
 
             ### 下载
 
-            - **macOS**: `CC-Switch-${{ github.ref_name }}-macOS.dmg`（推荐）或 `CC-Switch-${{ github.ref_name }}-macOS.zip`（解压即用）
-            - **Windows (x86_64)**: `CC-Switch-${{ github.ref_name }}-Windows.msi`（安装版）或 `CC-Switch-${{ github.ref_name }}-Windows-Portable.zip`（绿色版）
-            - **Windows (ARM64)**: `CC-Switch-${{ github.ref_name }}-Windows-arm64.msi`（安装版）或 `CC-Switch-${{ github.ref_name }}-Windows-arm64-Portable.zip`（绿色版）
-            - **Linux (x86_64)**: `CC-Switch-${{ github.ref_name }}-Linux-x86_64.AppImage` / `.deb` / `.rpm`
-            - **Linux (ARM64)**: `CC-Switch-${{ github.ref_name }}-Linux-arm64.AppImage` / `.deb` / `.rpm`
+            - **macOS**: `ICodeEasy-${{ github.ref_name }}-macOS.dmg`（推荐）或 `ICodeEasy-${{ github.ref_name }}-macOS.zip`（解压即用）
+            - **Windows (x86_64)**: `ICodeEasy-${{ github.ref_name }}-Windows.msi`（安装版）或 `ICodeEasy-${{ github.ref_name }}-Windows-Portable.zip`（绿色版）
+            - **Windows (ARM64)**: `ICodeEasy-${{ github.ref_name }}-Windows-arm64.msi`（安装版）或 `ICodeEasy-${{ github.ref_name }}-Windows-arm64-Portable.zip`（绿色版）
+            - **Linux (x86_64)**: `ICodeEasy-${{ github.ref_name }}-Linux-x86_64.AppImage` / `.deb` / `.rpm`
+            - **Linux (ARM64)**: `ICodeEasy-${{ github.ref_name }}-Linux-arm64.AppImage` / `.deb` / `.rpm`
 
             ---
             macOS 版本已通过 Apple 代码签名和公证，可直接安装使用。
           files: release-assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

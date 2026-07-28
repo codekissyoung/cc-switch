@@ -33,6 +33,10 @@ export interface CodexProviderPreset {
   iconColor?: string; // 图标颜色
   // Codex API 格式
   apiFormat?: CodexApiFormat;
+  // 托管账号预设：目前仅 xAI OAuth（Grok 订阅经本地代理注入 token 直连 api.x.ai）
+  providerType?: "xai_oauth";
+  // OAuth 预设：隐藏 API Key 输入，保存前要求已登录托管账号
+  requiresOAuth?: boolean;
   // Codex Chat 本地路由模式下的模型目录
   modelCatalog?: CodexCatalogModel[];
   // Codex Responses -> Chat Completions reasoning capability defaults
@@ -56,7 +60,7 @@ export function generateThirdPartyAuth(apiKey: string): Record<string, any> {
 export function generateThirdPartyConfig(
   providerName: string,
   baseUrl: string,
-  modelName = "gpt-5.5",
+  modelName = "gpt-5.6-sol",
 ): string {
   const tomlString = (value: string) => JSON.stringify(value);
 
@@ -120,6 +124,101 @@ export const codexProviderPresets: CodexProviderPreset[] = [
     },
     icon: "openai",
     iconColor: "#00A67E",
+  },
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
+  {
+    name: "Kimi",
+    websiteUrl: "https://platform.kimi.com",
+    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
+    auth: generateThirdPartyAuth(""),
+    config: generateThirdPartyConfig(
+      "kimi",
+      "https://api.moonshot.cn/v1",
+      "kimi-k2.7-code",
+    ),
+    endpointCandidates: ["https://api.moonshot.cn/v1"],
+    apiFormat: "openai_chat",
+    modelCatalog: modelCatalog([
+      {
+        model: "kimi-k2.7-code",
+        displayName: "Kimi K2.7 Code",
+        contextWindow: 262144,
+      },
+      {
+        model: "kimi-k3",
+        displayName: "Kimi K3",
+        contextWindow: 1048576,
+      },
+    ]),
+    codexChatReasoning: {
+      supportsThinking: true,
+      supportsEffort: false,
+      thinkingParam: "thinking",
+      effortParam: "none",
+      outputFormat: "reasoning_content",
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+  },
+  {
+    name: "Kimi For Coding",
+    websiteUrl: "https://www.kimi.com/code/",
+    apiKeyUrl: "https://www.kimi.com/code/",
+    auth: generateThirdPartyAuth(""),
+    config: generateThirdPartyConfig(
+      "kimi_coding",
+      "https://api.kimi.com/coding/v1",
+      "kimi-for-coding",
+    ),
+    endpointCandidates: ["https://api.kimi.com/coding/v1"],
+    apiFormat: "openai_chat",
+    promptCacheRouting: "enabled",
+    modelCatalog: modelCatalog([
+      {
+        model: "kimi-for-coding",
+        displayName: "Kimi For Coding",
+        contextWindow: 262144,
+      },
+    ]),
+    codexChatReasoning: {
+      supportsThinking: true,
+      supportsEffort: false,
+      thinkingParam: "thinking",
+      effortParam: "none",
+      outputFormat: "reasoning_content",
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+  },
+  {
+    name: "PackyCode",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
+    category: "third_party",
+    auth: generateThirdPartyAuth(""),
+    config: generateThirdPartyConfig(
+      "packycode",
+      "https://www.packyapi.ai/v1",
+      "gpt-5.6-sol",
+    ),
+    endpointCandidates: ["https://www.packyapi.ai/v1"],
+    icon: "packycode",
+  },
+  {
+    name: "AICoding",
+    websiteUrl: "https://aicoding.sh",
+    apiKeyUrl: "https://aicoding.sh/i/CCSWITCH",
+    auth: generateThirdPartyAuth(""),
+    config: generateThirdPartyConfig(
+      "aicoding",
+      "https://api.aicoding.sh",
+      "gpt-5.6-sol",
+    ),
+    endpointCandidates: ["https://api.aicoding.sh"],
+    icon: "aicoding",
+    iconColor: "#000000",
   },
   {
     name: "火山Agentplan",
@@ -201,6 +300,7 @@ export const codexProviderPresets: CodexProviderPreset[] = [
     icon: "doubao",
     iconColor: "#3370FF",
   },
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "Azure OpenAI",
     websiteUrl:
@@ -209,7 +309,7 @@ export const codexProviderPresets: CodexProviderPreset[] = [
     isOfficial: true,
     auth: generateThirdPartyAuth(""),
     config: `model_provider = "custom"
-model = "gpt-5.5"
+model = "gpt-5.6-sol"
 model_reasoning_effort = "high"
 disable_response_storage = true
 
@@ -365,67 +465,6 @@ requires_openai_auth = true`,
     category: "cn_official",
     icon: "bailian",
     iconColor: "#624AFF",
-  },
-  {
-    name: "Kimi",
-    websiteUrl: "https://platform.kimi.com",
-    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
-    auth: generateThirdPartyAuth(""),
-    config: generateThirdPartyConfig(
-      "kimi",
-      "https://api.moonshot.cn/v1",
-      "kimi-k2.7-code",
-    ),
-    endpointCandidates: ["https://api.moonshot.cn/v1"],
-    apiFormat: "openai_chat",
-    modelCatalog: modelCatalog([
-      {
-        model: "kimi-k2.7-code",
-        displayName: "Kimi K2.7 Code",
-        contextWindow: 262144,
-      },
-    ]),
-    codexChatReasoning: {
-      supportsThinking: true,
-      supportsEffort: false,
-      thinkingParam: "thinking",
-      effortParam: "none",
-      outputFormat: "reasoning_content",
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-  },
-  {
-    name: "Kimi For Coding",
-    websiteUrl: "https://www.kimi.com/code/",
-    apiKeyUrl: "https://www.kimi.com/code/",
-    auth: generateThirdPartyAuth(""),
-    config: generateThirdPartyConfig(
-      "kimi_coding",
-      "https://api.kimi.com/coding/v1",
-      "kimi-for-coding",
-    ),
-    endpointCandidates: ["https://api.kimi.com/coding/v1"],
-    apiFormat: "openai_chat",
-    promptCacheRouting: "enabled",
-    modelCatalog: modelCatalog([
-      {
-        model: "kimi-for-coding",
-        displayName: "Kimi For Coding",
-        contextWindow: 262144,
-      },
-    ]),
-    codexChatReasoning: {
-      supportsThinking: true,
-      supportsEffort: false,
-      thinkingParam: "thinking",
-      effortParam: "none",
-      outputFormat: "reasoning_content",
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
   },
   {
     name: "StepFun",
@@ -683,21 +722,51 @@ requires_openai_auth = true`,
     iconColor: "#000000",
   },
   {
-    name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
-    category: "third_party",
+    name: "xAI (Grok)",
+    websiteUrl: "https://x.ai/api",
+    apiKeyUrl: "https://console.x.ai",
     auth: generateThirdPartyAuth(""),
-    config: generateThirdPartyConfig(
-      "packycode",
-      "https://www.packyapi.com/v1",
-      "gpt-5.5",
-    ),
-    endpointCandidates: [
-      "https://www.packyapi.com/v1",
-      "https://api-slb.packyapi.com/v1",
-    ],
-    icon: "packycode",
+    config: generateThirdPartyConfig("xai", "https://api.x.ai/v1", "grok-4.5"),
+    endpointCandidates: ["https://api.x.ai/v1"],
+    // xAI 官方以 /v1/responses 为一等端点（docs.x.ai api-reference）：Codex 硬依赖的
+    // store:false / include=["reasoning.encrypted_content"] / reasoning effort 均支持，
+    // 原生 Responses，无需路由接管转换
+    apiFormat: "openai_responses",
+    modelCatalog: modelCatalog([
+      {
+        model: "grok-4.5",
+        displayName: "Grok 4.5",
+        contextWindow: 500000,
+        supportsParallelToolCalls: true,
+        inputModalities: ["text", "image"],
+      },
+    ]),
+    category: "third_party",
+    icon: "xai",
+    iconColor: "#000000",
+  },
+  {
+    name: "xAI (Grok) OAuth",
+    websiteUrl: "https://x.ai/grok",
+    auth: generateThirdPartyAuth(""),
+    // 托管 OAuth：真实 token 由本地代理按请求注入，CodexAdapter 硬定向
+    // api.x.ai；这里的 base_url / 空 auth 只是配置快照，转发时不生效。
+    config: generateThirdPartyConfig("xai", "https://api.x.ai/v1", "grok-4.5"),
+    apiFormat: "openai_responses",
+    providerType: "xai_oauth",
+    requiresOAuth: true,
+    modelCatalog: modelCatalog([
+      {
+        model: "grok-4.5",
+        displayName: "Grok 4.5",
+        contextWindow: 500000,
+        supportsParallelToolCalls: true,
+        inputModalities: ["text", "image"],
+      },
+    ]),
+    category: "third_party",
+    icon: "xai",
+    iconColor: "#000000",
   },
   {
     name: "OpenRouter",
@@ -707,7 +776,7 @@ requires_openai_auth = true`,
     config: generateThirdPartyConfig(
       "openrouter",
       "https://openrouter.ai/api/v1",
-      "gpt-5.5",
+      "gpt-5.6-sol",
     ),
     category: "aggregator",
     icon: "openrouter",

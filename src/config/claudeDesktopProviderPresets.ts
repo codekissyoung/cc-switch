@@ -33,7 +33,7 @@ export interface ClaudeDesktopRoutePreset {
  */
 export const CLAUDE_DESKTOP_ROLE_ROUTE_IDS = {
   sonnet: "claude-sonnet-5",
-  opus: "claude-opus-4-8",
+  opus: "claude-opus-5",
   fable: "claude-fable-5",
   haiku: "claude-haiku-4-5",
 } as const;
@@ -56,7 +56,7 @@ export interface ClaudeDesktopProviderPreset {
   mode: "direct" | "proxy";
   apiFormat?: ClaudeDesktopApiFormat;
   modelRoutes?: ClaudeDesktopRoutePreset[];
-  providerType?: "github_copilot" | "codex_oauth";
+  providerType?: "github_copilot" | "codex_oauth" | "xai_oauth";
   requiresOAuth?: boolean;
 
   endpointCandidates?: string[];
@@ -153,6 +153,45 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     icon: "anthropic",
     iconColor: "#D4915D",
   },
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
+  {
+    name: "Kimi",
+    websiteUrl: "https://platform.kimi.com",
+    category: "cn_official",
+    baseUrl: "https://api.moonshot.cn/anthropic",
+    mode: "proxy",
+    apiFormat: "anthropic",
+    modelRoutes: brandedRoutes(
+      "kimi-k2.7-code",
+      "kimi-k2.7-code",
+      "kimi-k2.7-code",
+    ),
+    icon: "kimi",
+    iconColor: "#6366F1",
+  },
+  {
+    name: "Kimi For Coding",
+    websiteUrl: "https://www.kimi.com/code/",
+    category: "cn_official",
+    baseUrl: "https://api.kimi.com/coding/",
+    mode: "proxy",
+    apiFormat: "anthropic",
+    modelRoutes: passthroughRoutes(),
+    icon: "kimi",
+    iconColor: "#6366F1",
+  },
+  {
+    name: "PackyCode",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
+    category: "third_party",
+    baseUrl: "https://www.packyapi.ai",
+    mode: "direct",
+    apiFormat: "anthropic",
+    modelRoutes: passthroughRoutes(),
+    endpointCandidates: ["https://www.packyapi.ai"],
+    icon: "packycode",
+  },
   {
     name: "火山Agentplan",
     websiteUrl:
@@ -207,6 +246,7 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     icon: "doubao",
     iconColor: "#3370FF",
   },
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "Gemini Native",
     websiteUrl: "https://ai.google.dev/gemini-api",
@@ -217,9 +257,9 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     mode: "proxy",
     apiFormat: "gemini_native",
     modelRoutes: brandedRoutes(
-      "gemini-3.5-flash",
-      "gemini-3.5-flash",
-      "gemini-3.5-flash",
+      "gemini-3.6-flash",
+      "gemini-3.6-flash",
+      "gemini-3.6-flash",
     ),
     endpointCandidates: ["https://generativelanguage.googleapis.com"],
     icon: "gemini",
@@ -251,8 +291,21 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     apiFormat: "openai_responses",
     providerType: "codex_oauth",
     requiresOAuth: true,
-    modelRoutes: brandedRoutes("gpt-5.6", "gpt-5.6", "gpt-5.6-luna"),
+    modelRoutes: brandedRoutes("gpt-5.6-sol", "gpt-5.6-sol", "gpt-5.6-luna"),
     icon: "openai",
+    iconColor: "#000000",
+  },
+  {
+    name: "xAI (Grok)",
+    websiteUrl: "https://x.ai/grok",
+    category: "third_party",
+    baseUrl: "https://api.x.ai/v1",
+    mode: "proxy",
+    apiFormat: "openai_responses",
+    providerType: "xai_oauth",
+    requiresOAuth: true,
+    modelRoutes: brandedRoutes("grok-4.5", "grok-4.5", "grok-4.5"),
+    icon: "xai",
     iconColor: "#000000",
   },
   {
@@ -333,32 +386,6 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     modelRoutes: passthroughRoutes(),
     icon: "bailian",
     iconColor: "#624AFF",
-  },
-  {
-    name: "Kimi",
-    websiteUrl: "https://platform.kimi.com",
-    category: "cn_official",
-    baseUrl: "https://api.moonshot.cn/anthropic",
-    mode: "proxy",
-    apiFormat: "anthropic",
-    modelRoutes: brandedRoutes(
-      "kimi-k2.7-code",
-      "kimi-k2.7-code",
-      "kimi-k2.7-code",
-    ),
-    icon: "kimi",
-    iconColor: "#6366F1",
-  },
-  {
-    name: "Kimi For Coding",
-    websiteUrl: "https://www.kimi.com/code/",
-    category: "cn_official",
-    baseUrl: "https://api.kimi.com/coding/",
-    mode: "proxy",
-    apiFormat: "anthropic",
-    modelRoutes: passthroughRoutes(),
-    icon: "kimi",
-    iconColor: "#6366F1",
   },
   {
     name: "StepFun",
@@ -448,21 +475,6 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     modelRoutes: brandedRoutes("Ling-2.5-1T", "Ling-2.5-1T", "Ling-2.5-1T"),
   },
   {
-    name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
-    category: "third_party",
-    baseUrl: "https://www.packyapi.com",
-    mode: "direct",
-    apiFormat: "anthropic",
-    modelRoutes: passthroughRoutes(),
-    endpointCandidates: [
-      "https://www.packyapi.com",
-      "https://api-slb.packyapi.com",
-    ],
-    icon: "packycode",
-  },
-  {
     name: "OpenRouter",
     websiteUrl: "https://openrouter.ai",
     apiKeyUrl: "https://openrouter.ai/keys",
@@ -472,7 +484,7 @@ export const claudeDesktopProviderPresets: ClaudeDesktopProviderPreset[] = [
     apiFormat: "anthropic",
     modelRoutes: mappedRoutes(
       "anthropic/claude-sonnet-5",
-      "anthropic/claude-opus-4.8",
+      "anthropic/claude-opus-5",
       "anthropic/claude-haiku-4.5",
       true,
     ),

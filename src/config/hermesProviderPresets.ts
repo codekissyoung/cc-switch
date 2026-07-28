@@ -16,7 +16,7 @@ export const HERMES_PROVIDER_SOURCE_DICT = "providers_dict";
 
 /**
  * True when the provider was sourced from Hermes' v12+ `providers:` dict —
- * ICodeEasy renders those read-only and routes edits to Hermes Web UI.
+ * CC Switch renders those read-only and routes edits to Hermes Web UI.
  */
 export function isHermesReadOnlyProvider(settingsConfig: unknown): boolean {
   if (!settingsConfig || typeof settingsConfig !== "object") {
@@ -35,7 +35,7 @@ export function isHermesReadOnlyProvider(settingsConfig: unknown): boolean {
  *
  * ```yaml
  * models:
- *   anthropic/claude-opus-4-8:
+ *   anthropic/claude-opus-5:
  *     context_length: 200000
  * ```
  *
@@ -129,6 +129,65 @@ export interface HermesProviderSettingsConfig {
 }
 
 export const hermesProviderPresets: HermesProviderPreset[] = [
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
+  {
+    name: "Kimi",
+    websiteUrl: "https://platform.kimi.com",
+    settingsConfig: {
+      name: "kimi",
+      base_url: "https://api.moonshot.cn/v1",
+      api_key: "",
+      api_mode: "chat_completions",
+      models: [
+        { id: "kimi-k2.7-code", name: "Kimi K2.7 Code" },
+        { id: "kimi-k3", name: "Kimi K3", context_length: 1048576 },
+      ],
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+    suggestedDefaults: {
+      model: { default: "kimi-k2.7-code", provider: "kimi" },
+    },
+  },
+  {
+    name: "Kimi For Coding",
+    websiteUrl: "https://www.kimi.com/code/",
+    settingsConfig: {
+      name: "kimi_coding",
+      base_url: "https://api.kimi.com/coding/",
+      api_key: "",
+      api_mode: "anthropic_messages",
+      models: [{ id: "kimi-for-coding", name: "Kimi For Coding" }],
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+    suggestedDefaults: {
+      model: { default: "kimi-for-coding", provider: "kimi_coding" },
+    },
+  },
+  {
+    name: "PackyCode",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
+    settingsConfig: {
+      name: "packycode",
+      base_url: "https://www.packyapi.ai",
+      api_key: "",
+      api_mode: "anthropic_messages",
+      models: [
+        { id: "claude-opus-5", name: "Claude Opus 5" },
+        { id: "claude-sonnet-5", name: "Claude Sonnet 5" },
+        { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
+      ],
+    },
+    category: "third_party",
+    icon: "packycode",
+    suggestedDefaults: {
+      model: { default: "claude-opus-5", provider: "packycode" },
+    },
+  },
   {
     name: "火山Agentplan",
     websiteUrl:
@@ -213,6 +272,7 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
       },
     },
   },
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "OpenRouter",
     nameKey: "providerForm.presets.openrouter",
@@ -225,8 +285,8 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
       api_mode: "chat_completions",
       models: [
         {
-          id: "anthropic/claude-opus-4-8",
-          name: "Claude Opus 4.8",
+          id: "anthropic/claude-opus-5",
+          name: "Claude Opus 5",
           context_length: 1000000,
         },
         {
@@ -240,13 +300,13 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
           context_length: 200000,
         },
         {
-          id: "openai/gpt-5.5",
-          name: "GPT-5.5",
+          id: "openai/gpt-5.6-sol",
+          name: "GPT-5.6 Sol",
           context_length: 400000,
         },
         {
-          id: "google/gemini-3.5-flash",
-          name: "Gemini 3.5 Flash",
+          id: "google/gemini-3.6-flash",
+          name: "Gemini 3.6 Flash",
           context_length: 1000000,
         },
       ],
@@ -255,7 +315,7 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
     icon: "openrouter",
     iconColor: "#6366F1",
     suggestedDefaults: {
-      model: { default: "anthropic/claude-opus-4-8", provider: "openrouter" },
+      model: { default: "anthropic/claude-opus-5", provider: "openrouter" },
     },
   },
   {
@@ -319,7 +379,6 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
     },
   },
 
-  // ===== 以下为从 Claude 应用预设同步而来的供应商 =====
   // 字段映射：env.ANTHROPIC_BASE_URL → base_url；env.ANTHROPIC_AUTH_TOKEN → api_key；
   // apiFormat "anthropic"(默认) → api_mode "anthropic_messages"；
   // apiFormat "openai_chat" → api_mode "chat_completions"；
@@ -398,40 +457,6 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
     iconColor: "#624AFF",
     suggestedDefaults: {
       model: { default: "qwen3-coder-plus", provider: "bailian_coding" },
-    },
-  },
-  {
-    name: "Kimi",
-    websiteUrl: "https://platform.kimi.com",
-    settingsConfig: {
-      name: "kimi",
-      base_url: "https://api.moonshot.cn/v1",
-      api_key: "",
-      api_mode: "chat_completions",
-      models: [{ id: "kimi-k2.7-code", name: "Kimi K2.7 Code" }],
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-    suggestedDefaults: {
-      model: { default: "kimi-k2.7-code", provider: "kimi" },
-    },
-  },
-  {
-    name: "Kimi For Coding",
-    websiteUrl: "https://www.kimi.com/code/",
-    settingsConfig: {
-      name: "kimi_coding",
-      base_url: "https://api.kimi.com/coding/",
-      api_key: "",
-      api_mode: "anthropic_messages",
-      models: [{ id: "kimi-for-coding", name: "Kimi For Coding" }],
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-    suggestedDefaults: {
-      model: { default: "kimi-for-coding", provider: "kimi_coding" },
     },
   },
   {
@@ -550,27 +575,6 @@ export const hermesProviderPresets: HermesProviderPreset[] = [
     category: "cn_official",
     suggestedDefaults: {
       model: { default: "Ling-2.5-1T", provider: "bailing" },
-    },
-  },
-  {
-    name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
-    settingsConfig: {
-      name: "packycode",
-      base_url: "https://www.packyapi.com",
-      api_key: "",
-      api_mode: "anthropic_messages",
-      models: [
-        { id: "claude-opus-4-8", name: "Claude Opus 4.8" },
-        { id: "claude-sonnet-5", name: "Claude Sonnet 5" },
-        { id: "claude-haiku-4-5-20251001", name: "Claude Haiku 4.5" },
-      ],
-    },
-    category: "third_party",
-    icon: "packycode",
-    suggestedDefaults: {
-      model: { default: "claude-opus-4-8", provider: "packycode" },
     },
   },
   {

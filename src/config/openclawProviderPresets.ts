@@ -99,6 +99,133 @@ export const openclawApiProtocols = [
  * OpenClaw provider presets list
  */
 export const openclawProviderPresets: OpenClawProviderPreset[] = [
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
+  {
+    name: "Kimi",
+    websiteUrl: "https://platform.kimi.com",
+    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
+    settingsConfig: {
+      baseUrl: "https://api.moonshot.cn/v1",
+      apiKey: "",
+      api: "openai-completions",
+      models: [
+        {
+          id: "kimi-k2.7-code",
+          name: "Kimi K2.7 Code",
+          contextWindow: 262144,
+          cost: { input: 0.95, output: 4, cacheRead: 0.19 },
+        },
+        {
+          id: "kimi-k3",
+          name: "Kimi K3",
+          contextWindow: 1048576,
+          cost: { input: 3, output: 15, cacheRead: 0.3, cacheWrite: 0 },
+        },
+      ],
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+    templateValues: {
+      baseUrl: {
+        label: "Base URL",
+        placeholder: "https://api.moonshot.cn/v1",
+        defaultValue: "https://api.moonshot.cn/v1",
+        editorValue: "",
+      },
+      apiKey: {
+        label: "API Key",
+        placeholder: "sk-...",
+        editorValue: "",
+      },
+    },
+    suggestedDefaults: {
+      model: { primary: "kimi/kimi-k2.7-code" },
+      modelCatalog: { "kimi/kimi-k2.7-code": { alias: "Kimi" } },
+    },
+  },
+  {
+    name: "Kimi For Coding",
+    websiteUrl: "https://www.kimi.com/code/",
+    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
+    settingsConfig: {
+      baseUrl: "https://api.kimi.com/coding/v1",
+      apiKey: "",
+      api: "openai-completions",
+      models: [
+        {
+          id: "kimi-for-coding",
+          name: "Kimi For Coding",
+          contextWindow: 131072,
+          cost: { input: 0.95, output: 4, cacheRead: 0.19 },
+        },
+      ],
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+    templateValues: {
+      baseUrl: {
+        label: "Base URL",
+        placeholder: "https://api.kimi.com/coding/v1",
+        defaultValue: "https://api.kimi.com/coding/v1",
+        editorValue: "",
+      },
+      apiKey: {
+        label: "API Key",
+        placeholder: "sk-...",
+        editorValue: "",
+      },
+    },
+    suggestedDefaults: {
+      model: { primary: "kimi-coding/kimi-for-coding" },
+      modelCatalog: { "kimi-coding/kimi-for-coding": { alias: "Kimi" } },
+    },
+  },
+
+  {
+    name: "PackyCode",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
+    settingsConfig: {
+      baseUrl: "https://www.packyapi.ai",
+      apiKey: "",
+      api: "anthropic-messages",
+      models: [
+        {
+          id: "claude-opus-5",
+          name: "Claude Opus 5",
+          contextWindow: 1000000,
+          cost: { input: 5, output: 25 },
+        },
+        {
+          id: "claude-sonnet-5",
+          name: "Claude Sonnet 5",
+          contextWindow: 1000000,
+          cost: { input: 3, output: 15 },
+        },
+      ],
+    },
+    category: "third_party",
+    icon: "packycode",
+    templateValues: {
+      apiKey: {
+        label: "API Key",
+        placeholder: "",
+        editorValue: "",
+      },
+    },
+    suggestedDefaults: {
+      model: {
+        primary: "packycode/claude-opus-5",
+        fallbacks: ["packycode/claude-sonnet-5"],
+      },
+      modelCatalog: {
+        "packycode/claude-opus-5": { alias: "Opus" },
+        "packycode/claude-sonnet-5": { alias: "Sonnet" },
+      },
+    },
+  },
   {
     name: "火山Agentplan",
     websiteUrl:
@@ -205,7 +332,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
       },
     },
   },
-  // ========== Chinese Officials ==========
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "DeepSeek",
     websiteUrl: "https://platform.deepseek.com",
@@ -219,7 +346,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "deepseek-v4-pro",
           name: "DeepSeek V4 Pro",
           contextWindow: 1000000,
-          cost: { input: 1.68, output: 3.36 },
+          cost: { input: 0.435, output: 0.87, cacheRead: 0.003625 },
         },
         {
           id: "deepseek-v4-flash",
@@ -263,7 +390,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "glm-5.1",
           name: "GLM-5.1",
           contextWindow: 128000,
-          cost: { input: 0.001, output: 0.001 },
+          cost: { input: 1.4, output: 4.4, cacheRead: 0.26 },
         },
       ],
     },
@@ -301,7 +428,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "glm-5.1",
           name: "GLM-5.1",
           contextWindow: 128000,
-          cost: { input: 0.001, output: 0.001 },
+          cost: { input: 1.4, output: 4.4, cacheRead: 0.26 },
         },
       ],
     },
@@ -339,7 +466,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "qwen3.5-plus",
           name: "Qwen3.5 Plus",
           contextWindow: 32000,
-          cost: { input: 0.002, output: 0.006 },
+          cost: { input: 0.26, output: 1.56, cacheRead: 0.052 },
         },
       ],
     },
@@ -362,82 +489,6 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
     suggestedDefaults: {
       model: { primary: "qwen/qwen3.5-plus" },
       modelCatalog: { "qwen/qwen3.5-plus": { alias: "Qwen" } },
-    },
-  },
-  {
-    name: "Kimi",
-    websiteUrl: "https://platform.kimi.com",
-    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
-    settingsConfig: {
-      baseUrl: "https://api.moonshot.cn/v1",
-      apiKey: "",
-      api: "openai-completions",
-      models: [
-        {
-          id: "kimi-k2.7-code",
-          name: "Kimi K2.7 Code",
-          contextWindow: 262144,
-          cost: { input: 0.002, output: 0.006 },
-        },
-      ],
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-    templateValues: {
-      baseUrl: {
-        label: "Base URL",
-        placeholder: "https://api.moonshot.cn/v1",
-        defaultValue: "https://api.moonshot.cn/v1",
-        editorValue: "",
-      },
-      apiKey: {
-        label: "API Key",
-        placeholder: "sk-...",
-        editorValue: "",
-      },
-    },
-    suggestedDefaults: {
-      model: { primary: "kimi/kimi-k2.7-code" },
-      modelCatalog: { "kimi/kimi-k2.7-code": { alias: "Kimi" } },
-    },
-  },
-  {
-    name: "Kimi For Coding",
-    websiteUrl: "https://www.kimi.com/code/",
-    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
-    settingsConfig: {
-      baseUrl: "https://api.kimi.com/v1",
-      apiKey: "",
-      api: "openai-completions",
-      models: [
-        {
-          id: "kimi-for-coding",
-          name: "Kimi For Coding",
-          contextWindow: 131072,
-          cost: { input: 0.002, output: 0.006 },
-        },
-      ],
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-    templateValues: {
-      baseUrl: {
-        label: "Base URL",
-        placeholder: "https://api.kimi.com/v1",
-        defaultValue: "https://api.kimi.com/v1",
-        editorValue: "",
-      },
-      apiKey: {
-        label: "API Key",
-        placeholder: "sk-...",
-        editorValue: "",
-      },
-    },
-    suggestedDefaults: {
-      model: { primary: "kimi-coding/kimi-for-coding" },
-      modelCatalog: { "kimi-coding/kimi-for-coding": { alias: "Kimi" } },
     },
   },
   {
@@ -543,7 +594,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "MiniMax-M2.7",
           name: "MiniMax M2.7",
           contextWindow: 200000,
-          cost: { input: 0.001, output: 0.004 },
+          cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.375 },
         },
       ],
     },
@@ -579,7 +630,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "MiniMax-M2.7",
           name: "MiniMax M2.7",
           contextWindow: 200000,
-          cost: { input: 0.001, output: 0.004 },
+          cost: { input: 0.3, output: 1.2, cacheRead: 0.06, cacheWrite: 0.375 },
         },
       ],
     },
@@ -616,7 +667,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "KAT-Coder-Pro",
           name: "KAT-Coder Pro",
           contextWindow: 128000,
-          cost: { input: 0.002, output: 0.006 },
+          cost: { input: 0.3, output: 1.2, cacheRead: 0.06 },
         },
       ],
     },
@@ -665,7 +716,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           contextWindow: 1048576,
           maxTokens: 131072,
           compat: { maxTokensField: "max_tokens" },
-          cost: { input: 0.001, output: 0.004 },
+          cost: { input: 0.75, output: 2.95, cacheRead: 0.015 },
         },
       ],
     },
@@ -702,7 +753,7 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
           id: "Ling-2.5-1T",
           name: "Ling 2.5 1T",
           contextWindow: 128000,
-          cost: { input: 0.001, output: 0.004 },
+          cost: { input: 0.56, output: 2.24 },
         },
       ],
     },
@@ -804,7 +855,6 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
     },
   },
 
-  // ========== Aggregators ==========
   {
     name: "OpenRouter",
     websiteUrl: "https://openrouter.ai",
@@ -815,8 +865,8 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
       api: "openai-completions",
       models: [
         {
-          id: "anthropic/claude-opus-4.8",
-          name: "Claude Opus 4.8",
+          id: "anthropic/claude-opus-5",
+          name: "Claude Opus 5",
           contextWindow: 1000000,
           cost: { input: 5, output: 25 },
         },
@@ -840,61 +890,15 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
     },
     suggestedDefaults: {
       model: {
-        primary: "openrouter/anthropic/claude-opus-4.8",
+        primary: "openrouter/anthropic/claude-opus-5",
         fallbacks: ["openrouter/anthropic/claude-sonnet-5"],
       },
       modelCatalog: {
-        "openrouter/anthropic/claude-opus-4.8": { alias: "Opus" },
+        "openrouter/anthropic/claude-opus-5": { alias: "Opus" },
         "openrouter/anthropic/claude-sonnet-5": { alias: "Sonnet" },
       },
     },
   },
-
-  // ========== Third Party Partners ==========
-  {
-    name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
-    settingsConfig: {
-      baseUrl: "https://www.packyapi.com",
-      apiKey: "",
-      api: "anthropic-messages",
-      models: [
-        {
-          id: "claude-opus-4-8",
-          name: "Claude Opus 4.8",
-          contextWindow: 1000000,
-          cost: { input: 5, output: 25 },
-        },
-        {
-          id: "claude-sonnet-5",
-          name: "Claude Sonnet 5",
-          contextWindow: 1000000,
-          cost: { input: 3, output: 15 },
-        },
-      ],
-    },
-    category: "third_party",
-    icon: "packycode",
-    templateValues: {
-      apiKey: {
-        label: "API Key",
-        placeholder: "",
-        editorValue: "",
-      },
-    },
-    suggestedDefaults: {
-      model: {
-        primary: "packycode/claude-opus-4-8",
-        fallbacks: ["packycode/claude-sonnet-5"],
-      },
-      modelCatalog: {
-        "packycode/claude-opus-4-8": { alias: "Opus" },
-        "packycode/claude-sonnet-5": { alias: "Sonnet" },
-      },
-    },
-  },
-  // ========== Cloud Providers ==========
   {
     name: "AWS Bedrock",
     websiteUrl: "https://aws.amazon.com/bedrock/",
@@ -905,8 +909,8 @@ export const openclawProviderPresets: OpenClawProviderPreset[] = [
       api: "bedrock-converse-stream",
       models: [
         {
-          id: "anthropic.claude-opus-4-8",
-          name: "Claude Opus 4.8",
+          id: "anthropic.claude-opus-5",
+          name: "Claude Opus 5",
           contextWindow: 1000000,
           cost: { input: 5, output: 25, cacheRead: 0.5, cacheWrite: 6.25 },
         },

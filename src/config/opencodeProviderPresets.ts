@@ -64,6 +64,13 @@ export const OPENCODE_PRESET_MODEL_VARIANTS: Record<
       modalities: { input: ["text", "image", "video"], output: ["text"] },
     },
     {
+      id: "kimi-k3",
+      name: "Kimi K3",
+      contextLimit: 1048576,
+      outputLimit: 131072,
+      modalities: { input: ["text", "image", "video"], output: ["text"] },
+    },
+    {
       id: "step-3.5-flash-2603",
       name: "Step 3.5 Flash 2603",
       contextLimit: 262144,
@@ -92,8 +99,8 @@ export const OPENCODE_PRESET_MODEL_VARIANTS: Record<
       },
     },
     {
-      id: "gemini-3.5-flash",
-      name: "Gemini 3.5 Flash",
+      id: "gemini-3.6-flash",
+      name: "Gemini 3.6 Flash",
       contextLimit: 1048576,
       outputLimit: 65536,
       modalities: {
@@ -118,8 +125,8 @@ export const OPENCODE_PRESET_MODEL_VARIANTS: Record<
   ],
   "@ai-sdk/openai": [
     {
-      id: "gpt-5.5",
-      name: "GPT-5.5",
+      id: "gpt-5.6-sol",
+      name: "GPT-5.6 Sol",
       contextLimit: 400000,
       outputLimit: 128000,
       modalities: { input: ["text", "image"], output: ["text"] },
@@ -149,8 +156,8 @@ export const OPENCODE_PRESET_MODEL_VARIANTS: Record<
   ],
   "@ai-sdk/amazon-bedrock": [
     {
-      id: "global.anthropic.claude-opus-4-8",
-      name: "Claude Opus 4.8",
+      id: "global.anthropic.claude-opus-5",
+      name: "Claude Opus 5",
       contextLimit: 1000000,
       outputLimit: 128000,
       modalities: { input: ["text", "image", "pdf"], output: ["text"] },
@@ -217,8 +224,8 @@ export const OPENCODE_PRESET_MODEL_VARIANTS: Record<
       },
     },
     {
-      id: "claude-opus-4-8",
-      name: "Claude Opus 4.8",
+      id: "claude-opus-5",
+      name: "Claude Opus 5",
       contextLimit: 1000000,
       outputLimit: 128000,
       modalities: { input: ["text", "image", "pdf"], output: ["text"] },
@@ -279,6 +286,102 @@ export function getPresetModelDefaults(
 }
 
 export const opencodeProviderPresets: OpenCodeProviderPreset[] = [
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
+  {
+    name: "Kimi",
+    websiteUrl: "https://platform.kimi.com",
+    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
+    settingsConfig: {
+      npm: "@ai-sdk/openai-compatible",
+      name: "Kimi",
+      options: {
+        baseURL: "https://api.moonshot.cn/v1",
+        apiKey: "",
+        setCacheKey: true,
+      },
+      models: {
+        "kimi-k2.7-code": { name: "Kimi K2.7 Code" },
+        "kimi-k3": { name: "Kimi K3" },
+      },
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+    templateValues: {
+      baseURL: {
+        label: "Base URL",
+        placeholder: "https://api.moonshot.cn/v1",
+        defaultValue: "https://api.moonshot.cn/v1",
+        editorValue: "",
+      },
+      apiKey: {
+        label: "API Key",
+        placeholder: "sk-...",
+        editorValue: "",
+      },
+    },
+  },
+  {
+    name: "Kimi For Coding",
+    websiteUrl: "https://www.kimi.com/code/",
+    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
+    settingsConfig: {
+      npm: "@ai-sdk/anthropic",
+      name: "Kimi For Coding",
+      options: {
+        baseURL: "https://api.kimi.com/coding/v1",
+        apiKey: "",
+        setCacheKey: true,
+      },
+      models: {
+        "kimi-for-coding": { name: "Kimi For Coding" },
+      },
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+    templateValues: {
+      baseURL: {
+        label: "Base URL",
+        placeholder: "https://api.kimi.com/coding/v1",
+        defaultValue: "https://api.kimi.com/coding/v1",
+        editorValue: "",
+      },
+      apiKey: {
+        label: "API Key",
+        placeholder: "sk-...",
+        editorValue: "",
+      },
+    },
+  },
+
+  {
+    name: "PackyCode",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
+    settingsConfig: {
+      npm: "@ai-sdk/anthropic",
+      name: "PackyCode",
+      options: {
+        baseURL: "https://www.packyapi.ai/v1",
+        apiKey: "",
+        setCacheKey: true,
+      },
+      models: {
+        "claude-sonnet-5": { name: "Claude Sonnet 5" },
+        "claude-opus-5": { name: "Claude Opus 5" },
+      },
+    },
+    category: "third_party",
+    icon: "packycode",
+    templateValues: {
+      apiKey: {
+        label: "API Key",
+        placeholder: "",
+        editorValue: "",
+      },
+    },
+  },
   {
     name: "火山Agentplan",
     websiteUrl:
@@ -372,6 +475,7 @@ export const opencodeProviderPresets: OpenCodeProviderPreset[] = [
       },
     },
   },
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "DeepSeek",
     websiteUrl: "https://platform.deepseek.com",
@@ -487,72 +591,6 @@ export const opencodeProviderPresets: OpenCodeProviderPreset[] = [
         label: "Base URL",
         placeholder: "https://dashscope.aliyuncs.com/compatible-mode/v1",
         defaultValue: "https://dashscope.aliyuncs.com/compatible-mode/v1",
-        editorValue: "",
-      },
-      apiKey: {
-        label: "API Key",
-        placeholder: "sk-...",
-        editorValue: "",
-      },
-    },
-  },
-  {
-    name: "Kimi",
-    websiteUrl: "https://platform.kimi.com",
-    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
-    settingsConfig: {
-      npm: "@ai-sdk/openai-compatible",
-      name: "Kimi",
-      options: {
-        baseURL: "https://api.moonshot.cn/v1",
-        apiKey: "",
-        setCacheKey: true,
-      },
-      models: {
-        "kimi-k2.7-code": { name: "Kimi K2.7 Code" },
-      },
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-    templateValues: {
-      baseURL: {
-        label: "Base URL",
-        placeholder: "https://api.moonshot.cn/v1",
-        defaultValue: "https://api.moonshot.cn/v1",
-        editorValue: "",
-      },
-      apiKey: {
-        label: "API Key",
-        placeholder: "sk-...",
-        editorValue: "",
-      },
-    },
-  },
-  {
-    name: "Kimi For Coding",
-    websiteUrl: "https://www.kimi.com/code/",
-    apiKeyUrl: "https://platform.kimi.com/console/api-keys",
-    settingsConfig: {
-      npm: "@ai-sdk/anthropic",
-      name: "Kimi For Coding",
-      options: {
-        baseURL: "https://api.kimi.com/coding/v1",
-        apiKey: "",
-        setCacheKey: true,
-      },
-      models: {
-        "kimi-for-coding": { name: "Kimi For Coding" },
-      },
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-    templateValues: {
-      baseURL: {
-        label: "Base URL",
-        placeholder: "https://api.kimi.com/coding/v1",
-        defaultValue: "https://api.kimi.com/coding/v1",
         editorValue: "",
       },
       apiKey: {
@@ -906,7 +944,7 @@ export const opencodeProviderPresets: OpenCodeProviderPreset[] = [
       },
       models: {
         "anthropic/claude-sonnet-5": { name: "Claude Sonnet 5" },
-        "anthropic/claude-opus-4.8": { name: "Claude Opus 4.8" },
+        "anthropic/claude-opus-5": { name: "Claude Opus 5" },
       },
     },
     category: "aggregator",
@@ -916,34 +954,6 @@ export const opencodeProviderPresets: OpenCodeProviderPreset[] = [
       apiKey: {
         label: "API Key",
         placeholder: "sk-or-...",
-        editorValue: "",
-      },
-    },
-  },
-
-  {
-    name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
-    settingsConfig: {
-      npm: "@ai-sdk/anthropic",
-      name: "PackyCode",
-      options: {
-        baseURL: "https://www.packyapi.com/v1",
-        apiKey: "",
-        setCacheKey: true,
-      },
-      models: {
-        "claude-sonnet-5": { name: "Claude Sonnet 5" },
-        "claude-opus-4-8": { name: "Claude Opus 4.8" },
-      },
-    },
-    category: "third_party",
-    icon: "packycode",
-    templateValues: {
-      apiKey: {
-        label: "API Key",
-        placeholder: "",
         editorValue: "",
       },
     },
@@ -961,7 +971,7 @@ export const opencodeProviderPresets: OpenCodeProviderPreset[] = [
         setCacheKey: true,
       },
       models: {
-        "global.anthropic.claude-opus-4-8": { name: "Claude Opus 4.8" },
+        "global.anthropic.claude-opus-5": { name: "Claude Opus 5" },
         "global.anthropic.claude-sonnet-5": {
           name: "Claude Sonnet 5",
         },

@@ -50,26 +50,25 @@ export const geminiProviderPresets: GeminiProviderPreset[] = [
     icon: "gemini",
     iconColor: "#4285F4",
   },
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
   {
     name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
     settingsConfig: {
       env: {
-        GOOGLE_GEMINI_BASE_URL: "https://www.packyapi.com",
-        GEMINI_MODEL: "gemini-3.5-flash",
+        GOOGLE_GEMINI_BASE_URL: "https://www.packyapi.ai",
+        GEMINI_MODEL: "gemini-3.6-flash",
       },
     },
-    baseURL: "https://www.packyapi.com",
-    model: "gemini-3.5-flash",
+    baseURL: "https://www.packyapi.ai",
+    model: "gemini-3.6-flash",
     description: "PackyCode",
     category: "third_party",
-    endpointCandidates: [
-      "https://api-slb.packyapi.com",
-      "https://www.packyapi.com",
-    ],
+    endpointCandidates: ["https://www.packyapi.ai"],
     icon: "packycode",
   },
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "OpenRouter",
     websiteUrl: "https://openrouter.ai",
@@ -77,11 +76,11 @@ export const geminiProviderPresets: GeminiProviderPreset[] = [
     settingsConfig: {
       env: {
         GOOGLE_GEMINI_BASE_URL: "https://openrouter.ai/api",
-        GEMINI_MODEL: "gemini-3.5-flash",
+        GEMINI_MODEL: "gemini-3.6-flash",
       },
     },
     baseURL: "https://openrouter.ai/api",
-    model: "gemini-3.5-flash",
+    model: "gemini-3.6-flash",
     description: "OpenRouter",
     category: "aggregator",
     icon: "openrouter",
@@ -93,10 +92,10 @@ export const geminiProviderPresets: GeminiProviderPreset[] = [
     settingsConfig: {
       env: {
         GOOGLE_GEMINI_BASE_URL: "",
-        GEMINI_MODEL: "gemini-3.5-flash",
+        GEMINI_MODEL: "gemini-3.6-flash",
       },
     },
-    model: "gemini-3.5-flash",
+    model: "gemini-3.6-flash",
     description: "自定义 Gemini API 端点",
     category: "custom",
   },

@@ -60,7 +60,7 @@ export interface ProviderPreset {
   // 供应商类型标识（用于特殊供应商检测）
   // - "github_copilot": GitHub Copilot 供应商（需要 OAuth 认证）
   // - "codex_oauth": OpenAI Codex via ChatGPT Plus/Pro 反代（需要 OAuth 认证）
-  providerType?: "github_copilot" | "codex_oauth";
+  providerType?: "github_copilot" | "codex_oauth" | "xai_oauth";
 
   // 是否需要 OAuth 认证（而非 API Key）
   requiresOAuth?: boolean;
@@ -89,6 +89,62 @@ export const providerPresets: ProviderPreset[] = [
     },
     icon: "anthropic",
     iconColor: "#D4915D",
+  },
+  // ===== 赞助商预设：文件顺序 = 应用内展示顺序，与 README 赞助商表对齐 =====
+  {
+    name: "Kimi",
+    websiteUrl: "https://platform.kimi.com",
+    settingsConfig: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.moonshot.cn/anthropic",
+        ANTHROPIC_AUTH_TOKEN: "",
+        ANTHROPIC_MODEL: "kimi-k2.7-code",
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: "kimi-k2.7-code",
+        ANTHROPIC_DEFAULT_SONNET_MODEL: "kimi-k2.7-code",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "kimi-k2.7-code",
+      },
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+  },
+  {
+    name: "Kimi For Coding",
+    websiteUrl: "https://www.kimi.com/code/",
+    settingsConfig: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://api.kimi.com/coding/",
+        ANTHROPIC_AUTH_TOKEN: "",
+        // CLAUDE_CODE_MAX_CONTEXT_TOKENS 只对非 claude- 前缀模型 id 生效，
+        // 必须显式路由端点别名 kimi-for-coding（与 codex/hermes/opencode 预设一致）
+        ANTHROPIC_MODEL: "kimi-for-coding",
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: "kimi-for-coding",
+        ANTHROPIC_DEFAULT_SONNET_MODEL: "kimi-for-coding",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "kimi-for-coding",
+        // 双键钉 256K：压缩窗口=min(模型窗口,值)，与窗口同值时行为等价于不设，
+        // 但显式钉住可屏蔽远程实验下发的更小压缩点；调整直接改 JSON，不出表单字段
+        CLAUDE_CODE_MAX_CONTEXT_TOKENS: "262144",
+        CLAUDE_CODE_AUTO_COMPACT_WINDOW: "262144",
+      },
+    },
+    category: "cn_official",
+    icon: "kimi",
+    iconColor: "#6366F1",
+  },
+  {
+    name: "PackyCode",
+    websiteUrl: "https://www.packyapi.ai",
+    apiKeyUrl: "https://www.packyapi.ai/register",
+    settingsConfig: {
+      env: {
+        ANTHROPIC_BASE_URL: "https://www.packyapi.ai",
+        ANTHROPIC_AUTH_TOKEN: "",
+      },
+    },
+    // 请求地址候选（用于地址管理/测速）
+    endpointCandidates: ["https://www.packyapi.ai"],
+    category: "third_party",
+    icon: "packycode",
   },
   {
     name: "火山Agentplan",
@@ -152,6 +208,7 @@ export const providerPresets: ProviderPreset[] = [
     icon: "doubao",
     iconColor: "#3370FF",
   },
+  // ===== 非赞助商预设：应用内展示按显示名排序，此处文件顺序不影响展示 =====
   {
     name: "Gemini Native",
     websiteUrl: "https://ai.google.dev/gemini-api",
@@ -161,10 +218,10 @@ export const providerPresets: ProviderPreset[] = [
       env: {
         ANTHROPIC_BASE_URL: "https://generativelanguage.googleapis.com",
         ANTHROPIC_API_KEY: "",
-        ANTHROPIC_MODEL: "gemini-3.5-flash",
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: "gemini-3.5-flash",
-        ANTHROPIC_DEFAULT_SONNET_MODEL: "gemini-3.5-flash",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "gemini-3.5-flash",
+        ANTHROPIC_MODEL: "gemini-3.6-flash",
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: "gemini-3.6-flash",
+        ANTHROPIC_DEFAULT_SONNET_MODEL: "gemini-3.6-flash",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "gemini-3.6-flash",
       },
     },
     category: "third_party",
@@ -274,46 +331,6 @@ export const providerPresets: ProviderPreset[] = [
     category: "cn_official",
     icon: "bailian",
     iconColor: "#624AFF",
-  },
-  {
-    name: "Kimi",
-    websiteUrl: "https://platform.kimi.com",
-    settingsConfig: {
-      env: {
-        ANTHROPIC_BASE_URL: "https://api.moonshot.cn/anthropic",
-        ANTHROPIC_AUTH_TOKEN: "",
-        ANTHROPIC_MODEL: "kimi-k2.7-code",
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: "kimi-k2.7-code",
-        ANTHROPIC_DEFAULT_SONNET_MODEL: "kimi-k2.7-code",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "kimi-k2.7-code",
-      },
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
-  },
-  {
-    name: "Kimi For Coding",
-    websiteUrl: "https://www.kimi.com/code/",
-    settingsConfig: {
-      env: {
-        ANTHROPIC_BASE_URL: "https://api.kimi.com/coding/",
-        ANTHROPIC_AUTH_TOKEN: "",
-        // CLAUDE_CODE_MAX_CONTEXT_TOKENS 只对非 claude- 前缀模型 id 生效，
-        // 必须显式路由端点别名 kimi-for-coding（与 codex/hermes/opencode 预设一致）
-        ANTHROPIC_MODEL: "kimi-for-coding",
-        ANTHROPIC_DEFAULT_HAIKU_MODEL: "kimi-for-coding",
-        ANTHROPIC_DEFAULT_SONNET_MODEL: "kimi-for-coding",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "kimi-for-coding",
-        // 双键钉 256K：压缩窗口=min(模型窗口,值)，与窗口同值时行为等价于不设，
-        // 但显式钉住可屏蔽远程实验下发的更小压缩点；调整直接改 JSON，不出表单字段
-        CLAUDE_CODE_MAX_CONTEXT_TOKENS: "262144",
-        CLAUDE_CODE_AUTO_COMPACT_WINDOW: "262144",
-      },
-    },
-    category: "cn_official",
-    icon: "kimi",
-    iconColor: "#6366F1",
   },
   {
     name: "StepFun",
@@ -464,24 +481,6 @@ export const providerPresets: ProviderPreset[] = [
     category: "cn_official",
   },
   {
-    name: "PackyCode",
-    websiteUrl: "https://www.packyapi.com",
-    apiKeyUrl: "https://www.packyapi.com/register",
-    settingsConfig: {
-      env: {
-        ANTHROPIC_BASE_URL: "https://www.packyapi.com",
-        ANTHROPIC_AUTH_TOKEN: "",
-      },
-    },
-    // 请求地址候选（用于地址管理/测速）
-    endpointCandidates: [
-      "https://www.packyapi.com",
-      "https://api-slb.packyapi.com",
-    ],
-    category: "third_party",
-    icon: "packycode",
-  },
-  {
     name: "OpenRouter",
     websiteUrl: "https://openrouter.ai",
     apiKeyUrl: "https://openrouter.ai/keys",
@@ -492,7 +491,7 @@ export const providerPresets: ProviderPreset[] = [
         ANTHROPIC_MODEL: "anthropic/claude-sonnet-5",
         ANTHROPIC_DEFAULT_HAIKU_MODEL: "anthropic/claude-haiku-4.5",
         ANTHROPIC_DEFAULT_SONNET_MODEL: "anthropic/claude-sonnet-5",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "anthropic/claude-opus-4.8",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "anthropic/claude-opus-5",
       },
     },
     category: "aggregator",
@@ -526,12 +525,12 @@ export const providerPresets: ProviderPreset[] = [
         // base_url 由代理后端强制重写为 chatgpt.com/backend-api/codex
         // 用户无需配置
         ANTHROPIC_BASE_URL: "https://chatgpt.com/backend-api/codex",
-        ANTHROPIC_MODEL: "gpt-5.6",
+        ANTHROPIC_MODEL: "gpt-5.6-sol",
         ANTHROPIC_DEFAULT_HAIKU_MODEL: "gpt-5.6-luna",
-        ANTHROPIC_DEFAULT_SONNET_MODEL: "gpt-5.6",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "gpt-5.6",
+        ANTHROPIC_DEFAULT_SONNET_MODEL: "gpt-5.6-sol",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "gpt-5.6-sol",
         // Claude Code falls back to a 200K context window for unrecognized
-        // non-Claude model ids. The ChatGPT Codex backend catalogs gpt-5.6
+        // non-Claude model ids. The ChatGPT Codex backend catalogs gpt-5.6-sol
         // at a 372K window with a ~353K effective budget (openai/codex#31860),
         // not the 1.05M API window. Pin both knobs: the compact window equals
         // min(model window, value), so matching the window is behavior-neutral
@@ -546,6 +545,26 @@ export const providerPresets: ProviderPreset[] = [
     providerType: "codex_oauth",
     requiresOAuth: true,
     icon: "openai",
+    iconColor: "#000000",
+  },
+  {
+    name: "xAI (Grok)",
+    websiteUrl: "https://x.ai/grok",
+    settingsConfig: {
+      env: {
+        // The proxy enforces both this origin and the Responses wire format.
+        ANTHROPIC_BASE_URL: "https://api.x.ai/v1",
+        ANTHROPIC_MODEL: "grok-4.5",
+        ANTHROPIC_DEFAULT_HAIKU_MODEL: "grok-4.5",
+        ANTHROPIC_DEFAULT_SONNET_MODEL: "grok-4.5",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "grok-4.5",
+      },
+    },
+    category: "third_party",
+    apiFormat: "openai_responses",
+    providerType: "xai_oauth",
+    requiresOAuth: true,
+    icon: "xai",
     iconColor: "#000000",
   },
   {
@@ -594,11 +613,11 @@ export const providerPresets: ProviderPreset[] = [
         AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}",
         AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}",
         AWS_REGION: "${AWS_REGION}",
-        ANTHROPIC_MODEL: "global.anthropic.claude-opus-4-8",
+        ANTHROPIC_MODEL: "global.anthropic.claude-opus-5",
         ANTHROPIC_DEFAULT_HAIKU_MODEL:
           "global.anthropic.claude-haiku-4-5-20251001-v1:0",
         ANTHROPIC_DEFAULT_SONNET_MODEL: "global.anthropic.claude-sonnet-5",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "global.anthropic.claude-opus-4-8",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "global.anthropic.claude-opus-5",
         CLAUDE_CODE_USE_BEDROCK: "1",
       },
     },
@@ -632,11 +651,11 @@ export const providerPresets: ProviderPreset[] = [
         ANTHROPIC_BASE_URL:
           "https://bedrock-runtime.${AWS_REGION}.amazonaws.com",
         AWS_REGION: "${AWS_REGION}",
-        ANTHROPIC_MODEL: "global.anthropic.claude-opus-4-8",
+        ANTHROPIC_MODEL: "global.anthropic.claude-opus-5",
         ANTHROPIC_DEFAULT_HAIKU_MODEL:
           "global.anthropic.claude-haiku-4-5-20251001-v1:0",
         ANTHROPIC_DEFAULT_SONNET_MODEL: "global.anthropic.claude-sonnet-5",
-        ANTHROPIC_DEFAULT_OPUS_MODEL: "global.anthropic.claude-opus-4-8",
+        ANTHROPIC_DEFAULT_OPUS_MODEL: "global.anthropic.claude-opus-5",
         CLAUDE_CODE_USE_BEDROCK: "1",
       },
     },
