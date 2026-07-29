@@ -63,6 +63,7 @@ interface SettingsDialogProps {
   onOpenChange: (open: boolean) => void;
   onImportSuccess?: () => void | Promise<void>;
   defaultTab?: string;
+  showTabNavigation?: boolean;
 }
 
 export function SettingsPage({
@@ -70,6 +71,7 @@ export function SettingsPage({
   onOpenChange,
   onImportSuccess,
   defaultTab = "general",
+  showTabNavigation = true,
 }: SettingsDialogProps) {
   const { t } = useTranslation();
   const {
@@ -213,7 +215,9 @@ export function SettingsPage({
   const isBusy = useMemo(() => isLoading && !settings, [isLoading, settings]);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden px-6">
+    <div
+      className={`flex h-full flex-col overflow-hidden px-6 ${showTabNavigation ? "" : "pt-6"}`}
+    >
       {isBusy ? (
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -224,20 +228,24 @@ export function SettingsPage({
           onValueChange={setActiveTab}
           className="flex flex-col h-full"
         >
-          <TabsList className="grid w-full grid-cols-6 mb-6 glass rounded-lg">
-            <TabsTrigger value="general">
-              {t("settings.tabGeneral")}
-            </TabsTrigger>
-            <TabsTrigger value="proxy">{t("settings.tabProxy")}</TabsTrigger>
-            <TabsTrigger value="auth">
-              {t("settings.tabAuth", { defaultValue: "认证" })}
-            </TabsTrigger>
-            <TabsTrigger value="advanced">
-              {t("settings.tabAdvanced")}
-            </TabsTrigger>
-            <TabsTrigger value="usage">{t("usage.title")}</TabsTrigger>
-            <TabsTrigger value="about">{t("common.about")}</TabsTrigger>
-          </TabsList>
+          {showTabNavigation && (
+            <TabsList className="grid w-full grid-cols-6 mb-6 glass rounded-lg">
+              <TabsTrigger value="general">
+                {t("settings.tabGeneral")}
+              </TabsTrigger>
+              <TabsTrigger value="proxy">{t("settings.tabProxy")}</TabsTrigger>
+              <TabsTrigger value="auth">
+                {t("settings.tabAuth", { defaultValue: "认证" })}
+              </TabsTrigger>
+              <TabsTrigger value="advanced">
+                {t("settings.tabAdvanced")}
+              </TabsTrigger>
+              <TabsTrigger value="usage">
+                {t("icodeeasyNavigation.statistics")}
+              </TabsTrigger>
+              <TabsTrigger value="about">{t("common.about")}</TabsTrigger>
+            </TabsList>
+          )}
 
           <div className="flex-1 min-h-0 flex flex-col">
             <div

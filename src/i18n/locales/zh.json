@@ -42,6 +42,11 @@
     "enabled": "已开启",
     "notSet": "未设置"
   },
+  "icodeeasyNavigation": {
+    "ariaLabel": "ICodeEasy 主导航",
+    "home": "首页",
+    "statistics": "统计"
+  },
   "firstRunNotice": {
     "title": "欢迎使用 ICodeEasy",
     "bodyDefault": "ICodeEasy 是面向 Claude Code、Codex 和 Gemini CLI 的一键配置客户端。填入一把 ICodeEasy API Key，选择要使用的工具，即可完成接入。",

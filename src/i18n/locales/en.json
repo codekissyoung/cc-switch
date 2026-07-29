@@ -42,6 +42,11 @@
     "enabled": "Enabled",
     "notSet": "Not Set"
   },
+  "icodeeasyNavigation": {
+    "ariaLabel": "ICodeEasy main navigation",
+    "home": "Home",
+    "statistics": "Statistics"
+  },
   "firstRunNotice": {
     "title": "Welcome to ICodeEasy",
     "bodyDefault": "ICodeEasy is a one-click setup client for Claude Code, Codex, and Gemini CLI. Enter your ICodeEasy API Key, choose the tools you use, and they are ready to connect.",

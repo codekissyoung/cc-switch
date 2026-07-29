@@ -134,6 +134,21 @@ vi.mock("@/components/icodeeasy/ICodeEasySetupPage", () => ({
   ),
 }));
 
+vi.mock("@/components/settings/SettingsPage", () => ({
+  SettingsPage: ({ defaultTab, showTabNavigation }: any) => (
+    <div data-testid="settings-page">
+      <span data-testid="settings-active-section">{defaultTab}</span>
+      <span data-testid="settings-navigation-mode">
+        {showTabNavigation ? "tabs" : "external"}
+      </span>
+    </div>
+  ),
+}));
+
+vi.mock("@/components/FirstRunNoticeDialog", () => ({
+  FirstRunNoticeDialog: () => null,
+}));
+
 vi.mock("@/components/mcp/McpPanel", () => ({
   default: ({ open, onOpenChange }: any) =>
     open ? (
@@ -166,6 +181,7 @@ const renderApp = (
 describe("App integration with MSW", () => {
   beforeEach(() => {
     resetProviderState();
+    localStorage.removeItem("cc-switch-last-view");
     toastSuccessMock.mockReset();
     toastErrorMock.mockReset();
   });
@@ -177,6 +193,56 @@ describe("App integration with MSW", () => {
     expect(await screen.findByTestId("icodeeasy-setup")).toBeInTheDocument();
     expect(screen.queryByTestId("provider-list")).not.toBeInTheDocument();
     expect(screen.queryByTestId("app-switcher")).not.toBeInTheDocument();
+
+    const navigation = screen.getByRole("complementary", {
+      name: "icodeeasyNavigation.ariaLabel",
+    });
+    expect(navigation).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "icodeeasyNavigation.home" }),
+    ).toHaveAttribute("aria-current", "page");
+    expect(
+      screen.getByRole("button", {
+        name: "icodeeasyNavigation.statistics",
+      }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "settings.tabProxy" }));
+    expect(await screen.findByTestId("settings-page")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-active-section")).toHaveTextContent(
+      "proxy",
+    );
+    expect(screen.getByTestId("settings-navigation-mode")).toHaveTextContent(
+      "external",
+    );
+    expect(
+      screen.getByRole("button", { name: "settings.tabProxy" }),
+    ).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "icodeeasyNavigation.home" }),
+    );
+    expect(await screen.findByTestId("icodeeasy-setup")).toBeInTheDocument();
+  });
+
+  it("keeps the horizontal settings navigation in compatibility mode", async () => {
+    const { default: App } = await import("@/App");
+    renderApp(App);
+
+    await waitFor(() =>
+      expect(screen.getByTestId("provider-list")).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByTitle("common.settings"));
+
+    expect(await screen.findByTestId("settings-page")).toBeInTheDocument();
+    expect(screen.getByTestId("settings-navigation-mode")).toHaveTextContent(
+      "tabs",
+    );
+    expect(
+      screen.queryByRole("complementary", {
+        name: "icodeeasyNavigation.ariaLabel",
+      }),
+    ).not.toBeInTheDocument();
   });
 
   it("covers basic provider flows via real hooks", async () => {

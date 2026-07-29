@@ -82,6 +82,12 @@ import { FirstRunNoticeDialog } from "@/components/FirstRunNoticeDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
 import { ICodeEasySetupPage } from "@/components/icodeeasy/ICodeEasySetupPage";
+import {
+  ICODEEASY_SETTINGS_NAV_ITEMS,
+  ICODEEASY_SIDEBAR_WIDTH,
+  ICodeEasySidebar,
+  type ICodeEasySettingsSection,
+} from "@/components/icodeeasy/ICodeEasySidebar";
 import { McpIcon } from "@/components/BrandIcons";
 import { Button } from "@/components/ui/button";
 import { SessionManagerPage } from "@/components/sessions/SessionManagerPage";
@@ -200,9 +206,23 @@ function App({ compatibilityProviderManager = false }: AppProps) {
   );
   const [skillsDiscoverySource, setSkillsDiscoverySource] =
     useState<SkillsPageSource>("repos");
-  const [settingsDefaultTab, setSettingsDefaultTab] = useState("general");
+  const [settingsDefaultTab, setSettingsDefaultTab] =
+    useState<ICodeEasySettingsSection>("general");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isWindowMaximized, setIsWindowMaximized] = useState(false);
+
+  const singleProviderHeaderTitle = useMemo(() => {
+    if (currentView === "providers") {
+      return t("icodeeasyNavigation.home");
+    }
+    if (currentView === "settings") {
+      const item = ICODEEASY_SETTINGS_NAV_ITEMS.find(
+        ({ id }) => id === settingsDefaultTab,
+      );
+      return item ? t(item.labelKey) : t("settings.title");
+    }
+    return null;
+  }, [currentView, settingsDefaultTab, t]);
 
   useEffect(() => {
     localStorage.setItem(VIEW_STORAGE_KEY, currentView);
@@ -928,6 +948,7 @@ function App({ compatibilityProviderManager = false }: AppProps) {
               onOpenChange={() => setCurrentView("providers")}
               onImportSuccess={handleImportSuccess}
               defaultTab={settingsDefaultTab}
+              showTabNavigation={!singleProviderProductMode}
             />
           );
         case "prompts":
@@ -1085,8 +1106,26 @@ function App({ compatibilityProviderManager = false }: AppProps) {
   return (
     <div
       className="flex flex-col h-screen overflow-hidden bg-background text-foreground selection:bg-primary/30 pb-4"
-      style={{ overflowX: "hidden", paddingTop: contentTopOffset }}
+      style={{
+        overflowX: "hidden",
+        paddingTop: contentTopOffset,
+        paddingLeft: singleProviderProductMode
+          ? ICODEEASY_SIDEBAR_WIDTH
+          : undefined,
+      }}
     >
+      {singleProviderProductMode && (
+        <ICodeEasySidebar
+          isHomeActive={currentView === "providers"}
+          activeSettingsSection={settingsDefaultTab}
+          onHomeSelect={() => setCurrentView("providers")}
+          onSettingsSectionSelect={(section) => {
+            setSettingsDefaultTab(section);
+            setCurrentView("settings");
+          }}
+          style={{ top: dragBarHeight }}
+        />
+      )}
       {(dragBarHeight > 0 || useAppWindowControls) && (
         <div
           className="fixed top-0 left-0 right-0 z-[70] flex items-center justify-end px-2"
@@ -1163,13 +1202,14 @@ function App({ compatibilityProviderManager = false }: AppProps) {
       )}
 
       <header
-        className="fixed z-50 w-full transition-all duration-300 bg-background/80 backdrop-blur-md"
+        className="fixed right-0 z-50 transition-all duration-300 bg-background/80 backdrop-blur-md"
         {...DRAG_REGION_ATTR}
         style={
           {
             ...DRAG_REGION_STYLE,
             top: dragBarHeight,
             height: HEADER_HEIGHT,
+            left: singleProviderProductMode ? ICODEEASY_SIDEBAR_WIDTH : 0,
           } as any
         }
       >
@@ -1182,7 +1222,11 @@ function App({ compatibilityProviderManager = false }: AppProps) {
             className="flex items-center gap-1"
             style={{ WebkitAppRegion: "no-drag" } as any}
           >
-            {currentView !== "providers" ? (
+            {singleProviderProductMode && singleProviderHeaderTitle ? (
+              <h1 className="text-lg font-semibold">
+                {singleProviderHeaderTitle}
+              </h1>
+            ) : currentView !== "providers" ? (
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
