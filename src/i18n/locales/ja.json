@@ -44,9 +44,47 @@
   },
   "firstRunNotice": {
     "title": "ICodeEasy へようこそ",
-    "bodyDefault": "ICodeEasy は Claude Code / Codex / Gemini CLI の複数プロバイダーをワンクリックで切り替えられるツールです。すでにこれらのツールを設定済みの場合、ICodeEasy は現在の設定を「default」という名前のプロバイダーとして自動的に保存するので、既存の設定が失われることはありません。",
-    "bodyOfficial": "リストには「Official（公式）」プリセットも用意されており、公式バージョンに戻したくなったらクリックするだけで切り替えられます。切り替える前に現在の設定は自動で default にバックアップされるので、自由に行き来できます。これが ICodeEasy の仕組みです 😊",
+    "bodyDefault": "ICodeEasy は Claude Code、Codex、Gemini CLI 向けのワンクリック設定クライアントです。ICodeEasy API Key を入力し、使用するツールを選ぶだけで接続できます。",
+    "bodyOfficial": "すでに設定済みのツールがある場合、既存データは保持され、起動時に暗黙に削除または上書きされることはありません。新しい設定を書き込む前のバックアップと、失敗時のロールバックも引き続き行われます。",
     "confirm": "了解しました"
+  },
+  "icodeeasySetup": {
+    "badge": "ICodeEasy ワンクリック設定",
+    "title": "1 つの Key で AI コーディングツールを設定",
+    "description": "ICodeEasy が唯一かつ既定のサービスです。プロバイダーやエンドポイントを選ぶ必要はなく、API Key を貼り付けて設定する CLI を選ぶだけです。",
+    "apiKeyTitle": "ICodeEasy API Key を入力",
+    "apiKeyDescription": "ICodeEasy ダッシュボードからコピーした API Key を貼り付けます。",
+    "apiKeyLabel": "ICodeEasy API Key",
+    "apiKeyPlaceholder": "ICodeEasy API Key を貼り付け",
+    "showApiKey": "API Key を表示",
+    "hideApiKey": "API Key を隠す",
+    "getApiKey": "API Key を取得",
+    "localStorageHint": "Key はローカルの ICodeEasy データベースと選択した CLI の設定にのみ書き込まれます。",
+    "selectAppsTitle": "設定するツールを選択",
+    "selectAppsDescription": "1 つまたは複数のツールをまとめて設定できます。未選択のツールの現在の設定は変更しません。",
+    "apps": {
+      "claude": {
+        "name": "Claude Code",
+        "description": "Anthropic 互換接続を設定し、Claude Code 自身のモデル選択は維持します。"
+      },
+      "codex": {
+        "name": "Codex",
+        "description": "ICodeEasy Responses と推奨モデル gpt-5.6-sol を設定します。"
+      },
+      "gemini": {
+        "name": "Gemini CLI",
+        "description": "Gemini ネイティブ v1beta と推奨モデル gemini-3.6-flash を設定します。"
+      }
+    },
+    "configured": "ICodeEasy を使用中",
+    "configureFailed": "今回の設定に失敗",
+    "compatibilityHint": "アップグレード時の既存プロバイダーと設定は互換レイヤーに保持されますが、通常の画面には表示されません。書き込み前に現在の CLI 設定をバックアップし、失敗したツールは自動的にロールバックします。",
+    "configureButton": "選択したツールを設定（{{count}}）",
+    "configureSuccess": "選択したツールを ICodeEasy に設定しました",
+    "configurePartial": "設定は完了しましたが、{{count}} 個のツールが失敗し、以前の設定を保持しました",
+    "configureError": "ICodeEasy 設定の保存に失敗しました：{{error}}",
+    "loadError": "ICodeEasy 設定の読み込みに失敗しました：{{error}}",
+    "openKeysError": "API Key ページを開けませんでした：{{error}}"
   },
   "apiKeyInput": {
     "placeholder": "API Key を入力",
@@ -290,7 +328,7 @@
     },
     "unifyCodexHistory": {
       "title": "Codex セッション履歴を統一",
-      "message": "オンにすると、公式サブスクリプションとサードパーティが同じセッション履歴リストを共有します。注意：プロバイダーをまたいで古いセッションを再開すると、encrypted_content を相手のバックエンドが復号できず失敗する場合があります。\n\n既存の公式セッション履歴を共有リストへ移行することもできます（移行前に ~/.cc-switch/backups へ自動バックアップされ、オフにする際に復元を選択できます）。",
+      "message": "オンにすると、公式サブスクリプションとサードパーティが同じセッション履歴リストを共有します。注意：プロバイダーをまたいで古いセッションを再開すると、encrypted_content を相手のバックエンドが復号できず失敗する場合があります。\n\n既存の公式セッション履歴を共有リストへ移行することもできます（移行前に ~/.icodeeasy/backups へ自動バックアップされ、オフにする際に復元を選択できます）。",
       "migrateExisting": "既存の公式セッション履歴も移行する",
       "confirm": "理解しました、オンにする"
     },
@@ -705,7 +743,7 @@
       "description": "ICodeEasy がスキルのマスターコピーを保存するディレクトリを選択します",
       "ccSwitch": "ICodeEasy",
       "unified": "~/.agents/skills",
-      "ccSwitchHint": "スキルは ~/.cc-switch/skills/ に保存され、シンボリックリンクまたはコピーで各アプリに同期されます。",
+      "ccSwitchHint": "スキルは ~/.icodeeasy/skills/ に保存され、シンボリックリンクまたはコピーで各アプリに同期されます。",
       "unifiedHint": "スキルは ~/.agents/skills/ に保存されます（Agent Skills オープン標準）。対応ツール（Claude Code、Codex、Gemini CLI など）はこのディレクトリのスキルを直接検出します。",
       "confirmTitle": "スキル保存場所の移行",
       "confirmMessage": "{{count}} 個のスキルを新しい場所に移動します。続行しますか？",
@@ -753,7 +791,7 @@
     "configDirectoryDescription": "WSL などで Claude Code や Codex を使う場合、ここで設定ディレクトリを WSL 側に合わせるとデータを揃えられます。",
     "appConfigDir": "ICodeEasy 設定ディレクトリ",
     "appConfigDirDescription": "ICodeEasy の保存場所をカスタマイズします（クラウド同期フォルダを指定すると設定を同期できます）",
-    "browsePlaceholderApp": "例: C:\\\\Users\\\\Administrator\\\\.cc-switch",
+    "browsePlaceholderApp": "例: C:\\\\Users\\\\Administrator\\\\.icodeeasy",
     "claudeConfigDir": "Claude Code 設定ディレクトリ",
     "claudeConfigDirDescription": "Claude の設定ディレクトリ（settings.json）を上書きします。カスタムディレクトリでは .claude.json（MCP）をその中に保存し、既定の ~/.claude では Claude Code の既定どおり ~/.claude.json を使います。",
     "codexConfigDir": "Codex 設定ディレクトリ",

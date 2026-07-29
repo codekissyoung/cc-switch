@@ -15,8 +15,9 @@ finish-args:
   # Tray icon permissions (required by Tauri tray-icon)
   - --talk-name=org.kde.StatusNotifierWatcher
   - --filesystem=xdg-run/tray-icon:create
-  # GitHub Releases scenario: Users download and install manually.
-  # For "download and run" convenience (needs read/write access to ~/.cc-switch, ~/.claude, ~/.claude.json, ~/.codex, ~/.gemini,
+  # Website download scenario: Users download and install manually.
+  # For "download and run" convenience (needs read/write access to ~/.icodeeasy, legacy ~/.cc-switch migration data,
+  # ~/.claude, ~/.claude.json, ~/.codex, ~/.gemini,
   # and supports custom directory overrides), we grant full Home access by default.
   # If you plan to publish on Flathub or prefer minimal permissions, replace this with more precise directory grants (see flatpak/README.md).
   - --filesystem=home

@@ -4,15 +4,12 @@
 
 ### Claude Code、Claude Desktop、Codex、Gemini CLI、Grok Build、OpenCode、OpenClaw 和 Hermes Agent 的全方位管理工具
 
-[![Version](https://img.shields.io/github/v/release/farion1231/cc-switch?color=blue&label=version)](https://github.com/farion1231/cc-switch/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/farion1231/cc-switch/releases)
+[![Version](https://img.shields.io/badge/version-3.18.0-blue.svg)](CHANGELOG.md)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://icodeeasy.cc/download/)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-orange.svg)](https://tauri.app/)
-[![Downloads](https://img.shields.io/github/downloads/farion1231/cc-switch/total)](https://github.com/farion1231/cc-switch/releases/latest)
+[![Download](https://img.shields.io/badge/download-icodeeasy.cc-4c8bf5.svg)](https://icodeeasy.cc/download/)
 
-<a href="https://trendshift.io/repositories/15372" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15372" alt="farion1231%2Fcc-switch | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-<a href="https://www.star-history.com/#farion1231/cc-switch&Date"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=farion1231/cc-switch&theme=dark" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=farion1231/cc-switch" width="196" height="55" /></picture></a>
-
-### 🌐 唯一官方网站：**[ccswitch.io](https://ccswitch.io)**
+### 🌐 官方网站：**[icodeeasy.cc](https://icodeeasy.cc)** · **[下载](https://icodeeasy.cc/download/)**
 
 [English](README.md) | 中文 | [日本語](README_JA.md) | [Deutsch](README_DE.md) | [更新日志](CHANGELOG.md)
 
@@ -72,7 +69,7 @@
 
 - **云同步** — 自定义配置目录（Dropbox、OneDrive、iCloud、坚果云、NAS）及 WebDAV 服务器同步
 - **Deep Link** (`ccswitch://`) — 通过 URL 一键导入供应商、MCP 服务器、提示词和技能
-- 深色 / 浅色 / 跟随系统主题、开机自启、自动更新、原子写入、自动备份、国际化（简中/繁中/英/日）
+- 深色 / 浅色 / 跟随系统主题、开机自启、轻量版本检查与手动下载、原子写入、自动备份、国际化（简中/繁中/英/日）
 
 ## 常见问题
 
@@ -100,7 +97,7 @@ ICodeEasy 使用“通用配置片段”功能，在不同的供应商之间传�
 <details>
 <summary><strong>macOS 安装</strong></summary>
 
-ICodeEasy macOS 版本已通过 Apple 代码签名和公证，可直接下载安装，无需额外操作。推荐使用 `.dmg` 安装包。
+请从[官方下载页](https://icodeeasy.cc/download/)获取当前 macOS 安装包并查看安装说明。macOS 安装包只会在完成所需的签名和公证检查后发布。
 
 </details>
 
@@ -123,11 +120,13 @@ ICodeEasy macOS 版本已通过 Apple 代码签名和公证，可直接下载安
 <details>
 <summary><strong>我的数据存储在哪里？</strong></summary>
 
-- **数据库**：`~/.cc-switch/cc-switch.db`（SQLite — 供应商、MCP、提示词、技能）
-- **本地设置**：`~/.cc-switch/settings.json`（设备级 UI 偏好设置）
-- **备份**：`~/.cc-switch/backups/`（自动轮换，保留最近 10 个）
-- **SKILLS**：`~/.cc-switch/skills/`（默认通过软链接连接到对应应用）
-- **技能备份**：`~/.cc-switch/skill-backups/`（卸载前自动创建，保留最近 20 个）
+- **数据库**：`~/.icodeeasy/cc-switch.db`（SQLite — 供应商、MCP、提示词、技能）
+- **本地设置**：`~/.icodeeasy/settings.json`（设备级 UI 偏好设置）
+- **备份**：`~/.icodeeasy/backups/`（自动轮换，保留最近 10 个）
+- **SKILLS**：`~/.icodeeasy/skills/`（默认通过软链接连接到对应应用）
+- **技能备份**：`~/.icodeeasy/skill-backups/`（卸载前自动创建，保留最近 20 个）
+
+从旧版本升级时，ICodeEasy 会将 `~/.cc-switch` 安全复制到 `~/.icodeeasy`，并保留旧目录作为回退副本。
 
 </details>
 
@@ -176,47 +175,9 @@ CC_SWITCH_GDK_BACKEND=wayland ./CC-Switch-*.AppImage
 - **macOS**：macOS 12 (Monterey) 及以上
 - **Linux**：Ubuntu 22.04+ / Debian 11+ / Fedora 34+ 等主流发行版
 
-### Windows 用户
+请从 **[ICodeEasy 官方下载页](https://icodeeasy.cc/download/)** 获取适用于当前平台的安装包。ICodeEasy 通过官网分发，不使用公开 GitHub Releases；各平台的可用版本、校验值和安装说明均以下载页为准。
 
-从 [Releases](../../releases) 页面下载最新版本的 `CC-Switch-v{版本号}-Windows.msi` 安装包或 `CC-Switch-v{版本号}-Windows-Portable.zip` 绿色版。
-
-### macOS 用户
-
-**方式一：通过 Homebrew 安装（推荐）**
-
-```bash
-brew install --cask cc-switch
-```
-
-更新：
-
-```bash
-brew upgrade --cask cc-switch
-```
-
-**方式二：手动下载**
-
-从 [Releases](../../releases) 页面下载 `CC-Switch-v{版本号}-macOS.dmg`（推荐）或 `.zip`。
-
-> **注意**：ICodeEasy macOS 版本已通过 Apple 代码签名和公证，可直接安装打开。
-
-### Arch Linux 用户
-
-**通过 paru 安装（推荐）**
-
-```bash
-paru -S cc-switch-bin
-```
-
-### Linux 用户
-
-从 [Releases](../../releases) 页面下载最新版本的 Linux 安装包：
-
-- `CC-Switch-v{版本号}-Linux.deb`（Debian/Ubuntu）
-- `CC-Switch-v{版本号}-Linux.rpm`（Fedora/RHEL/openSUSE）
-- `CC-Switch-v{版本号}-Linux.AppImage`（通用）
-
-> **Flatpak**：官方 Release 不包含 Flatpak 包。如需使用，可从 `.deb` 自行构建 — 参见 [`flatpak/README.md`](flatpak/README.md)。
+ICodeEasy 使用轻量版本检查，不包含自动更新器。发现新版本后，请从官方下载页获取安装包并覆盖安装；已有用户数据会保留。
 
 <details>
 <summary><strong>架构总览</strong></summary>
@@ -243,7 +204,7 @@ paru -S cc-switch-bin
 
 **核心设计模式**
 
-- **SSOT**（单一事实源）：所有数据存储在 `~/.cc-switch/cc-switch.db`（SQLite）
+- **SSOT**（单一事实源）：所有数据存储在 `~/.icodeeasy/cc-switch.db`（SQLite）
 - **双层存储**：SQLite 存储可同步数据，JSON 存储设备级设置
 - **双向同步**：切换时写入 live 文件，编辑当前供应商时从 live 回填
 - **原子写入**：临时文件 + 重命名模式防止配置损坏
@@ -406,10 +367,6 @@ pnpm test:unit --coverage
 - 通过单元测试：`pnpm test:unit`
 
 新功能开发前，欢迎先开 Issue 讨论实现方案，不适合项目的功能性 PR 有可能会被关闭。
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=farion1231/cc-switch&type=Date)](https://www.star-history.com/#farion1231/cc-switch&Date)
 
 ## License
 

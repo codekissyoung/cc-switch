@@ -27,7 +27,7 @@ pub struct Provider {
     /// 备注信息
     #[serde(skip_serializing_if = "Option::is_none")]
     pub notes: Option<String>,
-    /// 供应商元数据（不写入 live 配置，仅存于 ~/.cc-switch/config.json）
+    /// 供应商元数据（不写入 live 配置，仅存于 ~/.icodeeasy/config.json）
     #[serde(skip_serializing_if = "Option::is_none")]
     pub meta: Option<ProviderMeta>,
     /// 图标名称（如 "openai", "anthropic"）
@@ -730,30 +730,43 @@ impl UniversalProvider {
             return None;
         }
 
-        let models = self.models.claude.as_ref();
-        let model = models
-            .and_then(|m| m.model.clone())
-            .unwrap_or_else(|| "claude-sonnet-4-20250514".to_string());
-        let haiku = models
-            .and_then(|m| m.haiku_model.clone())
-            .unwrap_or_else(|| model.clone());
-        let sonnet = models
-            .and_then(|m| m.sonnet_model.clone())
-            .unwrap_or_else(|| model.clone());
-        let opus = models
-            .and_then(|m| m.opus_model.clone())
-            .unwrap_or_else(|| model.clone());
+        let settings_config = if self.provider_type == "icodeeasy" {
+            // ICodeEasy 由网关处理 Claude 模型别名。这里不强行固定模型，避免覆盖
+            // Claude Code 自身的模型选择，同时关闭非必要的官方遥测流量。
+            serde_json::json!({
+                "env": {
+                    "ANTHROPIC_BASE_URL": self.base_url,
+                    "ANTHROPIC_AUTH_TOKEN": self.api_key,
+                    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
+                    "CLAUDE_CODE_ATTRIBUTION_HEADER": "0",
+                }
+            })
+        } else {
+            let models = self.models.claude.as_ref();
+            let model = models
+                .and_then(|m| m.model.clone())
+                .unwrap_or_else(|| "claude-sonnet-4-20250514".to_string());
+            let haiku = models
+                .and_then(|m| m.haiku_model.clone())
+                .unwrap_or_else(|| model.clone());
+            let sonnet = models
+                .and_then(|m| m.sonnet_model.clone())
+                .unwrap_or_else(|| model.clone());
+            let opus = models
+                .and_then(|m| m.opus_model.clone())
+                .unwrap_or_else(|| model.clone());
 
-        let settings_config = serde_json::json!({
-            "env": {
-                "ANTHROPIC_BASE_URL": self.base_url,
-                "ANTHROPIC_AUTH_TOKEN": self.api_key,
-                "ANTHROPIC_MODEL": model,
-                "ANTHROPIC_DEFAULT_HAIKU_MODEL": haiku,
-                "ANTHROPIC_DEFAULT_SONNET_MODEL": sonnet,
-                "ANTHROPIC_DEFAULT_OPUS_MODEL": opus,
-            }
-        });
+            serde_json::json!({
+                "env": {
+                    "ANTHROPIC_BASE_URL": self.base_url,
+                    "ANTHROPIC_AUTH_TOKEN": self.api_key,
+                    "ANTHROPIC_MODEL": model,
+                    "ANTHROPIC_DEFAULT_HAIKU_MODEL": haiku,
+                    "ANTHROPIC_DEFAULT_SONNET_MODEL": sonnet,
+                    "ANTHROPIC_DEFAULT_OPUS_MODEL": opus,
+                }
+            })
+        };
 
         Some(Provider {
             id: format!("universal-claude-{}", self.id),
@@ -791,7 +804,11 @@ impl UniversalProvider {
             Some((_scheme, rest)) => !rest.contains('/'),
             None => !base_trimmed.contains('/'),
         };
-        let codex_base_url = if base_trimmed.ends_with("/v1") {
+        let codex_base_url = if self.provider_type == "icodeeasy" {
+            // Codex Responses 会自行拼接 /v1/responses；ICodeEasy 的公开配置契约
+            // 使用纯 origin，不能在此提前追加 /v1。
+            base_trimmed.to_string()
+        } else if base_trimmed.ends_with("/v1") {
             base_trimmed.to_string()
         } else if origin_only {
             format!("{base_trimmed}/v1")
@@ -800,8 +817,23 @@ impl UniversalProvider {
         };
 
         // 生成 Codex 的 config.toml 内容
-        let config_toml = format!(
-            r#"model_provider = "custom"
+        let config_toml = if self.provider_type == "icodeeasy" {
+            format!(
+                r#"model_provider = "icodeeasy"
+model = "{model}"
+model_reasoning_effort = "{reasoning_effort}"
+disable_response_storage = true
+preferred_auth_method = "apikey"
+
+[model_providers.icodeeasy]
+name = "ICodeEasy"
+base_url = "{codex_base_url}"
+wire_api = "responses"
+requires_openai_auth = true"#
+            )
+        } else {
+            format!(
+                r#"model_provider = "custom"
 model = "{model}"
 model_reasoning_effort = "{reasoning_effort}"
 disable_response_storage = true
@@ -811,7 +843,8 @@ name = "NewAPI"
 base_url = "{codex_base_url}"
 wire_api = "responses"
 requires_openai_auth = true"#
-        );
+            )
+        };
 
         let settings_config = serde_json::json!({
             "auth": {
@@ -847,13 +880,24 @@ requires_openai_auth = true"#
             .and_then(|m| m.model.clone())
             .unwrap_or_else(|| "gemini-2.5-pro".to_string());
 
-        let settings_config = serde_json::json!({
-            "env": {
-                "GOOGLE_GEMINI_BASE_URL": self.base_url,
-                "GEMINI_API_KEY": self.api_key,
-                "GEMINI_MODEL": model,
-            }
-        });
+        let settings_config = if self.provider_type == "icodeeasy" {
+            serde_json::json!({
+                "env": {
+                    "GOOGLE_GEMINI_BASE_URL": self.base_url,
+                    "GEMINI_API_KEY": self.api_key,
+                    "GEMINI_MODEL": model,
+                    "GOOGLE_GENAI_API_VERSION": "v1beta",
+                }
+            })
+        } else {
+            serde_json::json!({
+                "env": {
+                    "GOOGLE_GEMINI_BASE_URL": self.base_url,
+                    "GEMINI_API_KEY": self.api_key,
+                    "GEMINI_MODEL": model,
+                }
+            })
+        };
 
         Some(Provider {
             id: format!("universal-gemini-{}", self.id),
@@ -1196,6 +1240,47 @@ mod tests {
     }
 
     #[test]
+    fn icodeeasy_universal_provider_uses_claude_code_contract() {
+        let mut universal = UniversalProvider::new(
+            "icodeeasy".to_string(),
+            "ICodeEasy".to_string(),
+            "icodeeasy".to_string(),
+            "https://api.icodeeasy.cc".to_string(),
+            "user-key".to_string(),
+        );
+        universal.apps.claude = true;
+
+        let provider = universal.to_claude_provider().expect("claude provider");
+        let env = provider
+            .settings_config
+            .get("env")
+            .and_then(|value| value.as_object())
+            .expect("Claude env");
+
+        assert_eq!(
+            env.get("ANTHROPIC_BASE_URL")
+                .and_then(|value| value.as_str()),
+            Some("https://api.icodeeasy.cc")
+        );
+        assert_eq!(
+            env.get("ANTHROPIC_AUTH_TOKEN")
+                .and_then(|value| value.as_str()),
+            Some("user-key")
+        );
+        assert_eq!(
+            env.get("CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC")
+                .and_then(|value| value.as_str()),
+            Some("1")
+        );
+        assert_eq!(
+            env.get("CLAUDE_CODE_ATTRIBUTION_HEADER")
+                .and_then(|value| value.as_str()),
+            Some("0")
+        );
+        assert!(!env.contains_key("ANTHROPIC_MODEL"));
+    }
+
+    #[test]
     fn universal_provider_to_claude_provider_disabled_returns_none() {
         let universal = UniversalProvider::new(
             "u1".to_string(),
@@ -1262,6 +1347,46 @@ mod tests {
     }
 
     #[test]
+    fn icodeeasy_universal_provider_uses_codex_responses_contract() {
+        let mut universal = UniversalProvider::new(
+            "icodeeasy".to_string(),
+            "ICodeEasy".to_string(),
+            "icodeeasy".to_string(),
+            "https://api.icodeeasy.cc".to_string(),
+            "user-key".to_string(),
+        );
+        universal.apps.codex = true;
+        universal.models.codex = Some(CodexModelConfig {
+            model: Some("gpt-5.6-sol".to_string()),
+            reasoning_effort: Some("high".to_string()),
+        });
+
+        let provider = universal.to_codex_provider().expect("codex provider");
+        let config = provider
+            .settings_config
+            .get("config")
+            .and_then(|item| item.as_str())
+            .expect("config toml");
+
+        assert!(config.contains("model_provider = \"icodeeasy\""));
+        assert!(config.contains("model = \"gpt-5.6-sol\""));
+        assert!(config.contains("[model_providers.icodeeasy]"));
+        assert!(config.contains("base_url = \"https://api.icodeeasy.cc\""));
+        assert!(!config.contains("https://api.icodeeasy.cc/v1"));
+        assert!(!config.contains("env_key"));
+        assert!(config.contains("wire_api = \"responses\""));
+        assert!(config.contains("requires_openai_auth = true"));
+        assert!(config.contains("preferred_auth_method = \"apikey\""));
+        assert_eq!(
+            provider
+                .settings_config
+                .pointer("/auth/OPENAI_API_KEY")
+                .and_then(|item| item.as_str()),
+            Some("user-key")
+        );
+    }
+
+    #[test]
     fn universal_provider_to_codex_provider_disabled_returns_none() {
         let universal = UniversalProvider::new(
             "u1".to_string(),
@@ -1318,6 +1443,45 @@ mod tests {
                 .pointer("/env/GEMINI_MODEL")
                 .and_then(|item| item.as_str()),
             Some("gemini-custom")
+        );
+    }
+
+    #[test]
+    fn icodeeasy_universal_provider_uses_gemini_native_contract() {
+        let mut universal = UniversalProvider::new(
+            "icodeeasy".to_string(),
+            "ICodeEasy".to_string(),
+            "icodeeasy".to_string(),
+            "https://api.icodeeasy.cc".to_string(),
+            "user-key".to_string(),
+        );
+        universal.apps.gemini = true;
+        universal.models.gemini = Some(GeminiModelConfig {
+            model: Some("gemini-3.6-flash".to_string()),
+        });
+
+        let provider = universal.to_gemini_provider().expect("gemini provider");
+
+        assert_eq!(
+            provider
+                .settings_config
+                .pointer("/env/GOOGLE_GEMINI_BASE_URL")
+                .and_then(|item| item.as_str()),
+            Some("https://api.icodeeasy.cc")
+        );
+        assert_eq!(
+            provider
+                .settings_config
+                .pointer("/env/GEMINI_MODEL")
+                .and_then(|item| item.as_str()),
+            Some("gemini-3.6-flash")
+        );
+        assert_eq!(
+            provider
+                .settings_config
+                .pointer("/env/GOOGLE_GENAI_API_VERSION")
+                .and_then(|item| item.as_str()),
+            Some("v1beta")
         );
     }
 

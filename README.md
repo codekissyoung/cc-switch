@@ -4,15 +4,12 @@
 
 ### The All-in-One Manager for Claude Code, Claude Desktop, Codex, Gemini CLI, Grok Build, OpenCode, OpenClaw & Hermes Agent
 
-[![Version](https://img.shields.io/github/v/release/farion1231/cc-switch?color=blue&label=version)](https://github.com/farion1231/cc-switch/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/farion1231/cc-switch/releases)
+[![Version](https://img.shields.io/badge/version-3.18.0-blue.svg)](CHANGELOG.md)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://icodeeasy.cc/download/)
 [![Built with Tauri](https://img.shields.io/badge/built%20with-Tauri%202-orange.svg)](https://tauri.app/)
-[![Downloads](https://img.shields.io/github/downloads/farion1231/cc-switch/total)](https://github.com/farion1231/cc-switch/releases/latest)
+[![Download](https://img.shields.io/badge/download-icodeeasy.cc-4c8bf5.svg)](https://icodeeasy.cc/download/)
 
-<a href="https://trendshift.io/repositories/15372" target="_blank"><img src="https://trendshift.io/api/badge/repositories/15372" alt="farion1231%2Fcc-switch | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-<a href="https://www.star-history.com/#farion1231/cc-switch&Date"><picture><source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/badge?repo=farion1231/cc-switch&theme=dark" /><img alt="Star History Rank" src="https://api.star-history.com/badge?repo=farion1231/cc-switch" width="196" height="55" /></picture></a>
-
-### 🌐 The Only Official Website: **[ccswitch.io](https://ccswitch.io)**
+### 🌐 Official Website: **[icodeeasy.cc](https://icodeeasy.cc)** · **[Download](https://icodeeasy.cc/download/)**
 
 English | [中文](README_ZH.md) | [日本語](README_JA.md) | [Deutsch](README_DE.md) | [Changelog](CHANGELOG.md)
 
@@ -72,7 +69,7 @@ Modern AI-powered coding relies on tools like Claude Code, Claude Desktop, Codex
 
 - **Cloud sync** — Custom config directory (Dropbox, OneDrive, iCloud, NAS) and WebDAV server sync
 - **Deep Link** (`ccswitch://`) — Import providers, MCP servers, prompts, and skills via URL
-- Dark / Light / System theme, auto-launch, auto-updater, atomic writes, auto-backups, i18n (zh/zh-TW/en/ja)
+- Dark / Light / System theme, auto-launch, lightweight version checks with manual downloads, atomic writes, auto-backups, i18n (zh/zh-TW/en/ja)
 
 ## FAQ
 
@@ -100,7 +97,7 @@ ICodeEasy provides a "Shared Config Snippet" feature to pass common data (beyond
 <details>
 <summary><strong>macOS installation</strong></summary>
 
-ICodeEasy for macOS is code-signed and notarized by Apple. You can download and install it directly — no extra steps needed. We recommend using the `.dmg` installer.
+Download the current macOS installer and read its installation notes on the [official download page](https://icodeeasy.cc/download/). macOS packages are published only after the required signing and notarization checks pass.
 
 </details>
 
@@ -121,11 +118,13 @@ Add an official provider from the preset list. After switching to it, run the Lo
 <details>
 <summary><strong>Where is my data stored?</strong></summary>
 
-- **Database**: `~/.cc-switch/cc-switch.db` (SQLite — providers, MCP, prompts, skills)
-- **Local settings**: `~/.cc-switch/settings.json` (device-level UI preferences)
-- **Backups**: `~/.cc-switch/backups/` (auto-rotated, keeps 10 most recent)
-- **Skills**: `~/.cc-switch/skills/` (symlinked to corresponding apps by default)
-- **Skill Backups**: `~/.cc-switch/skill-backups/` (created automatically before uninstall, keeps 20 most recent)
+- **Database**: `~/.icodeeasy/cc-switch.db` (SQLite — providers, MCP, prompts, skills)
+- **Local settings**: `~/.icodeeasy/settings.json` (device-level UI preferences)
+- **Backups**: `~/.icodeeasy/backups/` (auto-rotated, keeps 10 most recent)
+- **Skills**: `~/.icodeeasy/skills/` (symlinked to corresponding apps by default)
+- **Skill Backups**: `~/.icodeeasy/skill-backups/` (created automatically before uninstall, keeps 20 most recent)
+
+When upgrading from an older version, ICodeEasy safely copies `~/.cc-switch` to `~/.icodeeasy` and retains the old directory as a rollback copy.
 
 </details>
 
@@ -174,47 +173,9 @@ For detailed guides on every feature, check out the **[User Manual](docs/user-ma
 - **macOS**: macOS 12 (Monterey) and above
 - **Linux**: Ubuntu 22.04+ / Debian 11+ / Fedora 34+ and other mainstream distributions
 
-### Windows Users
+Download ICodeEasy for your platform from the **[official download page](https://icodeeasy.cc/download/)**. Installers are distributed through the ICodeEasy website rather than public GitHub Releases; platform availability, checksums, and installation notes are listed on that page.
 
-Download the latest `CC-Switch-v{version}-Windows.msi` installer or `CC-Switch-v{version}-Windows-Portable.zip` portable version from the [Releases](../../releases) page.
-
-### macOS Users
-
-**Method 1: Install via Homebrew (Recommended)**
-
-```bash
-brew install --cask cc-switch
-```
-
-Update:
-
-```bash
-brew upgrade --cask cc-switch
-```
-
-**Method 2: Manual Download**
-
-Download `CC-Switch-v{version}-macOS.dmg` (recommended) or `.zip` from the [Releases](../../releases) page.
-
-> **Note**: ICodeEasy for macOS is code-signed and notarized by Apple. You can install and open it directly.
-
-### Arch Linux Users
-
-**Install via paru (Recommended)**
-
-```bash
-paru -S cc-switch-bin
-```
-
-### Linux Users
-
-Download the latest Linux build from the [Releases](../../releases) page:
-
-- `CC-Switch-v{version}-Linux.deb` (Debian/Ubuntu)
-- `CC-Switch-v{version}-Linux.rpm` (Fedora/RHEL/openSUSE)
-- `CC-Switch-v{version}-Linux.AppImage` (Universal)
-
-> **Flatpak**: Not included in official releases. You can build it yourself from the `.deb` — see [`flatpak/README.md`](flatpak/README.md) for instructions.
+ICodeEasy uses lightweight version checks instead of an automatic updater. When a newer version is available, download the installer from the official page and install it over the existing app; your existing data remains in place.
 
 <details>
 <summary><strong>Architecture Overview</strong></summary>
@@ -241,7 +202,7 @@ Download the latest Linux build from the [Releases](../../releases) page:
 
 **Core Design Patterns**
 
-- **SSOT** (Single Source of Truth): All data stored in `~/.cc-switch/cc-switch.db` (SQLite)
+- **SSOT** (Single Source of Truth): All data stored in `~/.icodeeasy/cc-switch.db` (SQLite)
 - **Dual-layer Storage**: SQLite for syncable data, JSON for device-level settings
 - **Dual-way Sync**: Write to live files on switch, backfill from live when editing active provider
 - **Atomic Writes**: Temp file + rename pattern prevents config corruption
@@ -404,10 +365,6 @@ Before submitting PRs, please ensure:
 - Pass unit tests: `pnpm test:unit`
 
 For new features, please open an issue for discussion before submitting a PR. PRs for features that are not a good fit for the project may be closed.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=farion1231/cc-switch&type=Date)](https://www.star-history.com/#farion1231/cc-switch&Date)
 
 ## License
 
