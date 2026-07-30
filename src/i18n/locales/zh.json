@@ -54,9 +54,6 @@
     "confirm": "我知道了"
   },
   "icodeeasySetup": {
-    "badge": "ICodeEasy 一键配置",
-    "title": "一把 Key，配置你的 AI 编程工具",
-    "description": "ICodeEasy 已经是唯一且默认的服务商。无需选择供应商或填写接口地址，只需粘贴 API Key 并选择要配置的 CLI。",
     "apiKeyTitle": "填写 ICodeEasy API Key",
     "apiKeyDescription": "将从 ICodeEasy 控制台复制的 API Key 粘贴到这里。",
     "apiKeyLabel": "ICodeEasy API Key",

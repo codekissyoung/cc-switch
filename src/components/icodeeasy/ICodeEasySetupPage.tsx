@@ -8,7 +8,6 @@ import {
   KeyRound,
   LoaderCircle,
   ShieldCheck,
-  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ClaudeIcon, CodexIcon, GeminiIcon } from "@/components/BrandIcons";
@@ -221,22 +220,6 @@ export function ICodeEasySetupPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
-      <section className="relative overflow-hidden rounded-2xl border border-blue-500/20 bg-gradient-to-br from-blue-500/10 via-background to-cyan-500/10 px-7 py-7">
-        <div className="relative z-10 max-w-2xl space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-medium text-blue-600 dark:text-blue-300">
-            <Sparkles className="h-3.5 w-3.5" />
-            {t("icodeeasySetup.badge")}
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {t("icodeeasySetup.title")}
-          </h1>
-          <p className="text-sm leading-6 text-muted-foreground">
-            {t("icodeeasySetup.description")}
-          </p>
-        </div>
-        <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl" />
-      </section>
-
       <Card className="border-border/70 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">

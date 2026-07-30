@@ -54,9 +54,6 @@
     "confirm": "Got it"
   },
   "icodeeasySetup": {
-    "badge": "ICodeEasy one-click setup",
-    "title": "One key for your AI coding tools",
-    "description": "ICodeEasy is the only and default service. There is no provider or endpoint to choose—paste your API Key and select the CLIs to configure.",
     "apiKeyTitle": "Enter your ICodeEasy API Key",
     "apiKeyDescription": "Paste the API Key copied from your ICodeEasy dashboard.",
     "apiKeyLabel": "ICodeEasy API Key",

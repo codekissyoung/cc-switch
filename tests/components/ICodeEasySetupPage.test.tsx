@@ -73,6 +73,11 @@ describe("ICodeEasySetupPage", () => {
     expect(screen.getByText("icodeeasySetup.apps.claude.name")).toBeVisible();
     expect(screen.getByText("icodeeasySetup.apps.codex.name")).toBeVisible();
     expect(screen.getByText("icodeeasySetup.apps.gemini.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasySetup.badge")).not.toBeInTheDocument();
+    expect(screen.queryByText("icodeeasySetup.title")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("icodeeasySetup.description"),
+    ).not.toBeInTheDocument();
     expect(screen.queryByText(/NewAPI/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/custom gateway/i)).not.toBeInTheDocument();
   });
