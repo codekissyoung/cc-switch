@@ -20,15 +20,15 @@ There are many ways to contribute:
 
 ### Prerequisites
 
-- Node.js 18+ and pnpm 8+
-- Rust 1.85+ and Cargo
+- Node.js 22.12.0 (see `.node-version`) and pnpm 10.12.3
+- Rust 1.95+ (see `rust-toolchain.toml`) and Cargo
 - [Tauri 2.0 prerequisites](https://v2.tauri.app/start/prerequisites/)
 
 ### Quick Start
 
 ```bash
 # Install dependencies
-pnpm install
+pnpm install --frozen-lockfile
 
 # Start development server with hot reload
 pnpm dev
@@ -71,7 +71,7 @@ cd src-tauri && cargo fmt --check && cargo clippy && cargo test
 ## Pull Request Guidelines
 
 1. **Open an issue first** for new features — PRs for features that are not a good fit may be closed.
-2. **Fork and branch** — Create a feature branch from `main` (e.g., `feat/my-feature` or `fix/issue-123`).
+2. **Fork and branch** — Create a feature branch from `ice` (e.g., `feat/my-feature` or `fix/issue-123`).
 3. **Keep PRs focused** — One feature or fix per PR. Avoid unrelated changes.
 4. **Follow the PR template** — Fill in the summary, related issue, and checklist.
 
@@ -110,12 +110,11 @@ By submitting a PR, you agree to the following:
 
 ## Internationalization (i18n)
 
-ICodeEasy supports three languages. When modifying user-facing text:
+ICodeEasy supports two languages. When modifying user-facing text:
 
-1. Update **all three** locale files:
-   - `src/locales/en/translation.json`
-   - `src/locales/zh/translation.json`
-   - `src/locales/ja/translation.json`
+1. Update **both** locale files:
+   - `src/i18n/locales/en.json`
+   - `src/i18n/locales/zh.json`
 2. Use the `t()` function from i18next for all UI text.
 3. Never hardcode user-facing strings.
 
@@ -148,15 +147,15 @@ ICodeEasy supports three languages. When modifying user-facing text:
 
 ### 前提条件
 
-- Node.js 18+ 和 pnpm 8+
-- Rust 1.85+ 和 Cargo
+- Node.js 22.12.0（见 `.node-version`）和 pnpm 10.12.3
+- Rust 1.95+（见 `rust-toolchain.toml`）和 Cargo
 - [Tauri 2.0 开发环境](https://v2.tauri.app/start/prerequisites/)
 
 ### 快速开始
 
 ```bash
 # 安装依赖
-pnpm install
+pnpm install --frozen-lockfile
 
 # 启动开发服务器（热重载）
 pnpm dev
@@ -199,7 +198,7 @@ cd src-tauri && cargo fmt --check && cargo clippy && cargo test
 ## Pull Request 指南
 
 1. **先开 Issue 讨论** — 新功能请先开 Issue，不适合项目方向的 PR 可能会被关闭。
-2. **Fork 并创建分支** — 从 `main` 创建功能分支（如 `feat/my-feature` 或 `fix/issue-123`）。
+2. **Fork 并创建分支** — 从 `ice` 创建功能分支（如 `feat/my-feature` 或 `fix/issue-123`）。
 3. **保持 PR 专注** — 每个 PR 只做一件事，避免无关改动。
 4. **遵循 PR 模板** — 填写概述、关联 Issue 和检查清单。
 
@@ -238,12 +237,11 @@ chore(deps): update dependencies
 
 ## 国际化（i18n）
 
-ICodeEasy 支持三种语言。修改用户可见文本时：
+ICodeEasy 支持两种语言。修改用户可见文本时：
 
-1. **同时更新三个**语言文件：
-   - `src/locales/en/translation.json`
-   - `src/locales/zh/translation.json`
-   - `src/locales/ja/translation.json`
+1. **同时更新两个**语言文件：
+   - `src/i18n/locales/en.json`
+   - `src/i18n/locales/zh.json`
 2. 所有 UI 文本使用 i18next 的 `t()` 函数。
 3. 不要硬编码用户可见的字符串。
 
