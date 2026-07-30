@@ -290,14 +290,27 @@ pub async fn run_tool_lifecycle_action(
 /// 不再弹出可见终端窗口（与 `launch_terminal_running` 的"开窗即返回"形成对比，
 /// 后者仍保留给 provider 切换等需要交互式终端的场景）。
 /// 失败时回传 stderr/stdout 末尾若干行，供前端 toast 提示。
+///
+/// 每次执行都使用独立的临时 npm cache，避免用户共享 `~/.npm` 中残留的 root
+/// 所有权文件或损坏条目阻塞一键安装。这里只覆盖 cache，不改 prefix / registry；
+/// CLI 仍安装到用户当前 Node/npm 对应的位置。TempDir 保活到子进程退出，随后自动清理。
+fn create_lifecycle_npm_cache() -> Result<tempfile::TempDir, String> {
+    tempfile::Builder::new()
+        .prefix("icodeeasy-npm-cache-")
+        .tempdir()
+        .map_err(|e| format!("创建临时 npm 缓存目录失败: {e}"))
+}
+
 #[cfg(not(target_os = "windows"))]
 fn run_tool_lifecycle_silently(command_line: &str, _label: &str) -> Result<(), String> {
     use std::process::Command;
+    let npm_cache = create_lifecycle_npm_cache()?;
     // command_line 是 bash 风格脚本（含 `set -e` 与多行命令）；强制用 bash 执行，
     // 避免用户默认 shell 为 fish/zsh 时 `set -e` 等语义不一致。
     let output = Command::new("bash")
         .arg("-c")
         .arg(command_line)
+        .env("NPM_CONFIG_CACHE", npm_cache.path())
         .output()
         .map_err(|e| format!("启动安装进程失败: {e}"))?;
     finish_lifecycle_output(&output)
@@ -310,6 +323,7 @@ fn run_tool_lifecycle_silently(command_line: &str, label: &str) -> Result<(), St
     use std::os::windows::process::CommandExt;
     use std::process::Command;
 
+    let npm_cache = create_lifecycle_npm_cache()?;
     let bat_file =
         std::env::temp_dir().join(format!("cc_switch_{}_{}.bat", label, std::process::id()));
     std::fs::write(&bat_file, command_line).map_err(|e| format!("写入批处理文件失败: {e}"))?;
@@ -317,6 +331,7 @@ fn run_tool_lifecycle_silently(command_line: &str, label: &str) -> Result<(), St
     let output = Command::new("cmd")
         .arg("/C")
         .arg(&bat_file)
+        .env("NPM_CONFIG_CACHE", npm_cache.path())
         .creation_flags(CREATE_NO_WINDOW)
         .output();
     let _ = std::fs::remove_file(&bat_file);
@@ -798,10 +813,21 @@ fn build_wsl_tool_action_line(
         default_flag_for_shell(shell)
     };
 
+    let command = posix_command_with_isolated_npm_cache(command);
     Ok(format!(
         "wsl.exe -d {distro} -- {shell} {flag} {}",
-        windows_cmd_double_quote_arg(command)
+        windows_cmd_double_quote_arg(&command)
     ))
+}
+
+/// WSL 不能复用 Windows 主机侧的临时路径；在发行版内部创建 Linux 临时 cache，
+/// 导出给官方 installer 及 npm fallback，并在 shell 退出时保留原退出码、自动清理。
+/// `trap ... 0` 是 POSIX 写法，可用于 WSL 默认的 dash/ash，不要求 bash。
+#[cfg(any(target_os = "windows", test))]
+fn posix_command_with_isolated_npm_cache(command: &str) -> String {
+    format!(
+        "npm_cache=$(mktemp -d) || exit 1; trap 'rm -rf \"$npm_cache\"' 0; export NPM_CONFIG_CACHE=\"$npm_cache\"; {command}"
+    )
 }
 
 /// Windows 双引号包裹基础原语:无条件加引号 + 内部 `"` 转义为 `\"`。
@@ -3708,6 +3734,57 @@ mod tests {
     use super::*;
     use std::path::{Path, PathBuf};
 
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn lifecycle_runner_uses_and_cleans_isolated_npm_cache() {
+        let probe_dir = tempfile::tempdir().expect("probe dir should be created");
+        let marker = probe_dir.path().join("npm-cache-path");
+        let command = format!(
+            "test -d \"$NPM_CONFIG_CACHE\" && printf '%s' \"$NPM_CONFIG_CACHE\" > {}",
+            shell_single_quote(&marker.to_string_lossy())
+        );
+
+        run_tool_lifecycle_silently(&command, "test")
+            .expect("lifecycle command should receive a writable npm cache");
+
+        let cache_path = std::fs::read_to_string(&marker)
+            .expect("child process should record its npm cache path");
+        assert!(
+            cache_path.contains("icodeeasy-npm-cache-"),
+            "cache should use the ICodeEasy temporary prefix: {cache_path}"
+        );
+        assert!(
+            !Path::new(&cache_path).exists(),
+            "cache should be removed after the lifecycle command: {cache_path}"
+        );
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    #[test]
+    fn posix_cache_wrapper_exports_and_cleans_cache() {
+        let probe_dir = tempfile::tempdir().expect("probe dir should be created");
+        let marker = probe_dir.path().join("wsl-npm-cache-path");
+        let command = format!(
+            "test -d \"$NPM_CONFIG_CACHE\" && printf '%s' \"$NPM_CONFIG_CACHE\" > {}",
+            shell_single_quote(&marker.to_string_lossy())
+        );
+        let wrapped = posix_command_with_isolated_npm_cache(&command);
+
+        let status = std::process::Command::new("sh")
+            .arg("-c")
+            .arg(&wrapped)
+            .status()
+            .expect("POSIX shell should run cache wrapper");
+        assert!(status.success(), "cache wrapper should preserve success");
+
+        let cache_path = std::fs::read_to_string(&marker)
+            .expect("wrapped command should record its npm cache path");
+        assert!(
+            !Path::new(&cache_path).exists(),
+            "trap should remove the WSL-side cache: {cache_path}"
+        );
+    }
+
     #[cfg(unix)]
     fn set_test_executable(path: &Path, executable: bool) {
         use std::os::unix::fs::PermissionsExt;
@@ -4442,6 +4519,12 @@ mod tests {
             let line = build_wsl_tool_action_line("Ubuntu", HERMES_INSTALL_UNIX, None, None)
                 .expect("valid WSL command line");
             assert!(line.starts_with("wsl.exe -d Ubuntu -- sh -c "));
+            assert!(
+                line.contains("npm_cache=$(mktemp -d)")
+                    && line.contains("export NPM_CONFIG_CACHE=\\\"$npm_cache\\\"")
+                    && line.contains("rm -rf \\\"$npm_cache\\\""),
+                "WSL 应在发行版内部创建并清理 npm cache: {line}"
+            );
             assert!(
                 !line.contains("| bash") && line.contains(" -o $tmp && bash $tmp"),
                 "WSL 子 shell 内不能出现 curl 管道安装器: {line}"
