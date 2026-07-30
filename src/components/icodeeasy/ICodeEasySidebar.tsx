@@ -3,7 +3,6 @@ import {
   BarChart3,
   Home,
   Info,
-  KeyRound,
   Route,
   Settings2,
   SlidersHorizontal,
@@ -15,7 +14,6 @@ import { cn } from "@/lib/utils";
 export type ICodeEasySettingsSection =
   | "general"
   | "proxy"
-  | "auth"
   | "advanced"
   | "usage"
   | "about";
@@ -32,11 +30,6 @@ export const ICODEEASY_SETTINGS_NAV_ITEMS = [
     id: "proxy",
     labelKey: "settings.tabProxy",
     icon: Route,
-  },
-  {
-    id: "auth",
-    labelKey: "settings.tabAuth",
-    icon: KeyRound,
   },
   {
     id: "advanced",
