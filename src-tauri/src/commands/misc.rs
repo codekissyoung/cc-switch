@@ -192,6 +192,272 @@ pub struct ToolVersion {
     wsl_distro: Option<String>,
 }
 
+/// ChatGPT Codex + native Codex CLI readiness for the first-run ICodeEasy flow.
+///
+/// The desktop app and the CLI deliberately stay separate here: installing the
+/// Store/DMG app does not prove that `codex` is available in the user's shell,
+/// and a WSL-only CLI does not share `%USERPROFILE%\.codex` with the native
+/// Windows desktop app.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CodexSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    desktop_installed: bool,
+    npm_available: bool,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CodexDesktopLaunchResult {
+    /// `codex-app` when the native CLI handled the launch/install flow;
+    /// `official-download` when ICodeEasy opened the official installer page.
+    method: &'static str,
+    desktop_was_installed: bool,
+}
+
+const CHATGPT_CODEX_LANDING_URL: &str = "https://chatgpt.com/codex?app-landing-page=true";
+const CHATGPT_WINDOWS_INSTALLER_URL: &str =
+    "https://get.microsoft.com/installer/download/9PLM9XGG6VKS?cid=website_cta_psi";
+
+fn codex_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn is_macos_chatgpt_bundle(bundle: &Path) -> bool {
+    if !bundle.is_dir() {
+        return false;
+    }
+    let macos = bundle.join("Contents/MacOS");
+    macos.join("ChatGPT").is_file() || macos.join("Codex").is_file()
+}
+
+#[cfg(target_os = "macos")]
+fn chatgpt_desktop_installed() -> bool {
+    let mut candidates = vec![
+        PathBuf::from("/Applications/ChatGPT.app"),
+        PathBuf::from("/Applications/Codex.app"),
+    ];
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(home.join("Applications/ChatGPT.app"));
+        candidates.push(home.join("Applications/Codex.app"));
+    }
+
+    candidates
+        .into_iter()
+        .any(|bundle| is_macos_chatgpt_bundle(&bundle))
+}
+
+#[cfg(target_os = "windows")]
+fn chatgpt_desktop_installed() -> bool {
+    use std::process::Command;
+
+    if let Some(local_data) = dirs::data_local_dir() {
+        let aliases = local_data.join("Microsoft").join("WindowsApps");
+        if aliases.join("ChatGPT.exe").is_file() || aliases.join("Codex.exe").is_file() {
+            return true;
+        }
+    }
+
+    // MSIX package names have changed as Codex moved into ChatGPT. Match both
+    // product names while keeping the query read-only and entirely constant.
+    let script = r#"$ErrorActionPreference='SilentlyContinue'; $pkg = Get-AppxPackage | Where-Object { $_.Name -match 'ChatGPT|Codex' -or $_.PackageFamilyName -match 'ChatGPT|Codex' -or $_.InstallLocation -match 'ChatGPT|Codex' } | Select-Object -First 1; if ($null -ne $pkg) { exit 0 } else { exit 1 }"#;
+    Command::new("powershell")
+        .args(["-NoProfile", "-NonInteractive", "-Command", script])
+        .creation_flags(CREATE_NO_WINDOW)
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn chatgpt_desktop_installed() -> bool {
+    false
+}
+
+#[cfg(not(target_os = "windows"))]
+fn native_npm_available() -> bool {
+    use std::process::Command;
+
+    let shell = std::env::var("SHELL")
+        .ok()
+        .filter(|shell| is_valid_shell(shell))
+        .unwrap_or_else(|| "sh".to_string());
+    Command::new(&shell)
+        .arg(default_flag_for_shell(&shell))
+        .arg("npm --version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
+
+#[cfg(target_os = "windows")]
+fn native_npm_available() -> bool {
+    use std::process::Command;
+
+    Command::new("cmd")
+        .args(["/D", "/S", "/C", "npm --version"])
+        .creation_flags(CREATE_NO_WINDOW)
+        .status()
+        .map(|status| status.success())
+        .unwrap_or(false)
+}
+
+fn native_codex_installation() -> Option<ToolInstallation> {
+    let installs = enumerate_tool_installations("codex");
+    let index = installs
+        .iter()
+        .position(|install| install.is_path_default && install.runnable)
+        .or_else(|| installs.iter().position(|install| install.runnable))?;
+    installs.into_iter().nth(index)
+}
+
+#[tauri::command]
+pub async fn get_codex_suite_status() -> Result<CodexSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("codex");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        CodexSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: codex_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            desktop_installed: chatgpt_desktop_installed(),
+            npm_available: native_npm_available(),
+        }
+    })
+    .await
+    .map_err(|e| format!("Codex suite probe task failed: {e}"))
+}
+
+/// Install a Windows/macOS native Codex CLI even when the Codex config path is
+/// overridden into WSL. The desktop app reads the host OS Codex home, so a WSL
+/// install is not a substitute for this first-run bundle.
+#[tauri::command]
+pub async fn install_native_codex_cli() -> Result<(), String> {
+    if !cfg!(any(target_os = "macos", target_os = "windows")) {
+        return Err("ChatGPT Codex desktop setup supports macOS and Windows only".to_string());
+    }
+
+    tokio::task::spawn_blocking(|| {
+        if !native_npm_available() {
+            return Err("Node.js/npm is required to install Codex CLI".to_string());
+        }
+
+        #[cfg(target_os = "windows")]
+        let command_line = "@echo off\r\ncall npm i -g @openai/codex@latest\r\nif errorlevel 1 exit /b %errorlevel%";
+        #[cfg(not(target_os = "windows"))]
+        let command_line = "set -e\nset -o pipefail\nnpm i -g @openai/codex@latest";
+
+        run_tool_lifecycle_silently(command_line, "codex_suite_install")
+    })
+    .await
+    .map_err(|e| format!("Codex CLI install task failed: {e}"))?
+}
+
+fn wait_for_child_in_background(mut child: std::process::Child) {
+    std::thread::spawn(move || {
+        if let Err(error) = child.wait() {
+            log::debug!("Codex desktop launcher wait failed: {error}");
+        }
+    });
+}
+
+fn launch_codex_desktop_from_cli(install: &ToolInstallation) -> Result<(), String> {
+    use std::process::Command;
+
+    let executable = Path::new(&install.path);
+
+    #[cfg(target_os = "windows")]
+    let child = {
+        if is_windows_command_script(executable) {
+            use std::os::windows::process::CommandExt as _;
+            let command = format!(
+                "call {} app",
+                win_quote_path_for_batch(&executable.to_string_lossy())
+            );
+            Command::new("cmd")
+                .args(["/D", "/S", "/C"])
+                .raw_arg(&command)
+                .creation_flags(CREATE_NO_WINDOW)
+                .spawn()
+        } else {
+            Command::new(executable)
+                .arg("app")
+                .creation_flags(CREATE_NO_WINDOW)
+                .spawn()
+        }
+    };
+
+    #[cfg(not(target_os = "windows"))]
+    let child = {
+        let inherited = std::env::var("PATH").unwrap_or_default();
+        let login = login_shell_path().unwrap_or_default();
+        let executable_dir = executable
+            .parent()
+            .map(|path| path.to_string_lossy().into_owned())
+            .unwrap_or_default();
+        let path = merge_path_segments(&executable_dir, &merge_path_segments(&login, &inherited));
+        Command::new(executable)
+            .arg("app")
+            .env("PATH", path)
+            .spawn()
+    };
+
+    let child = child.map_err(|e| format!("Failed to launch ChatGPT Codex: {e}"))?;
+    wait_for_child_in_background(child);
+    Ok(())
+}
+
+/// Launch the installed ChatGPT app, or hand off to OpenAI/Microsoft's official
+/// installer flow. ICodeEasy never mirrors or republishes the desktop package.
+#[tauri::command]
+pub async fn launch_or_install_codex_desktop(
+    app: AppHandle,
+) -> Result<CodexDesktopLaunchResult, String> {
+    if !cfg!(any(target_os = "macos", target_os = "windows")) {
+        return Err("ChatGPT Codex desktop setup supports macOS and Windows only".to_string());
+    }
+
+    let desktop_was_installed = chatgpt_desktop_installed();
+    if let Some(install) = native_codex_installation() {
+        launch_codex_desktop_from_cli(&install)?;
+        return Ok(CodexDesktopLaunchResult {
+            method: "codex-app",
+            desktop_was_installed,
+        });
+    }
+
+    let url = if cfg!(target_os = "windows") {
+        CHATGPT_WINDOWS_INSTALLER_URL
+    } else {
+        CHATGPT_CODEX_LANDING_URL
+    };
+    app.opener()
+        .open_url(url, None::<String>)
+        .map_err(|e| format!("Failed to open the official ChatGPT installer: {e}"))?;
+
+    Ok(CodexDesktopLaunchResult {
+        method: "official-download",
+        desktop_was_installed,
+    })
+}
+
 const VALID_TOOLS: [&str; 7] = [
     "claude", "codex", "gemini", "grok", "opencode", "openclaw", "hermes",
 ];
@@ -3872,6 +4138,27 @@ pub async fn set_window_theme(window: tauri::Window, theme: String) -> Result<()
 mod tests {
     use super::*;
     use std::path::{Path, PathBuf};
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_chatgpt_bundle_accepts_new_and_legacy_executable_names() {
+        for executable in ["ChatGPT", "Codex"] {
+            let temp = tempfile::tempdir().expect("bundle fixture should be created");
+            let macos = temp.path().join("Contents/MacOS");
+            std::fs::create_dir_all(&macos).expect("MacOS fixture directory should be created");
+            std::fs::write(macos.join(executable), b"fixture")
+                .expect("bundle executable fixture should be created");
+
+            assert!(is_macos_chatgpt_bundle(temp.path()));
+        }
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn macos_chatgpt_bundle_rejects_an_empty_app_directory() {
+        let temp = tempfile::tempdir().expect("bundle fixture should be created");
+        assert!(!is_macos_chatgpt_bundle(temp.path()));
+    }
 
     #[cfg(not(target_os = "windows"))]
     #[test]

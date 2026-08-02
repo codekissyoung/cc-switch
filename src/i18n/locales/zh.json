@@ -69,8 +69,8 @@
         "description": "配置 Anthropic 兼容接入，并保留 Claude Code 自身的模型选择。"
       },
       "codex": {
-        "name": "Codex",
-        "description": "配置 ICodeEasy Responses 接入和推荐模型 gpt-5.6-sol。"
+        "name": "ChatGPT Codex + CLI",
+        "description": "安装桌面端与 CLI，并配置 ICodeEasy Responses 接入和推荐模型 gpt-5.6-sol。"
       },
       "gemini": {
         "name": "Gemini CLI",
@@ -81,11 +81,26 @@
     "configureFailed": "本次配置失败",
     "compatibilityHint": "升级用户的历史供应商和配置会继续保留在兼容层中，但不会出现在普通用户界面。写入前会备份当前 CLI 配置，单个工具失败时会自动回滚该工具。",
     "configureButton": "配置所选工具（{{count}}）",
+    "installConfigureButton": "一键安装并配置（{{count}}）",
     "configureSuccess": "所选工具已配置为 ICodeEasy",
     "configurePartial": "配置完成，但有 {{count}} 个工具失败并已保留原配置",
     "configureError": "保存 ICodeEasy 配置失败：{{error}}",
     "loadError": "读取 ICodeEasy 配置失败：{{error}}",
-    "openKeysError": "无法打开 API Key 页面：{{error}}"
+    "openKeysError": "无法打开 API Key 页面：{{error}}",
+    "codexSuite": {
+      "title": "ChatGPT Codex + Codex CLI",
+      "description": "选择 Codex 后，ICodeEasy 会安装原生 Codex CLI、启动 OpenAI 官方 ChatGPT 安装流程，并让两者共用当前 ICodeEasy 配置。",
+      "installed": "已安装",
+      "willInstall": "点击下方按钮后自动处理",
+      "waitingForInstall": "请在官方安装器中完成安装",
+      "version": "已安装 · {{version}}",
+      "needsRepair": "已安装但需要修复",
+      "nodeMissing": "安装 CLI 前需要 Node.js/npm",
+      "officialInstallerHint": "ChatGPT 桌面端始终由 OpenAI 或 Microsoft 官方安装器提供；系统安装确认、管理员授权和登录仍需由你确认。",
+      "nodeRequired": "Codex CLI 需要 Node.js/npm；已为你打开 ChatGPT 官方安装入口，请安装 Node.js 后再次执行即可补齐 CLI。",
+      "cliVerificationFailed": "Codex CLI 安装后未通过版本验证",
+      "partial": "ICodeEasy 配置已写入，但 Codex 套件尚未完全就绪：{{error}}"
+    }
   },
   "apiKeyInput": {
     "placeholder": "请输入API Key",

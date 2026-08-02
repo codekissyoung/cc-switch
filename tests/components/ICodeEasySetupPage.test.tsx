@@ -10,6 +10,9 @@ const apiMocks = vi.hoisted(() => ({
   getCurrent: vi.fn(),
   switchProvider: vi.fn(),
   openExternal: vi.fn(),
+  getCodexSuiteStatus: vi.fn(),
+  installNativeCodexCli: vi.fn(),
+  launchOrInstallCodexDesktop: vi.fn(),
   toastSuccess: vi.fn(),
   toastWarning: vi.fn(),
   toastError: vi.fn(),
@@ -27,6 +30,9 @@ vi.mock("@/lib/api", () => ({
   },
   settingsApi: {
     openExternal: apiMocks.openExternal,
+    getCodexSuiteStatus: apiMocks.getCodexSuiteStatus,
+    installNativeCodexCli: apiMocks.installNativeCodexCli,
+    launchOrInstallCodexDesktop: apiMocks.launchOrInstallCodexDesktop,
   },
 }));
 
@@ -62,6 +68,20 @@ describe("ICodeEasySetupPage", () => {
     apiMocks.getCurrent.mockResolvedValue("");
     apiMocks.switchProvider.mockResolvedValue({ warnings: [] });
     apiMocks.openExternal.mockResolvedValue(undefined);
+    apiMocks.getCodexSuiteStatus.mockResolvedValue({
+      supported: true,
+      platform: "macos",
+      cliInstalled: true,
+      cliVersion: "0.146.0",
+      cliBroken: false,
+      desktopInstalled: true,
+      npmAvailable: true,
+    });
+    apiMocks.installNativeCodexCli.mockResolvedValue(undefined);
+    apiMocks.launchOrInstallCodexDesktop.mockResolvedValue({
+      method: "codex-app",
+      desktopWasInstalled: true,
+    });
   });
 
   it("shows only the fixed ICodeEasy setup flow", async () => {
@@ -93,13 +113,8 @@ describe("ICodeEasySetupPage", () => {
       }),
     );
     fireEvent.click(
-      screen.getByRole("checkbox", {
-        name: "icodeeasySetup.apps.codex.name",
-      }),
-    );
-    fireEvent.click(
       screen.getByRole("button", {
-        name: "icodeeasySetup.configureButton",
+        name: "icodeeasySetup.installConfigureButton",
       }),
     );
 
@@ -138,6 +153,88 @@ describe("ICodeEasySetupPage", () => {
       "universal-gemini-icodeeasy",
       "gemini",
     );
+    expect(apiMocks.launchOrInstallCodexDesktop).toHaveBeenCalledTimes(1);
     expect(apiMocks.toastSuccess).toHaveBeenCalled();
+  });
+
+  it("installs a missing native Codex CLI before opening ChatGPT Codex", async () => {
+    apiMocks.getCodexSuiteStatus
+      .mockResolvedValueOnce({
+        supported: true,
+        platform: "windows",
+        cliInstalled: false,
+        cliVersion: null,
+        cliBroken: false,
+        desktopInstalled: false,
+        npmAvailable: true,
+      })
+      .mockResolvedValue({
+        supported: true,
+        platform: "windows",
+        cliInstalled: true,
+        cliVersion: "0.146.0",
+        cliBroken: false,
+        desktopInstalled: false,
+        npmAvailable: true,
+      });
+    apiMocks.launchOrInstallCodexDesktop.mockResolvedValue({
+      method: "codex-app",
+      desktopWasInstalled: false,
+    });
+
+    render(<ICodeEasySetupPage />);
+
+    const keyInput = await screen.findByLabelText("icodeeasySetup.apiKeyLabel");
+    fireEvent.change(keyInput, { target: { value: "user-key" } });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "icodeeasySetup.installConfigureButton",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(apiMocks.installNativeCodexCli).toHaveBeenCalledTimes(1),
+    );
+    await waitFor(() =>
+      expect(apiMocks.launchOrInstallCodexDesktop).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.switchProvider).toHaveBeenCalledWith(
+      "universal-codex-icodeeasy",
+      "codex",
+    );
+  });
+
+  it("keeps the configuration and opens the official desktop flow when npm is missing", async () => {
+    apiMocks.getCodexSuiteStatus.mockResolvedValue({
+      supported: true,
+      platform: "macos",
+      cliInstalled: false,
+      cliVersion: null,
+      cliBroken: false,
+      desktopInstalled: false,
+      npmAvailable: false,
+    });
+    apiMocks.launchOrInstallCodexDesktop.mockResolvedValue({
+      method: "official-download",
+      desktopWasInstalled: false,
+    });
+
+    render(<ICodeEasySetupPage />);
+
+    const keyInput = await screen.findByLabelText("icodeeasySetup.apiKeyLabel");
+    fireEvent.change(keyInput, { target: { value: "user-key" } });
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "icodeeasySetup.installConfigureButton",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(apiMocks.launchOrInstallCodexDesktop).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.installNativeCodexCli).not.toHaveBeenCalled();
+    expect(apiMocks.toastWarning).toHaveBeenCalledWith(
+      "icodeeasySetup.codexSuite.partial",
+    );
   });
 });

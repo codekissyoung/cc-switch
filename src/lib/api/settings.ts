@@ -37,6 +37,21 @@ export interface AppVersionCheckResult {
   notes: string | null;
 }
 
+export interface CodexSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  desktopInstalled: boolean;
+  npmAvailable: boolean;
+}
+
+export interface CodexDesktopLaunchResult {
+  method: "codex-app" | "official-download";
+  desktopWasInstalled: boolean;
+}
+
 export const settingsApi = {
   async get(): Promise<Settings> {
     return await invoke("get_settings");
@@ -274,6 +289,18 @@ export const settingsApi = {
       action,
       wslShellByTool,
     });
+  },
+
+  async getCodexSuiteStatus(): Promise<CodexSuiteStatus> {
+    return await invoke("get_codex_suite_status");
+  },
+
+  async installNativeCodexCli(): Promise<void> {
+    await invoke("install_native_codex_cli");
+  },
+
+  async launchOrInstallCodexDesktop(): Promise<CodexDesktopLaunchResult> {
+    return await invoke("launch_or_install_codex_desktop");
   },
 
   /** 探测各工具安装分布：枚举所有安装、标记冲突、生成锚定升级命令。

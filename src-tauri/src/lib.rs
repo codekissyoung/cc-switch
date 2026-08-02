@@ -1634,6 +1634,9 @@ pub fn run() {
             commands::get_tool_versions,
             commands::run_tool_lifecycle_action,
             commands::probe_tool_installations,
+            commands::get_codex_suite_status,
+            commands::install_native_codex_cli,
+            commands::launch_or_install_codex_desktop,
             // Provider terminal
             commands::open_provider_terminal,
             // Universal Provider management
