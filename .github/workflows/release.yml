@@ -178,28 +178,50 @@ jobs:
         timeout-minutes: 60
         env:
           APPLE_SIGNING_IDENTITY: ${{ env.APPLE_SIGNING_IDENTITY }}
+        run: pnpm tauri build --target universal-apple-darwin
+
+      - name: Notarize macOS App
+        if: runner.os == 'macOS'
+        shell: bash
+        timeout-minutes: 190
+        env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: |
           set -euo pipefail
-          max_attempts=3
-          for attempt in $(seq 1 "$max_attempts"); do
-            echo "=== macOS build/notarization attempt ${attempt}/${max_attempts} ==="
-            if pnpm tauri build --target universal-apple-darwin; then
-              echo "✅ macOS build/notarization succeeded"
-              exit 0
-            fi
 
-            if [ "$attempt" -eq "$max_attempts" ]; then
-              echo "❌ macOS build/notarization failed after ${max_attempts} attempts" >&2
-              exit 1
+          APP_PATH=""
+          for path in \
+            "src-tauri/target/universal-apple-darwin/release/bundle/macos" \
+            "src-tauri/target/aarch64-apple-darwin/release/bundle/macos" \
+            "src-tauri/target/x86_64-apple-darwin/release/bundle/macos" \
+            "src-tauri/target/release/bundle/macos"; do
+            if [ -d "$path" ]; then
+              [ -z "$APP_PATH" ] && APP_PATH=$(find "$path" -maxdepth 1 -name "*.app" -type d | head -1 || true)
             fi
-
-            sleep_seconds=$((attempt * 60))
-            echo "⚠️ macOS build/notarization failed, retrying in ${sleep_seconds}s..."
-            sleep "$sleep_seconds"
           done
+
+          if [ -z "$APP_PATH" ]; then
+            echo "❌ No .app found for notarization" >&2
+            exit 1
+          fi
+
+          NOTARY_ZIP="$RUNNER_TEMP/ICodeEasy-notarize.zip"
+          trap 'rm -f "$NOTARY_ZIP"' EXIT
+          ditto -c -k --keepParent --sequesterRsrc "$APP_PATH" "$NOTARY_ZIP"
+
+          echo "=== Notarizing app: $APP_PATH ==="
+          xcrun notarytool submit "$NOTARY_ZIP" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 180m
+
+          xcrun stapler staple "$APP_PATH"
+          xcrun stapler validate "$APP_PATH"
+          echo "✅ App notarized and stapled"
 
       - name: Build Tauri App (Windows)
         if: runner.os == 'Windows'
@@ -243,17 +265,12 @@ jobs:
             exit 1
           fi
 
-          # Staple notarization ticket to .app (Tauri already notarized it)
-          xcrun stapler staple "$APP_PATH"
-          echo "✅ .app stapled"
-
-
-          # 2) Collect .app as zip
+          # 1) Collect .app as zip
           NEW_ZIP="ICodeEasy-${VERSION}-macOS.zip"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "release-assets/$NEW_ZIP"
           echo "macOS zip ready: $NEW_ZIP"
 
-          # 3) Create styled DMG with create-dmg (Tauri's built-in DMG styling doesn't work on CI)
+          # 2) Create styled DMG with create-dmg (Tauri's built-in DMG styling doesn't work on CI)
           if [ -z "${APPLE_SIGNING_IDENTITY:-}" ]; then
             echo "❌ APPLE_SIGNING_IDENTITY is missing before DMG creation" >&2
             exit 1
@@ -286,7 +303,7 @@ jobs:
       - name: Notarize macOS DMG
         if: runner.os == 'macOS'
         shell: bash
-        timeout-minutes: 30
+        timeout-minutes: 190
         env:
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_PASSWORD: ${{ secrets.APPLE_PASSWORD }}
@@ -301,29 +318,15 @@ jobs:
           fi
 
           echo "=== Notarizing DMG: $DMG_PATH ==="
-          max_attempts=3
-          for attempt in $(seq 1 "$max_attempts"); do
-            echo "=== DMG notarization attempt ${attempt}/${max_attempts} ==="
-            if xcrun notarytool submit "$DMG_PATH" \
-              --apple-id "$APPLE_ID" \
-              --password "$APPLE_PASSWORD" \
-              --team-id "$APPLE_TEAM_ID" \
-              --wait; then
-              echo "✅ DMG notarization succeeded"
-              xcrun stapler staple "$DMG_PATH"
-              echo "✅ DMG stapled"
-              break
-            fi
+          xcrun notarytool submit "$DMG_PATH" \
+            --apple-id "$APPLE_ID" \
+            --password "$APPLE_PASSWORD" \
+            --team-id "$APPLE_TEAM_ID" \
+            --wait \
+            --timeout 180m
 
-            if [ "$attempt" -eq "$max_attempts" ]; then
-              echo "❌ DMG notarization failed after ${max_attempts} attempts" >&2
-              exit 1
-            fi
-
-            sleep_seconds=$((attempt * 60))
-            echo "⚠️ DMG notarization failed, retrying in ${sleep_seconds}s..."
-            sleep "$sleep_seconds"
-          done
+          xcrun stapler staple "$DMG_PATH"
+          echo "✅ DMG notarized and stapled"
 
       - name: Verify macOS code signing and notarization
         if: runner.os == 'macOS'
