@@ -75,10 +75,6 @@ export function useApiKeyLink({
     return currentPresetEntry?.preset.isPartner ?? false;
   }, [currentPresetEntry]);
 
-  const partnerPromotionKey = useMemo(() => {
-    return currentPresetEntry?.preset.partnerPromotionKey;
-  }, [currentPresetEntry]);
-
   return {
     shouldShowApiKeyLink:
       appId === "claude" ||
@@ -92,6 +88,5 @@ export function useApiKeyLink({
         : false,
     websiteUrl: getWebsiteUrl,
     isPartner,
-    partnerPromotionKey,
   };
 }

@@ -184,8 +184,6 @@ export interface ProviderMeta {
   endpointAutoSelect?: boolean;
   // 是否为官方合作伙伴
   isPartner?: boolean;
-  // 合作伙伴促销 key（用于后端识别 PackyCode 等）
-  partnerPromotionKey?: string;
   // 供应商成本倍率
   costMultiplier?: string;
   // 供应商计费模式来源

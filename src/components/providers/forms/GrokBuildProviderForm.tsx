@@ -102,7 +102,6 @@ export function GrokBuildProviderForm({
   const [isPartner, setIsPartner] = useState(
     initialData?.meta?.isPartner ?? false,
   );
-  const [partnerPromotionKey, setPartnerPromotionKey] = useState<string>();
   const [profile, setProfile] = useState(initialConfig.model);
   const [upstreamModel, setUpstreamModel] = useState(
     initialConfig.upstreamModel ?? initialConfig.model,
@@ -234,7 +233,6 @@ export function GrokBuildProviderForm({
     if (presetId === "custom") {
       setCategory("custom");
       setIsPartner(false);
-      setPartnerPromotionKey(undefined);
       setPresetEndpoints([]);
       return;
     }
@@ -247,7 +245,6 @@ export function GrokBuildProviderForm({
       form.setValue("iconColor", grokBuildOfficialPreset.iconColor ?? "");
       setCategory("official");
       setIsPartner(false);
-      setPartnerPromotionKey(undefined);
       setPresetEndpoints([]);
       setRawConfig("");
       return;
@@ -277,7 +274,6 @@ export function GrokBuildProviderForm({
     form.setValue("iconColor", preset.iconColor ?? "");
     setCategory(preset.category ?? "custom");
     setIsPartner(preset.isPartner ?? false);
-    setPartnerPromotionKey(preset.partnerPromotionKey);
     setBaseUrl(presetBaseUrl);
     setApiKey(presetApiKey);
     setUpstreamModel(presetModel);
@@ -399,7 +395,6 @@ export function GrokBuildProviderForm({
       isFullUrl,
       endpointAutoSelect,
       isPartner,
-      partnerPromotionKey,
       impersonateClaudeCode,
       promptCacheRouting,
       codexChatReasoning,
@@ -519,7 +514,6 @@ export function GrokBuildProviderForm({
               shouldShowApiKeyLink={Boolean(websiteUrl)}
               websiteUrl={websiteUrl}
               isPartner={isPartner}
-              partnerPromotionKey={partnerPromotionKey}
               shouldShowSpeedTest
               codexBaseUrl={baseUrl}
               onBaseUrlChange={(value) => {

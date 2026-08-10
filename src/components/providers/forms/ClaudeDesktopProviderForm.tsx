@@ -76,7 +76,6 @@ export type ClaudeDesktopProviderFormValues = ProviderFormData & {
   presetId?: string;
   presetCategory?: ProviderCategory;
   isPartner?: boolean;
-  partnerPromotionKey?: string;
   meta?: ProviderMeta;
   providerKey?: string;
   suggestedDefaults?: OpenClawSuggestedDefaults;
@@ -297,7 +296,6 @@ export function ClaudeDesktopProviderForm({
     id: string;
     category?: ProviderCategory;
     isPartner?: boolean;
-    partnerPromotionKey?: string;
     providerType?: string;
     requiresOAuth?: boolean;
   } | null>(null);
@@ -409,7 +407,6 @@ export function ClaudeDesktopProviderForm({
     shouldShowApiKeyLink,
     websiteUrl: apiKeyLinkWebsiteUrl,
     isPartner: apiKeyLinkIsPartner,
-    partnerPromotionKey: apiKeyLinkPromotionKey,
   } = useApiKeyLink({
     appId: "claude-desktop",
     category: apiKeyLinkCategory,
@@ -477,7 +474,6 @@ export function ClaudeDesktopProviderForm({
       id: value,
       category: entry.preset.category,
       isPartner: entry.preset.isPartner,
-      partnerPromotionKey: entry.preset.partnerPromotionKey,
       providerType: entry.preset.providerType,
       requiresOAuth: entry.preset.requiresOAuth,
     });
@@ -791,7 +787,6 @@ export function ClaudeDesktopProviderForm({
       presetId: activePreset?.id,
       presetCategory: activePreset?.category,
       isPartner: activePreset?.isPartner,
-      partnerPromotionKey: activePreset?.partnerPromotionKey,
     });
   };
 
@@ -886,7 +881,6 @@ export function ClaudeDesktopProviderForm({
                 shouldShowLink={shouldShowApiKeyLink}
                 websiteUrl={apiKeyLinkWebsiteUrl}
                 isPartner={apiKeyLinkIsPartner}
-                partnerPromotionKey={apiKeyLinkPromotionKey}
               />
             )}
 

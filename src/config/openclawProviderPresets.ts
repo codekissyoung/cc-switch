@@ -27,7 +27,6 @@ export interface OpenClawProviderPreset {
   isOfficial?: boolean;
   isPartner?: boolean;
   primePartner?: boolean; // 置顶合作伙伴（顶级）：徽章显示为心形
-  partnerPromotionKey?: string;
   category?: ProviderCategory;
   /** Template variable definitions */
   templateValues?: Record<string, TemplateValueConfig>;

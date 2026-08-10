@@ -48,7 +48,6 @@ export interface ClaudeDesktopProviderPreset {
   category?: ProviderCategory;
   isPartner?: boolean;
   primePartner?: boolean; // 置顶合作伙伴（顶级）：徽章显示为心形
-  partnerPromotionKey?: string;
 
   baseUrl: string;
   apiKeyField?: "ANTHROPIC_AUTH_TOKEN" | "ANTHROPIC_API_KEY";

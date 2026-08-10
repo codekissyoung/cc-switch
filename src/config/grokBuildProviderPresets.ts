@@ -32,7 +32,6 @@ export interface GrokBuildProviderPreset {
   config: string; // Codex 风格 TOML 载体（只消费 base_url / model / wire_api）
   isOfficial?: boolean;
   isPartner?: boolean;
-  partnerPromotionKey?: string;
   category?: ProviderCategory;
   endpointCandidates?: string[];
   icon?: string;
