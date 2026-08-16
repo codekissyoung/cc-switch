@@ -11,11 +11,10 @@ const apiMocks = vi.hoisted(() => ({
   syncUniversal: vi.fn(),
   getCurrent: vi.fn(),
   switchProvider: vi.fn(),
-  openTerminal: vi.fn(),
-  pickDirectory: vi.fn(),
   getCodexSuiteStatus: vi.fn(),
   installNativeCodexCli: vi.fn(),
   launchOrInstallCodexDesktop: vi.fn(),
+  getToolVersions: vi.fn(),
   toastSuccess: vi.fn(),
   toastWarning: vi.fn(),
   toastError: vi.fn(),
@@ -30,13 +29,12 @@ vi.mock("@/lib/api", () => ({
   providersApi: {
     getCurrent: apiMocks.getCurrent,
     switch: apiMocks.switchProvider,
-    openTerminal: apiMocks.openTerminal,
   },
   settingsApi: {
-    pickDirectory: apiMocks.pickDirectory,
     getCodexSuiteStatus: apiMocks.getCodexSuiteStatus,
     installNativeCodexCli: apiMocks.installNativeCodexCli,
     launchOrInstallCodexDesktop: apiMocks.launchOrInstallCodexDesktop,
+    getToolVersions: apiMocks.getToolVersions,
   },
 }));
 
@@ -81,14 +79,23 @@ describe("ICodeEasyCodexPage", () => {
     apiMocks.syncUniversal.mockResolvedValue(true);
     apiMocks.getCurrent.mockResolvedValue("");
     apiMocks.switchProvider.mockResolvedValue({ warnings: [] });
-    apiMocks.openTerminal.mockResolvedValue(true);
-    apiMocks.pickDirectory.mockResolvedValue(null);
     apiMocks.getCodexSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.installNativeCodexCli.mockResolvedValue(undefined);
     apiMocks.launchOrInstallCodexDesktop.mockResolvedValue({
       method: "codex-app",
       desktopWasInstalled: true,
     });
+    apiMocks.getToolVersions.mockResolvedValue([
+      {
+        name: "codex",
+        version: "0.146.0",
+        latest_version: "0.146.0",
+        error: null,
+        installed_but_broken: false,
+        env_type: "macos",
+        wsl_distro: null,
+      },
+    ]);
   });
 
   it("shows relay and client status when everything is ready", async () => {
@@ -192,36 +199,47 @@ describe("ICodeEasyCodexPage", () => {
     );
   });
 
-  it("opens a terminal with the Codex provider in the picked directory", async () => {
-    apiMocks.getCurrent.mockResolvedValue(CODEX_PROVIDER_ID);
-    apiMocks.pickDirectory.mockResolvedValue("/tmp/project");
+  it("offers a CLI update when npm has a newer version", async () => {
+    apiMocks.getToolVersions.mockResolvedValue([
+      {
+        name: "codex",
+        version: "0.146.0",
+        latest_version: "0.147.0",
+        error: null,
+        installed_but_broken: false,
+        env_type: "macos",
+        wsl_distro: null,
+      },
+    ]);
 
     render(<ICodeEasyCodexPage />);
 
-    const launchButton = await screen.findByRole("button", {
-      name: "icodeeasyCodex.cli.launchTerminal",
+    const updateButton = await screen.findByRole("button", {
+      name: "icodeeasyCodex.cli.update",
     });
-    await waitFor(() => expect(launchButton).toBeEnabled());
-    fireEvent.click(launchButton);
+    fireEvent.click(updateButton);
 
     await waitFor(() =>
-      expect(apiMocks.openTerminal).toHaveBeenCalledWith(
-        CODEX_PROVIDER_ID,
-        "codex",
-        { cwd: "/tmp/project" },
-      ),
+      expect(apiMocks.installNativeCodexCli).toHaveBeenCalledTimes(1),
     );
-    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
-      "icodeeasyCodex.cli.terminalOpened",
+    await waitFor(() =>
+      expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+        "icodeeasyCodex.cli.installSuccess",
+      ),
     );
   });
 
-  it("disables terminal launch until the relay is configured", async () => {
+  it("shows no CLI update or terminal launch when the CLI is up to date", async () => {
     render(<ICodeEasyCodexPage />);
 
-    const launchButton = await screen.findByRole("button", {
-      name: "icodeeasyCodex.cli.launchTerminal",
-    });
-    expect(launchButton).toBeDisabled();
+    expect(await screen.findByText("icodeeasyCodex.cli.name")).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "icodeeasyCodex.cli.update" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", {
+        name: "icodeeasyCodex.cli.launchTerminal",
+      }),
+    ).not.toBeInTheDocument();
   });
 });

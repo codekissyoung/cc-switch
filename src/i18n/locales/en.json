@@ -103,17 +103,15 @@
     },
     "clients": {
       "title": "Clients",
-      "description": "Install, repair, and launch the Codex CLI and the ChatGPT Codex desktop app."
+      "description": "Check, install, and update the Codex CLI; get or launch the ChatGPT Codex desktop app."
     },
     "cli": {
       "name": "Codex CLI",
       "install": "Install CLI",
       "repair": "Repair and reinstall",
+      "update": "Update",
       "installSuccess": "Codex CLI is ready",
-      "installFailed": "Failed to install Codex CLI: {{error}}",
-      "launchTerminal": "Launch in terminal",
-      "terminalOpened": "Terminal opened",
-      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
+      "installFailed": "Failed to install Codex CLI: {{error}}"
     },
     "desktop": {
       "name": "ChatGPT Codex",
@@ -126,6 +124,7 @@
       "notInstalled": "Not installed",
       "waitingForInstall": "Finish installation in the official installer",
       "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
       "needsRepair": "Installed but needs repair",
       "nodeMissing": "Node.js/npm is required before installing the CLI",
       "officialInstallerHint": "The ChatGPT desktop app always comes from the official OpenAI or Microsoft installer. System installation prompts, administrator approval, and sign-in still require your confirmation.",

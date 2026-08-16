@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
+  ArrowUpCircle,
   CheckCircle2,
   CircleAlert,
   KeyRound,
@@ -18,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { providersApi, settingsApi, universalProvidersApi } from "@/lib/api";
+import { providersApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
   createICodeEasyUniversalProvider,
@@ -26,6 +27,7 @@ import {
 } from "@/config/universalProviderPresets";
 import { useCodexSuite } from "@/hooks/useCodexSuite";
 import { extractErrorMessage } from "@/utils/errorUtils";
+import { isUpdateAvailable } from "@/lib/version";
 
 const CODEX_PROVIDER_ID = `universal-codex-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`;
 
@@ -36,6 +38,7 @@ export function ICodeEasyCodexPage() {
     monitoring: monitoringInstall,
     installCli,
     launchDesktop,
+    cliLatestVersion,
   } = useCodexSuite();
 
   const [provider, setProvider] = useState<UniversalProvider | null>(null);
@@ -44,7 +47,6 @@ export function ICodeEasyCodexPage() {
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
   const [launchingDesktop, setLaunchingDesktop] = useState(false);
-  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -153,30 +155,6 @@ export function ICodeEasyCodexPage() {
     }
   };
 
-  const handleOpenTerminal = async () => {
-    if (openingTerminal) return;
-
-    setOpeningTerminal(true);
-    try {
-      const selectedDir = await settingsApi.pickDirectory();
-      if (!selectedDir) return;
-
-      await providersApi.openTerminal(CODEX_PROVIDER_ID, "codex", {
-        cwd: selectedDir,
-      });
-      toast.success(t("icodeeasyCodex.cli.terminalOpened"));
-    } catch (error) {
-      console.error("[ICodeEasyCodex] Failed to open terminal", error);
-      toast.error(
-        t("icodeeasyCodex.cli.terminalOpenFailed", {
-          error: extractErrorMessage(error),
-        }),
-      );
-    } finally {
-      setOpeningTerminal(false);
-    }
-  };
-
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -187,6 +165,8 @@ export function ICodeEasyCodexPage() {
 
   const cliReady = Boolean(suiteStatus?.cliInstalled);
   const desktopInstalled = Boolean(suiteStatus?.desktopInstalled);
+  const cliUpdateAvailable =
+    cliReady && isUpdateAvailable(suiteStatus?.cliVersion, cliLatestVersion);
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
@@ -296,9 +276,14 @@ export function ICodeEasyCodexPage() {
               </p>
               <p className="truncate text-xs text-muted-foreground">
                 {cliReady
-                  ? t("icodeeasyCodex.suite.version", {
-                      version: suiteStatus?.cliVersion,
-                    })
+                  ? cliUpdateAvailable
+                    ? t("icodeeasyCodex.suite.versionOutdated", {
+                        version: suiteStatus?.cliVersion,
+                        latest: cliLatestVersion,
+                      })
+                    : t("icodeeasyCodex.suite.version", {
+                        version: suiteStatus?.cliVersion,
+                      })
                   : suiteStatus?.cliBroken
                     ? t("icodeeasyCodex.suite.needsRepair")
                     : suiteStatus && !suiteStatus.npmAvailable
@@ -306,7 +291,7 @@ export function ICodeEasyCodexPage() {
                       : t("icodeeasyCodex.suite.notInstalled")}
               </p>
             </div>
-            {cliReady && (
+            {cliReady && !cliUpdateAvailable && (
               <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
             )}
             {!cliReady && (
@@ -330,17 +315,21 @@ export function ICodeEasyCodexPage() {
                 )}
               </Button>
             )}
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={!cliReady || !configured || openingTerminal}
-              onClick={() => void handleOpenTerminal()}
-            >
-              {openingTerminal && (
-                <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
-              )}
-              {t("icodeeasyCodex.cli.launchTerminal")}
-            </Button>
+            {cliUpdateAvailable && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!suiteSupported || installingCli}
+                onClick={() => void handleInstallCli()}
+              >
+                {installingCli ? (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <ArrowUpCircle className="mr-1.5 h-4 w-4" />
+                )}
+                {t("icodeeasyCodex.cli.update")}
+              </Button>
+            )}
           </div>
 
           <p className="text-xs leading-5 text-muted-foreground">

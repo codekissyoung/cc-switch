@@ -14,6 +14,7 @@ const MAX_POLL_ATTEMPTS = 100;
 export function useCodexSuite() {
   const [status, setStatus] = useState<CodexSuiteStatus | null>(null);
   const [monitoring, setMonitoring] = useState(false);
+  const [cliLatestVersion, setCliLatestVersion] = useState<string | null>(null);
 
   const refresh = useCallback(async (): Promise<CodexSuiteStatus | null> => {
     try {
@@ -29,6 +30,26 @@ export function useCodexSuite() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // npm 最新版本只在挂载时查一次：安装监控期间状态探测每 3 秒轮询一次，
+  // 若把 registry 网络请求挂进同一探测路径会被轮询放大。安装/更新成功后
+  // 由 installCli 补查一次即可。
+  const refreshCliLatestVersion = useCallback(async () => {
+    try {
+      const versions = await settingsApi.getToolVersions(["codex"]);
+      const codex = versions.find((tool) => tool.name === "codex");
+      setCliLatestVersion(codex?.latest_version ?? null);
+    } catch (error) {
+      console.warn(
+        "[useCodexSuite] Failed to fetch latest Codex CLI version",
+        error,
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    void refreshCliLatestVersion();
+  }, [refreshCliLatestVersion]);
 
   useEffect(() => {
     if (!monitoring) return;
@@ -58,13 +79,14 @@ export function useCodexSuite() {
     };
   }, [monitoring]);
 
-  /** 通过 npm 安装原生 Codex CLI；返回安装后的探测结果（可能仍未通过验证） */
+  /** 通过 npm 安装/更新原生 Codex CLI；返回安装后的探测结果（可能仍未通过验证） */
   const installCli = useCallback(async (): Promise<CodexSuiteStatus> => {
     await settingsApi.installNativeCodexCli();
     const next = await settingsApi.getCodexSuiteStatus();
     setStatus(next);
+    void refreshCliLatestVersion();
     return next;
-  }, []);
+  }, [refreshCliLatestVersion]);
 
   /** 启动已安装的桌面版；未安装时转交官方安装流程并进入安装监控 */
   const launchDesktop = useCallback(async () => {
@@ -73,5 +95,12 @@ export function useCodexSuite() {
     return result;
   }, []);
 
-  return { status, monitoring, refresh, installCli, launchDesktop };
+  return {
+    status,
+    monitoring,
+    refresh,
+    installCli,
+    launchDesktop,
+    cliLatestVersion,
+  };
 }
