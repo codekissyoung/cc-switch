@@ -81,6 +81,7 @@ import { FirstRunNoticeDialog } from "@/components/FirstRunNoticeDialog";
 import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
 import { ICodeEasySetupPage } from "@/components/icodeeasy/ICodeEasySetupPage";
+import { ICodeEasyCodexPage } from "@/components/icodeeasy/ICodeEasyCodexPage";
 import {
   ICODEEASY_SETTINGS_NAV_ITEMS,
   ICODEEASY_SIDEBAR_WIDTH,
@@ -103,6 +104,7 @@ import HermesMemoryPanel from "@/components/hermes/HermesMemoryPanel";
 
 type View =
   | "providers"
+  | "codex"
   | "settings"
   | "prompts"
   | "skills"
@@ -157,6 +159,7 @@ const getInitialApp = (
 const VIEW_STORAGE_KEY = "cc-switch-last-view";
 const VALID_VIEWS: View[] = [
   "providers",
+  "codex",
   "settings",
   "prompts",
   "skills",
@@ -213,6 +216,9 @@ function App({ compatibilityProviderManager = false }: AppProps) {
   const singleProviderHeaderTitle = useMemo(() => {
     if (currentView === "providers") {
       return t("icodeeasyNavigation.home");
+    }
+    if (currentView === "codex") {
+      return t("icodeeasyNavigation.codex");
     }
     if (currentView === "settings") {
       const item = ICODEEASY_SETTINGS_NAV_ITEMS.find(
@@ -939,6 +945,8 @@ function App({ compatibilityProviderManager = false }: AppProps) {
   const renderContent = () => {
     const content = (() => {
       switch (currentView) {
+        case "codex":
+          return <ICodeEasyCodexPage />;
         case "settings":
           return (
             <SettingsPage
@@ -1115,8 +1123,10 @@ function App({ compatibilityProviderManager = false }: AppProps) {
       {singleProviderProductMode && (
         <ICodeEasySidebar
           isHomeActive={currentView === "providers"}
+          isCodexActive={currentView === "codex"}
           activeSettingsSection={settingsDefaultTab}
           onHomeSelect={() => setCurrentView("providers")}
+          onCodexSelect={() => setCurrentView("codex")}
           onSettingsSectionSelect={(section) => {
             setSettingsDefaultTab(section);
             setCurrentView("settings");

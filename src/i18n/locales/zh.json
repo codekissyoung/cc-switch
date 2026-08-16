@@ -44,6 +44,7 @@
   "icodeeasyNavigation": {
     "ariaLabel": "ICodeEasy 主导航",
     "home": "首页",
+    "codex": "Codex",
     "statistics": "统计"
   },
   "firstRunNotice": {
@@ -70,7 +71,7 @@
       },
       "codex": {
         "name": "ChatGPT Codex + CLI",
-        "description": "安装桌面端与 CLI，并配置 ICodeEasy Responses 接入和推荐模型 gpt-5.6-sol。"
+        "description": "配置 ICodeEasy Responses 接入和推荐模型 gpt-5.6-sol；客户端安装与启动在 Codex 页管理。"
       },
       "gemini": {
         "name": "Gemini CLI",
@@ -81,25 +82,54 @@
     "configureFailed": "本次配置失败",
     "compatibilityHint": "升级用户的历史供应商和配置会继续保留在兼容层中，但不会出现在普通用户界面。写入前会备份当前 CLI 配置，单个工具失败时会自动回滚该工具。",
     "configureButton": "配置所选工具（{{count}}）",
-    "installConfigureButton": "一键安装并配置（{{count}}）",
     "configureSuccess": "所选工具已配置为 ICodeEasy",
     "configurePartial": "配置完成，但有 {{count}} 个工具失败并已保留原配置",
     "configureError": "保存 ICodeEasy 配置失败：{{error}}",
     "loadError": "读取 ICodeEasy 配置失败：{{error}}",
-    "openKeysError": "无法打开 API Key 页面：{{error}}",
-    "codexSuite": {
-      "title": "ChatGPT Codex + Codex CLI",
-      "description": "选择 Codex 后，ICodeEasy 会安装原生 Codex CLI、启动 OpenAI 官方 ChatGPT 安装流程，并让两者共用当前 ICodeEasy 配置。",
+    "openKeysError": "无法打开 API Key 页面：{{error}}"
+  },
+  "icodeeasyCodex": {
+    "loadError": "读取 Codex 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy Responses 接入与推荐模型 gpt-5.6-sol 写入 ~/.codex/config.toml 和 auth.json；Codex CLI 与桌面版共用这份配置，一次配置两端生效。",
+      "configured": "已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Codex 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "安装、修复并启动 Codex CLI 与 ChatGPT Codex 桌面版。"
+    },
+    "cli": {
+      "name": "Codex CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "installSuccess": "Codex CLI 已就绪",
+      "installFailed": "Codex CLI 安装失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
+    },
+    "desktop": {
+      "name": "ChatGPT Codex",
+      "launch": "启动",
+      "get": "获取桌面版",
+      "launchFailed": "启动桌面版失败：{{error}}"
+    },
+    "suite": {
       "installed": "已安装",
-      "willInstall": "点击下方按钮后自动处理",
+      "notInstalled": "未安装",
       "waitingForInstall": "请在官方安装器中完成安装",
       "version": "已安装 · {{version}}",
       "needsRepair": "已安装但需要修复",
       "nodeMissing": "安装 CLI 前需要 Node.js/npm",
       "officialInstallerHint": "ChatGPT 桌面端始终由 OpenAI 或 Microsoft 官方安装器提供；系统安装确认、管理员授权和登录仍需由你确认。",
-      "nodeRequired": "Codex CLI 需要 Node.js/npm；已为你打开 ChatGPT 官方安装入口，请安装 Node.js 后再次执行即可补齐 CLI。",
-      "cliVerificationFailed": "Codex CLI 安装后未通过版本验证",
-      "partial": "ICodeEasy 配置已写入，但 Codex 套件尚未完全就绪：{{error}}"
+      "cliVerificationFailed": "Codex CLI 安装后未通过版本验证"
     }
   },
   "apiKeyInput": {

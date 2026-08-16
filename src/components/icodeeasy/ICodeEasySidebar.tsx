@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import appIcon from "@/assets/icons/app-icon.png";
+import { CodexIcon } from "@/components/BrandIcons";
 import { cn } from "@/lib/utils";
 
 export type ICodeEasySettingsSection =
@@ -54,16 +55,20 @@ export const ICODEEASY_SETTINGS_NAV_ITEMS = [
 
 interface ICodeEasySidebarProps {
   isHomeActive: boolean;
+  isCodexActive: boolean;
   activeSettingsSection: ICodeEasySettingsSection;
   onHomeSelect: () => void;
+  onCodexSelect: () => void;
   onSettingsSectionSelect: (section: ICodeEasySettingsSection) => void;
   style?: CSSProperties;
 }
 
 export function ICodeEasySidebar({
   isHomeActive,
+  isCodexActive,
   activeSettingsSection,
   onHomeSelect,
+  onCodexSelect,
   onSettingsSectionSelect,
   style,
 }: ICodeEasySidebarProps) {
@@ -111,11 +116,26 @@ export function ICodeEasySidebar({
           <span>{t("icodeeasyNavigation.home")}</span>
         </button>
 
+        <button
+          type="button"
+          aria-current={isCodexActive ? "page" : undefined}
+          onClick={onCodexSelect}
+          className={itemClass(isCodexActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <CodexIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.codex")}</span>
+        </button>
+
         <div className="my-3 border-t border-border/60" />
 
         <div className="space-y-1">
           {ICODEEASY_SETTINGS_NAV_ITEMS.map((item) => {
-            const active = !isHomeActive && activeSettingsSection === item.id;
+            const active =
+              !isHomeActive &&
+              !isCodexActive &&
+              activeSettingsSection === item.id;
             const Icon = item.icon;
 
             return (

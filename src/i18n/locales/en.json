@@ -44,6 +44,7 @@
   "icodeeasyNavigation": {
     "ariaLabel": "ICodeEasy main navigation",
     "home": "Home",
+    "codex": "Codex",
     "statistics": "Statistics"
   },
   "firstRunNotice": {
@@ -70,7 +71,7 @@
       },
       "codex": {
         "name": "ChatGPT Codex + CLI",
-        "description": "Installs the desktop app and CLI, then sets up ICodeEasy Responses with the recommended gpt-5.6-sol model."
+        "description": "Sets up ICodeEasy Responses with the recommended gpt-5.6-sol model; client installation and launching live on the Codex page."
       },
       "gemini": {
         "name": "Gemini CLI",
@@ -81,25 +82,54 @@
     "configureFailed": "Setup failed this time",
     "compatibilityHint": "Existing providers and settings remain in the compatibility layer for upgrades, but are hidden from the normal interface. The current CLI config is backed up before writing, and a failed tool is rolled back automatically.",
     "configureButton": "Configure selected ({{count}})",
-    "installConfigureButton": "Install and configure ({{count}})",
     "configureSuccess": "The selected tools now use ICodeEasy",
     "configurePartial": "Setup finished, but {{count}} tool(s) failed and kept their previous configuration",
     "configureError": "Failed to save ICodeEasy configuration: {{error}}",
     "loadError": "Failed to load ICodeEasy configuration: {{error}}",
-    "openKeysError": "Could not open the API Key page: {{error}}",
-    "codexSuite": {
-      "title": "ChatGPT Codex + Codex CLI",
-      "description": "When Codex is selected, ICodeEasy installs the native Codex CLI, starts OpenAI's official ChatGPT installer flow, and gives both surfaces the current ICodeEasy configuration.",
+    "openKeysError": "Could not open the API Key page: {{error}}"
+  },
+  "icodeeasyCodex": {
+    "loadError": "Failed to load Codex configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy Responses endpoint and the recommended gpt-5.6-sol model to ~/.codex/config.toml and auth.json. The Codex CLI and the desktop app share this configuration, so one setup covers both.",
+      "configured": "Pointing to ICodeEasy",
+      "notConfigured": "Relay not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Codex now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Install, repair, and launch the Codex CLI and the ChatGPT Codex desktop app."
+    },
+    "cli": {
+      "name": "Codex CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "installSuccess": "Codex CLI is ready",
+      "installFailed": "Failed to install Codex CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
+    },
+    "desktop": {
+      "name": "ChatGPT Codex",
+      "launch": "Launch",
+      "get": "Get the desktop app",
+      "launchFailed": "Failed to launch the desktop app: {{error}}"
+    },
+    "suite": {
       "installed": "Installed",
-      "willInstall": "Handled after you click the button below",
+      "notInstalled": "Not installed",
       "waitingForInstall": "Finish installation in the official installer",
       "version": "Installed · {{version}}",
       "needsRepair": "Installed but needs repair",
       "nodeMissing": "Node.js/npm is required before installing the CLI",
       "officialInstallerHint": "The ChatGPT desktop app always comes from the official OpenAI or Microsoft installer. System installation prompts, administrator approval, and sign-in still require your confirmation.",
-      "nodeRequired": "Codex CLI requires Node.js/npm. The official ChatGPT installer entry has been opened; install Node.js and run this action again to add the CLI.",
-      "cliVerificationFailed": "Codex CLI did not pass version verification after installation",
-      "partial": "Your ICodeEasy configuration was saved, but the Codex suite is not fully ready: {{error}}"
+      "cliVerificationFailed": "Codex CLI did not pass version verification after installation"
     }
   },
   "apiKeyInput": {

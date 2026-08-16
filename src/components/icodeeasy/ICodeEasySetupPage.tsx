@@ -2,15 +2,12 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
-  CircleAlert,
   ExternalLink,
   Eye,
   EyeOff,
   KeyRound,
   LoaderCircle,
-  Monitor,
   ShieldCheck,
-  Terminal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ClaudeIcon, CodexIcon, GeminiIcon } from "@/components/BrandIcons";
@@ -34,7 +31,6 @@ import {
 } from "@/config/universalProviderPresets";
 import { extractErrorMessage } from "@/utils/errorUtils";
 import { cn } from "@/lib/utils";
-import type { CodexSuiteStatus } from "@/lib/api/settings";
 
 type SetupAppId = Extract<AppId, "claude" | "codex" | "gemini">;
 
@@ -88,10 +84,6 @@ export function ICodeEasySetupPage() {
   );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [codexSuiteStatus, setCodexSuiteStatus] =
-    useState<CodexSuiteStatus | null>(null);
-  const [codexSuiteError, setCodexSuiteError] = useState<string | null>(null);
-  const [monitorCodexInstall, setMonitorCodexInstall] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -106,23 +98,16 @@ export function ICodeEasySetupPage() {
           await universalProvidersApi.upsert(currentProvider);
         }
 
-        const [currentProviderIds, suiteStatus] = await Promise.all([
-          Promise.all(
-            SETUP_APPS.map(async (app) => ({
-              app,
-              currentId: await providersApi.getCurrent(app.id),
-            })),
-          ),
-          settingsApi.getCodexSuiteStatus().catch((error) => {
-            console.warn("[ICodeEasySetup] Failed to probe Codex suite", error);
-            return null;
-          }),
-        ]);
+        const currentProviderIds = await Promise.all(
+          SETUP_APPS.map(async (app) => ({
+            app,
+            currentId: await providersApi.getCurrent(app.id),
+          })),
+        );
 
         if (!active) return;
         setProvider(currentProvider);
         setApiKey(currentProvider.apiKey);
-        setCodexSuiteStatus(suiteStatus);
         setConfiguredApps(
           new Set(
             currentProviderIds
@@ -148,37 +133,6 @@ export function ICodeEasySetupPage() {
     };
   }, [t]);
 
-  useEffect(() => {
-    if (!monitorCodexInstall) return;
-
-    let active = true;
-    let attempts = 0;
-    const refresh = async () => {
-      attempts += 1;
-      try {
-        const status = await settingsApi.getCodexSuiteStatus();
-        if (!active) return;
-        setCodexSuiteStatus(status);
-        if (status.desktopInstalled || attempts >= 100) {
-          setMonitorCodexInstall(false);
-        }
-      } catch (error) {
-        console.warn(
-          "[ICodeEasySetup] Failed to refresh Codex suite status",
-          error,
-        );
-        if (attempts >= 100 && active) setMonitorCodexInstall(false);
-      }
-    };
-
-    const interval = window.setInterval(() => void refresh(), 3000);
-    void refresh();
-    return () => {
-      active = false;
-      window.clearInterval(interval);
-    };
-  }, [monitorCodexInstall]);
-
   const toggleApp = (appId: SetupAppId, checked: boolean) => {
     setSelectedApps((previous) => {
       const next = new Set(previous);
@@ -194,7 +148,6 @@ export function ICodeEasySetupPage() {
 
     setSaving(true);
     setFailedApps(new Set());
-    setCodexSuiteError(null);
     try {
       const normalizedProvider = createICodeEasyUniversalProvider(
         trimmedKey,
@@ -224,48 +177,8 @@ export function ICodeEasySetupPage() {
       setConfiguredApps(nextConfigured);
       setFailedApps(nextFailed);
 
-      let suiteError: string | null = null;
-      if (
-        selectedApps.has("codex") &&
-        !nextFailed.has("codex") &&
-        codexSuiteStatus?.supported !== false
-      ) {
-        try {
-          let status =
-            codexSuiteStatus ?? (await settingsApi.getCodexSuiteStatus());
-          if (!status.cliInstalled) {
-            if (!status.npmAvailable) {
-              suiteError = t("icodeeasySetup.codexSuite.nodeRequired");
-            } else {
-              await settingsApi.installNativeCodexCli();
-              status = await settingsApi.getCodexSuiteStatus();
-              setCodexSuiteStatus(status);
-              if (!status.cliInstalled) {
-                throw new Error(
-                  t("icodeeasySetup.codexSuite.cliVerificationFailed"),
-                );
-              }
-            }
-          }
-
-          const launch = await settingsApi.launchOrInstallCodexDesktop();
-          if (!launch.desktopWasInstalled) setMonitorCodexInstall(true);
-        } catch (error) {
-          suiteError = extractErrorMessage(error);
-          console.error(
-            "[ICodeEasySetup] Failed to prepare ChatGPT Codex suite",
-            error,
-          );
-        }
-      }
-      setCodexSuiteError(suiteError);
-
-      if (nextFailed.size === 0 && !suiteError) {
+      if (nextFailed.size === 0) {
         toast.success(t("icodeeasySetup.configureSuccess"));
-      } else if (nextFailed.size === 0 && suiteError) {
-        toast.warning(
-          t("icodeeasySetup.codexSuite.partial", { error: suiteError }),
-        );
       } else {
         toast.warning(
           t("icodeeasySetup.configurePartial", {
@@ -365,69 +278,6 @@ export function ICodeEasySetupPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-blue-500/20 bg-blue-500/[0.025] shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <CodexIcon size={24} />
-            {t("icodeeasySetup.codexSuite.title")}
-          </CardTitle>
-          <CardDescription>
-            {t("icodeeasySetup.codexSuite.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-background/70 p-3">
-              <Monitor className="h-5 w-5 text-blue-500" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">ChatGPT Codex</p>
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    codexSuiteStatus?.desktopInstalled
-                      ? "icodeeasySetup.codexSuite.installed"
-                      : monitorCodexInstall
-                        ? "icodeeasySetup.codexSuite.waitingForInstall"
-                        : "icodeeasySetup.codexSuite.willInstall",
-                  )}
-                </p>
-              </div>
-              {codexSuiteStatus?.desktopInstalled && (
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              )}
-            </div>
-            <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-background/70 p-3">
-              <Terminal className="h-5 w-5 text-blue-500" />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium">Codex CLI</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {codexSuiteStatus?.cliInstalled
-                    ? t("icodeeasySetup.codexSuite.version", {
-                        version: codexSuiteStatus.cliVersion,
-                      })
-                    : codexSuiteStatus?.cliBroken
-                      ? t("icodeeasySetup.codexSuite.needsRepair")
-                      : codexSuiteStatus && !codexSuiteStatus.npmAvailable
-                        ? t("icodeeasySetup.codexSuite.nodeMissing")
-                        : t("icodeeasySetup.codexSuite.willInstall")}
-                </p>
-              </div>
-              {codexSuiteStatus?.cliInstalled && (
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              )}
-            </div>
-          </div>
-          {codexSuiteError && (
-            <div className="flex items-start gap-2 text-xs leading-5 text-amber-600">
-              <CircleAlert className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{codexSuiteError}</span>
-            </div>
-          )}
-          <p className="text-xs leading-5 text-muted-foreground">
-            {t("icodeeasySetup.codexSuite.officialInstallerHint")}
-          </p>
-        </CardContent>
-      </Card>
-
       <Card className="border-border/70 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">
@@ -499,12 +349,7 @@ export function ICodeEasySetupPage() {
           onClick={() => void handleConfigure()}
         >
           {saving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-          {t(
-            selectedApps.has("codex")
-              ? "icodeeasySetup.installConfigureButton"
-              : "icodeeasySetup.configureButton",
-            { count: selectedApps.size },
-          )}
+          {t("icodeeasySetup.configureButton", { count: selectedApps.size })}
         </Button>
       </div>
     </div>
