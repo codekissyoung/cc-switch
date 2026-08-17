@@ -82,6 +82,7 @@ import { AgentsPanel } from "@/components/agents/AgentsPanel";
 import { UniversalProviderPanel } from "@/components/universal";
 import { ICodeEasySetupPage } from "@/components/icodeeasy/ICodeEasySetupPage";
 import { ICodeEasyCodexPage } from "@/components/icodeeasy/ICodeEasyCodexPage";
+import { ICodeEasyClaudePage } from "@/components/icodeeasy/ICodeEasyClaudePage";
 import {
   ICODEEASY_SETTINGS_NAV_ITEMS,
   ICODEEASY_SIDEBAR_WIDTH,
@@ -105,6 +106,7 @@ import HermesMemoryPanel from "@/components/hermes/HermesMemoryPanel";
 type View =
   | "providers"
   | "codex"
+  | "claude"
   | "settings"
   | "prompts"
   | "skills"
@@ -160,6 +162,7 @@ const VIEW_STORAGE_KEY = "cc-switch-last-view";
 const VALID_VIEWS: View[] = [
   "providers",
   "codex",
+  "claude",
   "settings",
   "prompts",
   "skills",
@@ -219,6 +222,9 @@ function App({ compatibilityProviderManager = false }: AppProps) {
     }
     if (currentView === "codex") {
       return t("icodeeasyNavigation.codex");
+    }
+    if (currentView === "claude") {
+      return t("icodeeasyNavigation.claude");
     }
     if (currentView === "settings") {
       const item = ICODEEASY_SETTINGS_NAV_ITEMS.find(
@@ -947,6 +953,8 @@ function App({ compatibilityProviderManager = false }: AppProps) {
       switch (currentView) {
         case "codex":
           return <ICodeEasyCodexPage />;
+        case "claude":
+          return <ICodeEasyClaudePage />;
         case "settings":
           return (
             <SettingsPage
@@ -1124,9 +1132,11 @@ function App({ compatibilityProviderManager = false }: AppProps) {
         <ICodeEasySidebar
           isHomeActive={currentView === "providers"}
           isCodexActive={currentView === "codex"}
+          isClaudeActive={currentView === "claude"}
           activeSettingsSection={settingsDefaultTab}
           onHomeSelect={() => setCurrentView("providers")}
           onCodexSelect={() => setCurrentView("codex")}
+          onClaudeSelect={() => setCurrentView("claude")}
           onSettingsSectionSelect={(section) => {
             setSettingsDefaultTab(section);
             setCurrentView("settings");

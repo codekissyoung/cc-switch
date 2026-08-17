@@ -45,6 +45,7 @@
     "ariaLabel": "ICodeEasy main navigation",
     "home": "Home",
     "codex": "Codex",
+    "claude": "Claude",
     "statistics": "Statistics"
   },
   "firstRunNotice": {
@@ -127,8 +128,52 @@
       "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
       "needsRepair": "Installed but needs repair",
       "nodeMissing": "Node.js/npm is required before installing the CLI",
+      "installerUnavailable": "Node.js/npm is required before installing the CLI",
       "officialInstallerHint": "The ChatGPT desktop app always comes from the official OpenAI or Microsoft installer. System installation prompts, administrator approval, and sign-in still require your confirmation.",
       "cliVerificationFailed": "Codex CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyClaude": {
+    "loadError": "Failed to load the Claude configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy Anthropic Messages connection to Claude Code settings.json and the Claude Desktop 3P profile. Their configs remain separate, but this action configures both.",
+      "configured": "Claude Code and Desktop point to ICodeEasy",
+      "notConfigured": "The two clients are not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Claude Code and Desktop now use ICodeEasy. Restart Desktop if it is running.",
+      "configureError": "Failed to configure the relay; the previous providers were restored where possible: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update Claude Code; get or launch Claude Desktop."
+    },
+    "cli": {
+      "name": "Claude Code",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "Claude Code is ready",
+      "installFailed": "Failed to install or update Claude Code: {{error}}"
+    },
+    "desktop": {
+      "name": "Claude Desktop",
+      "launch": "Launch",
+      "get": "Get the desktop app",
+      "launchFailed": "Failed to launch the desktop app: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "waitingForInstall": "Finish installation in Anthropic's official installer",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "Claude Code prefers Anthropic's official native installer. Claude Desktop always comes from Anthropic's official download. System installation prompts and sign-in still require your confirmation.",
+      "cliVerificationFailed": "Claude Code did not pass version verification after installation"
     }
   },
   "apiKeyInput": {

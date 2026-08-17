@@ -47,8 +47,22 @@ export interface CodexSuiteStatus {
   npmAvailable: boolean;
 }
 
+export interface ClaudeSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  desktopInstalled: boolean;
+}
+
 export interface CodexDesktopLaunchResult {
   method: "codex-app" | "official-download";
+  desktopWasInstalled: boolean;
+}
+
+export interface ClaudeDesktopLaunchResult {
+  method: "claude-app" | "official-download";
   desktopWasInstalled: boolean;
 }
 
@@ -301,6 +315,14 @@ export const settingsApi = {
 
   async launchOrInstallCodexDesktop(): Promise<CodexDesktopLaunchResult> {
     return await invoke("launch_or_install_codex_desktop");
+  },
+
+  async getClaudeSuiteStatus(): Promise<ClaudeSuiteStatus> {
+    return await invoke("get_claude_suite_status");
+  },
+
+  async launchOrInstallClaudeDesktop(): Promise<ClaudeDesktopLaunchResult> {
+    return await invoke("launch_or_install_claude_desktop");
   },
 
   /** 探测各工具安装分布：枚举所有安装、标记冲突、生成锚定升级命令。

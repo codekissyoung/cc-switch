@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import appIcon from "@/assets/icons/app-icon.png";
-import { CodexIcon } from "@/components/BrandIcons";
+import { ClaudeIcon, CodexIcon } from "@/components/BrandIcons";
 import { cn } from "@/lib/utils";
 
 export type ICodeEasySettingsSection =
@@ -56,9 +56,11 @@ export const ICODEEASY_SETTINGS_NAV_ITEMS = [
 interface ICodeEasySidebarProps {
   isHomeActive: boolean;
   isCodexActive: boolean;
+  isClaudeActive: boolean;
   activeSettingsSection: ICodeEasySettingsSection;
   onHomeSelect: () => void;
   onCodexSelect: () => void;
+  onClaudeSelect: () => void;
   onSettingsSectionSelect: (section: ICodeEasySettingsSection) => void;
   style?: CSSProperties;
 }
@@ -66,9 +68,11 @@ interface ICodeEasySidebarProps {
 export function ICodeEasySidebar({
   isHomeActive,
   isCodexActive,
+  isClaudeActive,
   activeSettingsSection,
   onHomeSelect,
   onCodexSelect,
+  onClaudeSelect,
   onSettingsSectionSelect,
   style,
 }: ICodeEasySidebarProps) {
@@ -128,6 +132,18 @@ export function ICodeEasySidebar({
           <span>{t("icodeeasyNavigation.codex")}</span>
         </button>
 
+        <button
+          type="button"
+          aria-current={isClaudeActive ? "page" : undefined}
+          onClick={onClaudeSelect}
+          className={itemClass(isClaudeActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <ClaudeIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.claude")}</span>
+        </button>
+
         <div className="my-3 border-t border-border/60" />
 
         <div className="space-y-1">
@@ -135,6 +151,7 @@ export function ICodeEasySidebar({
             const active =
               !isHomeActive &&
               !isCodexActive &&
+              !isClaudeActive &&
               activeSettingsSection === item.id;
             const Icon = item.icon;
 

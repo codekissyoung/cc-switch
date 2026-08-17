@@ -8,15 +8,19 @@ import {
 const renderSidebar = (overrides?: {
   isHomeActive?: boolean;
   isCodexActive?: boolean;
+  isClaudeActive?: boolean;
   onCodexSelect?: () => void;
+  onClaudeSelect?: () => void;
 }) =>
   render(
     <ICodeEasySidebar
       isHomeActive={overrides?.isHomeActive ?? false}
       isCodexActive={overrides?.isCodexActive ?? false}
+      isClaudeActive={overrides?.isClaudeActive ?? false}
       activeSettingsSection="general"
       onHomeSelect={vi.fn()}
       onCodexSelect={overrides?.onCodexSelect ?? vi.fn()}
+      onClaudeSelect={overrides?.onClaudeSelect ?? vi.fn()}
       onSettingsSectionSelect={vi.fn()}
     />,
   );
@@ -31,6 +35,7 @@ describe("ICodeEasySidebar", () => {
 
     expect(screen.getByText("icodeeasyNavigation.home")).toBeVisible();
     expect(screen.getByText("icodeeasyNavigation.codex")).toBeVisible();
+    expect(screen.getByText("icodeeasyNavigation.claude")).toBeVisible();
     expect(screen.getByText("settings.tabGeneral")).toBeVisible();
     expect(screen.getByText("settings.tabProxy")).toBeVisible();
     expect(screen.getByText("settings.tabAdvanced")).toBeVisible();
@@ -50,5 +55,22 @@ describe("ICodeEasySidebar", () => {
 
     fireEvent.click(codexButton!);
     expect(onCodexSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders Claude directly below Codex and forwards clicks", () => {
+    const onClaudeSelect = vi.fn();
+    renderSidebar({ isClaudeActive: true, onClaudeSelect });
+
+    const codexButton = screen
+      .getByText("icodeeasyNavigation.codex")
+      .closest("button");
+    const claudeButton = screen
+      .getByText("icodeeasyNavigation.claude")
+      .closest("button");
+    expect(codexButton?.nextElementSibling).toBe(claudeButton);
+    expect(claudeButton).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(claudeButton!);
+    expect(onClaudeSelect).toHaveBeenCalledTimes(1);
   });
 });

@@ -233,20 +233,9 @@ pub fn import_claude_desktop_providers_from_claude(
             continue;
         }
 
-        let mut desktop_provider = provider.clone();
-        desktop_provider.in_failover_queue = false;
-        let meta = desktop_provider.meta.get_or_insert_with(Default::default);
-
-        if crate::claude_desktop_config::is_compatible_direct_provider(provider)
-            && claude_provider_models_are_claude_safe(provider)
-        {
-            meta.claude_desktop_mode = Some(ClaudeDesktopMode::Direct);
-        } else if let Some(routes) = suggested_claude_desktop_routes(provider) {
-            meta.claude_desktop_mode = Some(ClaudeDesktopMode::Proxy);
-            meta.claude_desktop_model_routes = routes;
-        } else {
+        let Some(desktop_provider) = claude_desktop_provider_from_claude(provider) else {
             continue;
-        }
+        };
 
         state
             .db
@@ -266,6 +255,51 @@ pub fn import_claude_desktop_providers_from_claude(
     }
 
     Ok(imported)
+}
+
+fn claude_desktop_provider_from_claude(provider: &Provider) -> Option<Provider> {
+    let mut desktop_provider = provider.clone();
+    desktop_provider.in_failover_queue = false;
+    let meta = desktop_provider.meta.get_or_insert_with(Default::default);
+
+    if crate::claude_desktop_config::is_compatible_direct_provider(provider)
+        && claude_provider_models_are_claude_safe(provider)
+    {
+        meta.claude_desktop_mode = Some(ClaudeDesktopMode::Direct);
+        meta.claude_desktop_model_routes.clear();
+    } else if let Some(routes) = suggested_claude_desktop_routes(provider) {
+        meta.claude_desktop_mode = Some(ClaudeDesktopMode::Proxy);
+        meta.claude_desktop_model_routes = routes;
+    } else {
+        return None;
+    }
+
+    Some(desktop_provider)
+}
+
+/// Rebuild one Claude Desktop provider from its Claude Code source.
+///
+/// Unlike the bulk import command, this intentionally updates an existing row.
+/// The ICodeEasy Claude suite uses it after an API-key change so Desktop cannot
+/// keep stale credentials while Claude Code already points at the new provider.
+#[tauri::command]
+pub fn sync_claude_provider_to_desktop(
+    state: State<'_, AppState>,
+    id: String,
+) -> Result<bool, String> {
+    let provider = state
+        .db
+        .get_provider_by_id(&id, AppType::Claude.as_str())
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| format!("Claude provider {id} does not exist"))?;
+    let desktop_provider = claude_desktop_provider_from_claude(&provider)
+        .ok_or_else(|| format!("Claude provider {id} is not compatible with Claude Desktop"))?;
+
+    state
+        .db
+        .save_provider(AppType::ClaudeDesktop.as_str(), &desktop_provider)
+        .map_err(|e| e.to_string())?;
+    Ok(true)
 }
 
 #[tauri::command]
@@ -950,8 +984,8 @@ pub fn get_opencode_live_provider_ids() -> Result<Vec<String>, String> {
 
 #[cfg(test)]
 mod import_claude_desktop_tests {
-    use super::suggested_claude_desktop_routes;
-    use crate::provider::{Provider, ProviderMeta};
+    use super::{claude_desktop_provider_from_claude, suggested_claude_desktop_routes};
+    use crate::provider::{ClaudeDesktopMode, Provider, ProviderMeta};
     use serde_json::json;
 
     fn make_provider(env: serde_json::Value, provider_type: Option<&str>) -> Provider {
@@ -968,6 +1002,25 @@ mod import_claude_desktop_tests {
             });
         }
         p
+    }
+
+    #[test]
+    fn icodeeasy_provider_is_rebuilt_as_direct_desktop_provider() {
+        let mut provider = make_provider(
+            json!({
+                "ANTHROPIC_BASE_URL": "https://api.icodeeasy.cc",
+                "ANTHROPIC_AUTH_TOKEN": "user-key",
+            }),
+            None,
+        );
+        provider.in_failover_queue = true;
+
+        let desktop =
+            claude_desktop_provider_from_claude(&provider).expect("desktop provider built");
+        let meta = desktop.meta.expect("desktop metadata");
+        assert_eq!(meta.claude_desktop_mode, Some(ClaudeDesktopMode::Direct));
+        assert!(meta.claude_desktop_model_routes.is_empty());
+        assert!(!desktop.in_failover_queue);
     }
 
     #[test]

@@ -45,6 +45,7 @@
     "ariaLabel": "ICodeEasy 主导航",
     "home": "首页",
     "codex": "Codex",
+    "claude": "Claude",
     "statistics": "统计"
   },
   "firstRunNotice": {
@@ -127,8 +128,52 @@
       "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
       "needsRepair": "已安装但需要修复",
       "nodeMissing": "安装 CLI 前需要 Node.js/npm",
+      "installerUnavailable": "安装 CLI 前需要 Node.js/npm",
       "officialInstallerHint": "ChatGPT 桌面端始终由 OpenAI 或 Microsoft 官方安装器提供；系统安装确认、管理员授权和登录仍需由你确认。",
       "cliVerificationFailed": "Codex CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyClaude": {
+    "loadError": "读取 Claude 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "将 ICodeEasy Anthropic Messages 接入分别写入 Claude Code settings.json 与 Claude Desktop 3P profile；两端配置独立，但在这里一次完成。",
+      "configured": "Claude Code 与 Desktop 已指向 ICodeEasy",
+      "notConfigured": "尚未完成双端中转配置",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Claude Code 与 Desktop 已配置为 ICodeEasy；若 Desktop 正在运行，请重启后生效",
+      "configureError": "配置中转失败，已尝试恢复原配置：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 Claude Code；获取或启动 Claude Desktop。"
+    },
+    "cli": {
+      "name": "Claude Code",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "Claude Code 已就绪",
+      "installFailed": "Claude Code 安装或更新失败：{{error}}"
+    },
+    "desktop": {
+      "name": "Claude Desktop",
+      "launch": "启动",
+      "get": "获取桌面版",
+      "launchFailed": "启动桌面版失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "waitingForInstall": "请在 Anthropic 官方安装器中完成安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "Claude Code 优先使用 Anthropic 官方 native installer；Claude Desktop 始终来自 Anthropic 官方下载。系统安装确认和登录仍需由你完成。",
+      "cliVerificationFailed": "Claude Code 安装后未通过版本验证"
     }
   },
   "apiKeyInput": {

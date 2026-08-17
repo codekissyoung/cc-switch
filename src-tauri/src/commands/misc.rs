@@ -219,9 +219,37 @@ pub struct CodexDesktopLaunchResult {
     desktop_was_installed: bool,
 }
 
+/// Claude Code CLI + Claude Desktop readiness for the ICodeEasy Claude page.
+///
+/// Claude Code and Claude Desktop deliberately keep separate live configs, so
+/// this status only reports installation health. Provider synchronization is
+/// handled by the provider commands and verified independently by the page.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClaudeSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    desktop_installed: bool,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ClaudeDesktopLaunchResult {
+    /// `claude-app` when an installed application was launched;
+    /// `official-download` when ICodeEasy opened Anthropic's installer flow.
+    method: &'static str,
+    desktop_was_installed: bool,
+}
+
 const CHATGPT_CODEX_LANDING_URL: &str = "https://chatgpt.com/codex?app-landing-page=true";
 const CHATGPT_WINDOWS_INSTALLER_URL: &str =
     "https://get.microsoft.com/installer/download/9PLM9XGG6VKS?cid=website_cta_psi";
+const CLAUDE_MACOS_INSTALLER_URL: &str =
+    "https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect?utm_source=icodeeasy";
+const CLAUDE_WINDOWS_INSTALLER_URL: &str = "https://claude.com/download?utm_source=icodeeasy";
 
 fn codex_suite_platform() -> &'static str {
     if cfg!(target_os = "macos") {
@@ -370,10 +398,10 @@ pub async fn install_native_codex_cli() -> Result<(), String> {
     .map_err(|e| format!("Codex CLI install task failed: {e}"))?
 }
 
-fn wait_for_child_in_background(mut child: std::process::Child) {
+fn wait_for_child_in_background(mut child: std::process::Child, label: &'static str) {
     std::thread::spawn(move || {
         if let Err(error) = child.wait() {
-            log::debug!("Codex desktop launcher wait failed: {error}");
+            log::debug!("{label} launcher wait failed: {error}");
         }
     });
 }
@@ -420,7 +448,7 @@ fn launch_codex_desktop_from_cli(install: &ToolInstallation) -> Result<(), Strin
     };
 
     let child = child.map_err(|e| format!("Failed to launch ChatGPT Codex: {e}"))?;
-    wait_for_child_in_background(child);
+    wait_for_child_in_background(child, "Codex desktop");
     Ok(())
 }
 
@@ -455,6 +483,140 @@ pub async fn launch_or_install_codex_desktop(
     Ok(CodexDesktopLaunchResult {
         method: "official-download",
         desktop_was_installed,
+    })
+}
+
+fn claude_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn claude_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = vec![PathBuf::from("/Applications/Claude.app")];
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(home.join("Applications/Claude.app"));
+    }
+
+    candidates
+        .into_iter()
+        .find(|bundle| bundle.join("Contents/MacOS/Claude").is_file())
+}
+
+#[cfg(target_os = "windows")]
+fn claude_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(local_data) = dirs::data_local_dir() {
+        candidates.push(local_data.join("AnthropicClaude").join("Claude.exe"));
+        candidates.push(
+            local_data
+                .join("Programs")
+                .join("Claude")
+                .join("Claude.exe"),
+        );
+        candidates.push(
+            local_data
+                .join("Microsoft")
+                .join("WindowsApps")
+                .join("Claude.exe"),
+        );
+    }
+    if let Some(program_files) = std::env::var_os("ProgramFiles") {
+        candidates.push(
+            PathBuf::from(program_files)
+                .join("Claude")
+                .join("Claude.exe"),
+        );
+    }
+
+    candidates.into_iter().find(|path| path.is_file())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn claude_desktop_app_path() -> Option<PathBuf> {
+    None
+}
+
+#[tauri::command]
+pub async fn get_claude_suite_status() -> Result<ClaudeSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("claude");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        ClaudeSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: claude_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            desktop_installed: claude_desktop_app_path().is_some(),
+        }
+    })
+    .await
+    .map_err(|e| format!("Claude suite probe task failed: {e}"))
+}
+
+fn launch_installed_claude_desktop(path: &Path) -> Result<(), String> {
+    use std::process::Command;
+
+    #[cfg(target_os = "macos")]
+    let child = Command::new("open").arg(path).spawn();
+
+    #[cfg(target_os = "windows")]
+    let child = {
+        use std::os::windows::process::CommandExt as _;
+        Command::new(path).creation_flags(CREATE_NO_WINDOW).spawn()
+    };
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    let child: std::io::Result<std::process::Child> = Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "Claude Desktop is unsupported on this platform",
+    ));
+
+    let child = child.map_err(|e| format!("Failed to launch Claude Desktop: {e}"))?;
+    wait_for_child_in_background(child, "Claude Desktop");
+    Ok(())
+}
+
+/// Launch Claude Desktop when installed, otherwise open Anthropic's official
+/// installer. ICodeEasy never downloads, mirrors, or republishes the package.
+#[tauri::command]
+pub async fn launch_or_install_claude_desktop(
+    app: AppHandle,
+) -> Result<ClaudeDesktopLaunchResult, String> {
+    if !cfg!(any(target_os = "macos", target_os = "windows")) {
+        return Err("Claude Desktop setup supports macOS and Windows only".to_string());
+    }
+
+    if let Some(path) = claude_desktop_app_path() {
+        launch_installed_claude_desktop(&path)?;
+        return Ok(ClaudeDesktopLaunchResult {
+            method: "claude-app",
+            desktop_was_installed: true,
+        });
+    }
+
+    let url = if cfg!(target_os = "windows") {
+        CLAUDE_WINDOWS_INSTALLER_URL
+    } else {
+        CLAUDE_MACOS_INSTALLER_URL
+    };
+    app.opener()
+        .open_url(url, None::<String>)
+        .map_err(|e| format!("Failed to open the official Claude installer: {e}"))?;
+
+    Ok(ClaudeDesktopLaunchResult {
+        method: "official-download",
+        desktop_was_installed: false,
     })
 }
 
@@ -824,6 +986,8 @@ const HERMES_UPDATE_UNIX: &str =
 const HERMES_INSTALL_WINDOWS_SCRIPT: &str =
     "irm https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.ps1 | iex";
 #[cfg(target_os = "windows")]
+const CLAUDE_INSTALL_WINDOWS_SCRIPT: &str = "irm https://claude.ai/install.ps1 | iex";
+#[cfg(target_os = "windows")]
 const GROK_INSTALL_WINDOWS_SCRIPT: &str = "irm https://x.ai/cli/install.ps1 | iex";
 
 #[cfg(target_os = "windows")]
@@ -842,6 +1006,14 @@ fn hermes_install_windows_command() -> String {
     format!(
         "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {}",
         powershell_encoded_command(HERMES_INSTALL_WINDOWS_SCRIPT)
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn claude_install_windows_command() -> String {
+    format!(
+        "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {}",
+        powershell_encoded_command(CLAUDE_INSTALL_WINDOWS_SCRIPT)
     )
 }
 
@@ -913,6 +1085,20 @@ fn tool_action_shell_command_for_shell(
     action: ToolLifecycleAction,
     shell: LifecycleCommandShell,
 ) -> Option<String> {
+    // Anthropic now ships an official native PowerShell installer for Windows.
+    // Keep npm as a fallback for restricted networks and older managed hosts.
+    #[cfg(target_os = "windows")]
+    if tool == "claude"
+        && matches!(action, ToolLifecycleAction::Install)
+        && matches!(shell, LifecycleCommandShell::WindowsBatch)
+    {
+        return Some(chain_update_commands(
+            claude_install_windows_command(),
+            npm_install_command_for(tool)?.to_string(),
+            shell,
+        ));
+    }
+
     // xAI's primary Windows distribution is the native PowerShell installer.
     // Keep npm as the network/policy fallback, matching the POSIX installer chain.
     #[cfg(target_os = "windows")]
@@ -1010,8 +1196,9 @@ fn build_tool_action_line(
                 .ok_or_else(|| format!("Unsupported tool action target: {tool}"))?;
             return build_wsl_tool_action_line(&distro, &command, wsl_shell, wsl_shell_flag);
         }
-        // ② Windows 原生 update 锚定;install 走静态(install.sh 是 bash 脚本,Windows
-        //    无意义)。**`enumerate_tool_installations` 在这里 per-tool 重做、与前端
+        // ② Windows 原生 update 锚定；install 走各工具的 Windows 静态策略
+        //    （Claude/Grok/Hermes 优先官方 installer，其余走包管理器）。
+        //    **`enumerate_tool_installations` 在这里 per-tool 重做、与前端
         //    probe 阶段算过的结果不共享是 by design**:run_tool_lifecycle_action 是
         //    独立 IPC 调用,不信任前端回传的命令字符串(避免命令注入面扩大);前端是
         //    逐工具触发 lifecycle,batch 化会破坏"逐工具独立成败"的 UX。

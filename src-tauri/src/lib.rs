@@ -1405,6 +1405,7 @@ pub fn run() {
             commands::get_claude_desktop_status,
             commands::get_claude_desktop_default_routes,
             commands::import_claude_desktop_providers_from_claude,
+            commands::sync_claude_provider_to_desktop,
             commands::ensure_claude_desktop_official_provider,
             commands::ensure_codex_official_provider,
             commands::ensure_grokbuild_official_provider,
@@ -1637,6 +1638,8 @@ pub fn run() {
             commands::get_codex_suite_status,
             commands::install_native_codex_cli,
             commands::launch_or_install_codex_desktop,
+            commands::get_claude_suite_status,
+            commands::launch_or_install_claude_desktop,
             // Provider terminal
             commands::open_provider_terminal,
             // Universal Provider management
