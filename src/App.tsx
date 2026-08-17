@@ -83,6 +83,9 @@ import { UniversalProviderPanel } from "@/components/universal";
 import { ICodeEasySetupPage } from "@/components/icodeeasy/ICodeEasySetupPage";
 import { ICodeEasyCodexPage } from "@/components/icodeeasy/ICodeEasyCodexPage";
 import { ICodeEasyClaudePage } from "@/components/icodeeasy/ICodeEasyClaudePage";
+import { ICodeEasyGooglePage } from "@/components/icodeeasy/ICodeEasyGooglePage";
+import { ICodeEasyKimiPage } from "@/components/icodeeasy/ICodeEasyKimiPage";
+import { ICodeEasyZcodePage } from "@/components/icodeeasy/ICodeEasyZcodePage";
 import {
   ICODEEASY_SETTINGS_NAV_ITEMS,
   ICODEEASY_SIDEBAR_WIDTH,
@@ -107,6 +110,9 @@ type View =
   | "providers"
   | "codex"
   | "claude"
+  | "google"
+  | "kimi"
+  | "zcode"
   | "settings"
   | "prompts"
   | "skills"
@@ -163,6 +169,9 @@ const VALID_VIEWS: View[] = [
   "providers",
   "codex",
   "claude",
+  "google",
+  "kimi",
+  "zcode",
   "settings",
   "prompts",
   "skills",
@@ -225,6 +234,15 @@ function App({ compatibilityProviderManager = false }: AppProps) {
     }
     if (currentView === "claude") {
       return t("icodeeasyNavigation.claude");
+    }
+    if (currentView === "google") {
+      return t("icodeeasyNavigation.google");
+    }
+    if (currentView === "kimi") {
+      return t("icodeeasyNavigation.kimi");
+    }
+    if (currentView === "zcode") {
+      return t("icodeeasyNavigation.zcode");
     }
     if (currentView === "settings") {
       const item = ICODEEASY_SETTINGS_NAV_ITEMS.find(
@@ -955,6 +973,12 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           return <ICodeEasyCodexPage />;
         case "claude":
           return <ICodeEasyClaudePage />;
+        case "google":
+          return <ICodeEasyGooglePage />;
+        case "kimi":
+          return <ICodeEasyKimiPage />;
+        case "zcode":
+          return <ICodeEasyZcodePage />;
         case "settings":
           return (
             <SettingsPage
@@ -1133,10 +1157,16 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           isHomeActive={currentView === "providers"}
           isCodexActive={currentView === "codex"}
           isClaudeActive={currentView === "claude"}
+          isGoogleActive={currentView === "google"}
+          isKimiActive={currentView === "kimi"}
+          isZcodeActive={currentView === "zcode"}
           activeSettingsSection={settingsDefaultTab}
           onHomeSelect={() => setCurrentView("providers")}
           onCodexSelect={() => setCurrentView("codex")}
           onClaudeSelect={() => setCurrentView("claude")}
+          onGoogleSelect={() => setCurrentView("google")}
+          onKimiSelect={() => setCurrentView("kimi")}
+          onZcodeSelect={() => setCurrentView("zcode")}
           onSettingsSectionSelect={(section) => {
             setSettingsDefaultTab(section);
             setCurrentView("settings");

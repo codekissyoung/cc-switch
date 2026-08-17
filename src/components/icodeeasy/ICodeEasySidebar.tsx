@@ -9,7 +9,13 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import appIcon from "@/assets/icons/app-icon.png";
-import { ClaudeIcon, CodexIcon } from "@/components/BrandIcons";
+import {
+  ClaudeIcon,
+  CodexIcon,
+  GeminiIcon,
+  KimiIcon,
+  ZcodeIcon,
+} from "@/components/BrandIcons";
 import { cn } from "@/lib/utils";
 
 export type ICodeEasySettingsSection =
@@ -57,10 +63,16 @@ interface ICodeEasySidebarProps {
   isHomeActive: boolean;
   isCodexActive: boolean;
   isClaudeActive: boolean;
+  isGoogleActive: boolean;
+  isKimiActive: boolean;
+  isZcodeActive: boolean;
   activeSettingsSection: ICodeEasySettingsSection;
   onHomeSelect: () => void;
   onCodexSelect: () => void;
   onClaudeSelect: () => void;
+  onGoogleSelect: () => void;
+  onKimiSelect: () => void;
+  onZcodeSelect: () => void;
   onSettingsSectionSelect: (section: ICodeEasySettingsSection) => void;
   style?: CSSProperties;
 }
@@ -69,10 +81,16 @@ export function ICodeEasySidebar({
   isHomeActive,
   isCodexActive,
   isClaudeActive,
+  isGoogleActive,
+  isKimiActive,
+  isZcodeActive,
   activeSettingsSection,
   onHomeSelect,
   onCodexSelect,
   onClaudeSelect,
+  onGoogleSelect,
+  onKimiSelect,
+  onZcodeSelect,
   onSettingsSectionSelect,
   style,
 }: ICodeEasySidebarProps) {
@@ -144,6 +162,42 @@ export function ICodeEasySidebar({
           <span>{t("icodeeasyNavigation.claude")}</span>
         </button>
 
+        <button
+          type="button"
+          aria-current={isGoogleActive ? "page" : undefined}
+          onClick={onGoogleSelect}
+          className={itemClass(isGoogleActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <GeminiIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.google")}</span>
+        </button>
+
+        <button
+          type="button"
+          aria-current={isKimiActive ? "page" : undefined}
+          onClick={onKimiSelect}
+          className={itemClass(isKimiActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <KimiIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.kimi")}</span>
+        </button>
+
+        <button
+          type="button"
+          aria-current={isZcodeActive ? "page" : undefined}
+          onClick={onZcodeSelect}
+          className={itemClass(isZcodeActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <ZcodeIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.zcode")}</span>
+        </button>
+
         <div className="my-3 border-t border-border/60" />
 
         <div className="space-y-1">
@@ -152,6 +206,9 @@ export function ICodeEasySidebar({
               !isHomeActive &&
               !isCodexActive &&
               !isClaudeActive &&
+              !isGoogleActive &&
+              !isKimiActive &&
+              !isZcodeActive &&
               activeSettingsSection === item.id;
             const Icon = item.icon;
 

@@ -66,6 +66,42 @@ export interface ClaudeDesktopLaunchResult {
   desktopWasInstalled: boolean;
 }
 
+export interface GeminiSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  desktopInstalled: boolean;
+  npmAvailable: boolean;
+}
+
+export interface AntigravityDesktopLaunchResult {
+  method: "antigravity-app" | "official-download";
+  desktopWasInstalled: boolean;
+}
+
+export interface KimiSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  relayConfigured: boolean;
+}
+
+export interface ZcodeSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  desktopInstalled: boolean;
+  relayConfigured: boolean;
+}
+
+export interface ZcodeDesktopLaunchResult {
+  method: "zcode-app" | "official-download";
+  desktopWasInstalled: boolean;
+}
+
 export const settingsApi = {
   async get(): Promise<Settings> {
     return await invoke("get_settings");
@@ -323,6 +359,34 @@ export const settingsApi = {
 
   async launchOrInstallClaudeDesktop(): Promise<ClaudeDesktopLaunchResult> {
     return await invoke("launch_or_install_claude_desktop");
+  },
+
+  async getGeminiSuiteStatus(): Promise<GeminiSuiteStatus> {
+    return await invoke("get_gemini_suite_status");
+  },
+
+  async launchOrInstallAntigravityDesktop(): Promise<AntigravityDesktopLaunchResult> {
+    return await invoke("launch_or_install_antigravity_desktop");
+  },
+
+  async getKimiSuiteStatus(): Promise<KimiSuiteStatus> {
+    return await invoke("get_kimi_suite_status");
+  },
+
+  async configureKimiRelay(apiKey: string): Promise<void> {
+    await invoke("configure_kimi_relay", { apiKey });
+  },
+
+  async getZcodeSuiteStatus(): Promise<ZcodeSuiteStatus> {
+    return await invoke("get_zcode_suite_status");
+  },
+
+  async launchOrInstallZcodeDesktop(): Promise<ZcodeDesktopLaunchResult> {
+    return await invoke("launch_or_install_zcode_desktop");
+  },
+
+  async configureZcodeRelay(apiKey: string): Promise<void> {
+    await invoke("configure_zcode_relay", { apiKey });
   },
 
   /** 探测各工具安装分布：枚举所有安装、标记冲突、生成锚定升级命令。

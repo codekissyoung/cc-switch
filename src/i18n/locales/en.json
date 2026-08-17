@@ -46,6 +46,9 @@
     "home": "Home",
     "codex": "Codex",
     "claude": "Claude",
+    "google": "Google",
+    "kimi": "Kimi",
+    "zcode": "ZCode",
     "statistics": "Statistics"
   },
   "firstRunNotice": {
@@ -174,6 +177,121 @@
       "installerUnavailable": "No supported CLI installer is available on this system",
       "officialInstallerHint": "Claude Code prefers Anthropic's official native installer. Claude Desktop always comes from Anthropic's official download. System installation prompts and sign-in still require your confirmation.",
       "cliVerificationFailed": "Claude Code did not pass version verification after installation"
+    }
+  },
+  "icodeeasyGoogle": {
+    "loadError": "Failed to load the Google configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy Gemini v1beta connection and the recommended gemini-3.6-flash model to ~/.gemini/settings.json and .env. Only Gemini CLI supports the relay; the Antigravity desktop app and the Antigravity CLI (agy) sign in with a Google account instead.",
+      "configured": "Gemini CLI points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Gemini CLI now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update Gemini CLI and the Antigravity CLI (agy); get or launch the Antigravity desktop app."
+    },
+    "cli": {
+      "name": "Gemini CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "Gemini CLI is ready",
+      "installFailed": "Failed to install or update Gemini CLI: {{error}}"
+    },
+    "agy": {
+      "name": "Antigravity CLI (agy)",
+      "installSuccess": "Antigravity CLI is ready",
+      "installFailed": "Failed to install the Antigravity CLI: {{error}}"
+    },
+    "desktop": {
+      "name": "Antigravity desktop",
+      "launch": "Launch",
+      "get": "Get the desktop app",
+      "launchFailed": "Failed to launch the desktop app: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "waitingForInstall": "Finish installation in Google's official installer",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "Node.js/npm is required to install the CLI",
+      "officialInstallerHint": "The Antigravity desktop app and agy always come from Google's official downloads; Gemini CLI is installed via npm. System installation prompts and Google account sign-in still require your confirmation.",
+      "cliVerificationFailed": "The CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyKimi": {
+    "loadError": "Failed to load the Kimi configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy connection and the Kimi K3 model entries (256K and 1M) to ~/.kimi-code/config.toml and switches the default model to ICodeEasy. Your Kimi Code sign-in and other providers are preserved.",
+      "configured": "Kimi Code points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Kimi Code now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update Kimi Code CLI."
+    },
+    "cli": {
+      "name": "Kimi Code CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "Kimi Code CLI is ready",
+      "installFailed": "Failed to install or update Kimi Code CLI: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "Kimi Code prefers its official single-binary installer (no Node.js required), with npm as the fallback channel; updating reinstalls the latest version via the official script.",
+      "cliVerificationFailed": "Kimi Code CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyZcode": {
+    "loadError": "Failed to load the ZCode configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy custom provider (OpenAI / Responses protocol, gpt-5.6-sol · 256K) to ~/.zcode/v2/config.json. Your Z.ai / BigModel channels and other providers are preserved.",
+      "configured": "ZCode points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "ZCode now uses the ICodeEasy relay — restart ZCode to apply",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first.",
+      "restartHint": "A running ZCode instance does not reload its configuration; restart ZCode for changes to take effect."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and launch the ZCode desktop app."
+    },
+    "desktop": {
+      "name": "ZCode desktop",
+      "launch": "Launch",
+      "get": "Get the app",
+      "launchFailed": "Failed to launch the desktop app: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "waitingForInstall": "Waiting for the installation to finish…",
+      "officialInstallerHint": "ZCode ships as a desktop app only (macOS / Windows installers). When it is missing, the official Z.ai download page opens; you can also install it with brew install --cask zcode."
     }
   },
   "apiKeyInput": {

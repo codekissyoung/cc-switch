@@ -46,6 +46,9 @@
     "home": "首页",
     "codex": "Codex",
     "claude": "Claude",
+    "google": "Google",
+    "kimi": "Kimi",
+    "zcode": "ZCode",
     "statistics": "统计"
   },
   "firstRunNotice": {
@@ -174,6 +177,121 @@
       "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
       "officialInstallerHint": "Claude Code 优先使用 Anthropic 官方 native installer；Claude Desktop 始终来自 Anthropic 官方下载。系统安装确认和登录仍需由你完成。",
       "cliVerificationFailed": "Claude Code 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyGoogle": {
+    "loadError": "读取 Google 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy Gemini 原生 v1beta 接入与推荐模型 gemini-3.6-flash 写入 ~/.gemini/settings.json 和 .env。仅 Gemini CLI 支持中转；Antigravity 桌面版与 Antigravity CLI（agy）使用 Google 账号登录，不走中转。",
+      "configured": "Gemini CLI 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Gemini CLI 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 Gemini CLI 与 Antigravity CLI（agy）；获取或启动 Antigravity 桌面版。"
+    },
+    "cli": {
+      "name": "Gemini CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "Gemini CLI 已就绪",
+      "installFailed": "Gemini CLI 安装或更新失败：{{error}}"
+    },
+    "agy": {
+      "name": "Antigravity CLI（agy）",
+      "installSuccess": "Antigravity CLI 已就绪",
+      "installFailed": "Antigravity CLI 安装失败：{{error}}"
+    },
+    "desktop": {
+      "name": "Antigravity 桌面版",
+      "launch": "启动",
+      "get": "获取桌面版",
+      "launchFailed": "启动桌面版失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "waitingForInstall": "请在 Google 官方安装器中完成安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "安装 CLI 前需要 Node.js/npm",
+      "officialInstallerHint": "Antigravity 桌面版与 agy 始终来自 Google 官方下载；Gemini CLI 通过 npm 安装。系统安装确认和 Google 账号登录仍需由你完成。",
+      "cliVerificationFailed": "CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyKimi": {
+    "loadError": "读取 Kimi 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy 接入与 Kimi K3 模型（256K 与 1M 两个条目）写入 ~/.kimi-code/config.toml，并把默认模型切到 ICodeEasy；你的 Kimi Code 官方登录与其他 provider 配置会保留。",
+      "configured": "Kimi Code 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Kimi Code 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 Kimi Code CLI。"
+    },
+    "cli": {
+      "name": "Kimi Code CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "Kimi Code CLI 已就绪",
+      "installFailed": "Kimi Code CLI 安装或更新失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "Kimi Code 优先使用官方单二进制安装脚本（无需 Node.js），npm 作为兜底渠道；更新等价于用官方脚本重装最新版。",
+      "cliVerificationFailed": "Kimi Code CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyZcode": {
+    "loadError": "读取 ZCode 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy 自定义供应商（OpenAI / Responses 协议，gpt-5.6-sol · 256K）写入 ~/.zcode/v2/config.json；你的 Z.ai / 智谱官方渠道与其他供应商会保留。",
+      "configured": "ZCode 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "ZCode 已配置为 ICodeEasy 中转，重启 ZCode 后生效",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。",
+      "restartHint": "运行中的 ZCode 不会自动重载配置，改动在重启 ZCode 后生效。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并启动 ZCode 桌面版。"
+    },
+    "desktop": {
+      "name": "ZCode 桌面版",
+      "launch": "启动",
+      "get": "获取桌面版",
+      "launchFailed": "启动桌面版失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "waitingForInstall": "等待安装完成…",
+      "officialInstallerHint": "ZCode 只有桌面版（macOS / Windows 安装包）；未安装时会打开 Z.ai 官方下载页，也可以用 brew install --cask zcode 安装。"
     }
   },
   "apiKeyInput": {

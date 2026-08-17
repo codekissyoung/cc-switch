@@ -6,10 +6,12 @@ const MAX_POLL_ATTEMPTS = 100;
 
 export interface ClientSuiteStatus {
   supported: boolean;
-  cliInstalled: boolean;
-  cliVersion: string | null;
-  cliBroken: boolean;
-  desktopInstalled: boolean;
+  /** 桌面-only 产品（如 ZCode）没有 CLI，这三个字段缺席。 */
+  cliInstalled?: boolean;
+  cliVersion?: string | null;
+  cliBroken?: boolean;
+  /** 终端型产品（如 Kimi Code）没有桌面版，该字段缺席。 */
+  desktopInstalled?: boolean;
 }
 
 interface DesktopLaunchResult {
@@ -17,11 +19,14 @@ interface DesktopLaunchResult {
 }
 
 interface ClientSuiteAdapter<TStatus extends ClientSuiteStatus> {
-  tool: string;
+  /** 有 CLI 的产品提供工具 id 用于版本探测；桌面-only 产品缺席。 */
+  tool?: string;
   logLabel: string;
   getStatus: () => Promise<TStatus>;
-  runCliAction: (action: "install" | "update") => Promise<void>;
-  launchDesktop: () => Promise<DesktopLaunchResult>;
+  /** 无 CLI 的产品不提供此回调；卡片也不会渲染 CLI 行。 */
+  runCliAction?: (action: "install" | "update") => Promise<void>;
+  /** 无桌面版的产品不提供此回调；卡片也不会渲染桌面行与安装轮询。 */
+  launchDesktop?: () => Promise<DesktopLaunchResult>;
 }
 
 /** Shared install/status state machine for the first-party client suite pages. */
@@ -48,9 +53,11 @@ export function useClientSuite<TStatus extends ClientSuiteStatus>(
   }, [refresh]);
 
   const refreshCliLatestVersion = useCallback(async () => {
+    if (!adapter.tool) return;
+    const toolName = adapter.tool;
     try {
-      const versions = await settingsApi.getToolVersions([adapter.tool]);
-      const tool = versions.find((item) => item.name === adapter.tool);
+      const versions = await settingsApi.getToolVersions([toolName]);
+      const tool = versions.find((item) => item.name === toolName);
       setCliLatestVersion(tool?.latest_version ?? null);
     } catch (error) {
       console.warn(
@@ -97,6 +104,9 @@ export function useClientSuite<TStatus extends ClientSuiteStatus>(
 
   const runCliAction = useCallback(
     async (action: "install" | "update"): Promise<TStatus> => {
+      if (!adapter.runCliAction) {
+        throw new Error(`${adapter.logLabel} has no CLI lifecycle`);
+      }
       await adapter.runCliAction(action);
       const next = await adapter.getStatus();
       setStatus(next);
@@ -107,6 +117,7 @@ export function useClientSuite<TStatus extends ClientSuiteStatus>(
   );
 
   const launchDesktop = useCallback(async () => {
+    if (!adapter.launchDesktop) return undefined;
     const result = await adapter.launchDesktop();
     if (!result.desktopWasInstalled) setMonitoring(true);
     return result;

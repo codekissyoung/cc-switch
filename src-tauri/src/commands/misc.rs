@@ -244,12 +244,53 @@ pub struct ClaudeDesktopLaunchResult {
     desktop_was_installed: bool,
 }
 
+/// Gemini CLI + Antigravity desktop readiness for the ICodeEasy Google page.
+///
+/// Only the Gemini CLI can be pointed at the ICodeEasy relay; the Antigravity
+/// desktop app and the `agy` CLI authenticate with a Google account, so this
+/// status reports installation health only.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GeminiSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    desktop_installed: bool,
+    npm_available: bool,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AntigravityDesktopLaunchResult {
+    /// `antigravity-app` when an installed application was launched;
+    /// `official-download` when ICodeEasy opened Google's download page.
+    method: &'static str,
+    desktop_was_installed: bool,
+}
+
+/// Kimi Code CLI readiness + ICodeEasy relay state for the ICodeEasy Kimi page.
+/// Kimi Code is a terminal-only product, so there is no desktop field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct KimiSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    relay_configured: bool,
+}
+
 const CHATGPT_CODEX_LANDING_URL: &str = "https://chatgpt.com/codex?app-landing-page=true";
 const CHATGPT_WINDOWS_INSTALLER_URL: &str =
     "https://get.microsoft.com/installer/download/9PLM9XGG6VKS?cid=website_cta_psi";
 const CLAUDE_MACOS_INSTALLER_URL: &str =
     "https://claude.ai/api/desktop/darwin/universal/dmg/latest/redirect?utm_source=icodeeasy";
 const CLAUDE_WINDOWS_INSTALLER_URL: &str = "https://claude.com/download?utm_source=icodeeasy";
+const ANTIGRAVITY_DOWNLOAD_URL: &str = "https://antigravity.google/download";
+const ZCODE_DOWNLOAD_URL: &str = "https://zcode.z.ai/";
 
 fn codex_suite_platform() -> &'static str {
     if cfg!(target_os = "macos") {
@@ -620,8 +661,309 @@ pub async fn launch_or_install_claude_desktop(
     })
 }
 
-const VALID_TOOLS: [&str; 7] = [
-    "claude", "codex", "gemini", "grok", "opencode", "openclaw", "hermes",
+fn gemini_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn antigravity_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = vec![PathBuf::from("/Applications/Antigravity.app")];
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(home.join("Applications/Antigravity.app"));
+    }
+
+    candidates
+        .into_iter()
+        .find(|bundle| bundle.join("Contents/MacOS/Antigravity").is_file())
+}
+
+#[cfg(target_os = "windows")]
+fn antigravity_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(local_data) = dirs::data_local_dir() {
+        candidates.push(
+            local_data
+                .join("Programs")
+                .join("Antigravity")
+                .join("Antigravity.exe"),
+        );
+    }
+
+    candidates.into_iter().find(|path| path.is_file())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn antigravity_desktop_app_path() -> Option<PathBuf> {
+    None
+}
+
+#[tauri::command]
+pub async fn get_gemini_suite_status() -> Result<GeminiSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("gemini");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        GeminiSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: gemini_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            desktop_installed: antigravity_desktop_app_path().is_some(),
+            npm_available: native_npm_available(),
+        }
+    })
+    .await
+    .map_err(|e| format!("Gemini suite probe task failed: {e}"))
+}
+
+fn launch_installed_antigravity_desktop(path: &Path) -> Result<(), String> {
+    use std::process::Command;
+
+    #[cfg(target_os = "macos")]
+    let child = Command::new("open").arg(path).spawn();
+
+    #[cfg(target_os = "windows")]
+    let child = {
+        use std::os::windows::process::CommandExt as _;
+        Command::new(path).creation_flags(CREATE_NO_WINDOW).spawn()
+    };
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    let child: std::io::Result<std::process::Child> = Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "Antigravity is unsupported on this platform",
+    ));
+
+    let child = child.map_err(|e| format!("Failed to launch Antigravity: {e}"))?;
+    wait_for_child_in_background(child, "Antigravity");
+    Ok(())
+}
+
+/// Launch Antigravity when installed, otherwise open Google's official download
+/// page. ICodeEasy never downloads, mirrors, or republishes the package.
+#[tauri::command]
+pub async fn launch_or_install_antigravity_desktop(
+    app: AppHandle,
+) -> Result<AntigravityDesktopLaunchResult, String> {
+    if !cfg!(any(target_os = "macos", target_os = "windows")) {
+        return Err("Antigravity setup supports macOS and Windows only".to_string());
+    }
+
+    if let Some(path) = antigravity_desktop_app_path() {
+        launch_installed_antigravity_desktop(&path)?;
+        return Ok(AntigravityDesktopLaunchResult {
+            method: "antigravity-app",
+            desktop_was_installed: true,
+        });
+    }
+
+    app.opener()
+        .open_url(ANTIGRAVITY_DOWNLOAD_URL, None::<String>)
+        .map_err(|e| format!("Failed to open the official Antigravity download page: {e}"))?;
+
+    Ok(AntigravityDesktopLaunchResult {
+        method: "official-download",
+        desktop_was_installed: false,
+    })
+}
+
+fn kimi_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+#[tauri::command]
+pub async fn get_kimi_suite_status() -> Result<KimiSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("kimi");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        let relay_configured = crate::kimi_config::read_kimi_config_text()
+            .map(|text| crate::kimi_config::kimi_relay_configured(&text))
+            .unwrap_or(false);
+
+        KimiSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: kimi_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("Kimi suite probe task failed: {e}"))
+}
+
+/// 把 ICodeEasy 中转（provider + 模型条目 + default_model）upsert 进
+/// `~/.kimi-code/config.toml`，保留用户既有 OAuth 与其他 provider。
+#[tauri::command]
+pub async fn configure_kimi_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::kimi_config::write_kimi_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Kimi relay configure task failed: {e}"))?
+}
+
+/// ZCode desktop readiness + ICodeEasy relay state for the ICodeEasy ZCode page.
+/// ZCode is a desktop-only product (no standalone CLI), so there is no cli field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ZcodeSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    desktop_installed: bool,
+    relay_configured: bool,
+}
+
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ZcodeDesktopLaunchResult {
+    /// `zcode-app` when an installed application was launched;
+    /// `official-download` when ICodeEasy opened Z.ai's download page.
+    method: &'static str,
+    desktop_was_installed: bool,
+}
+
+fn zcode_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn zcode_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = vec![PathBuf::from("/Applications/ZCode.app")];
+    if let Some(home) = dirs::home_dir() {
+        candidates.push(home.join("Applications/ZCode.app"));
+    }
+
+    candidates
+        .into_iter()
+        .find(|bundle| bundle.join("Contents/MacOS/ZCode").is_file())
+}
+
+#[cfg(target_os = "windows")]
+fn zcode_desktop_app_path() -> Option<PathBuf> {
+    let mut candidates = Vec::new();
+    if let Some(local_data) = dirs::data_local_dir() {
+        candidates.push(local_data.join("Programs").join("ZCode").join("ZCode.exe"));
+    }
+
+    candidates.into_iter().find(|path| path.is_file())
+}
+
+#[cfg(not(any(target_os = "macos", target_os = "windows")))]
+fn zcode_desktop_app_path() -> Option<PathBuf> {
+    None
+}
+
+#[tauri::command]
+pub async fn get_zcode_suite_status() -> Result<ZcodeSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let relay_configured = crate::zcode_config::read_zcode_config_text()
+            .map(|text| crate::zcode_config::zcode_relay_configured(&text))
+            .unwrap_or(false);
+
+        ZcodeSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: zcode_suite_platform(),
+            desktop_installed: zcode_desktop_app_path().is_some(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("ZCode suite probe task failed: {e}"))
+}
+
+fn launch_installed_zcode_desktop(path: &Path) -> Result<(), String> {
+    use std::process::Command;
+
+    #[cfg(target_os = "macos")]
+    let child = Command::new("open").arg(path).spawn();
+
+    #[cfg(target_os = "windows")]
+    let child = {
+        use std::os::windows::process::CommandExt as _;
+        Command::new(path).creation_flags(CREATE_NO_WINDOW).spawn()
+    };
+
+    #[cfg(not(any(target_os = "macos", target_os = "windows")))]
+    let child: std::io::Result<std::process::Child> = Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "ZCode is unsupported on this platform",
+    ));
+
+    let child = child.map_err(|e| format!("Failed to launch ZCode: {e}"))?;
+    wait_for_child_in_background(child, "ZCode");
+    Ok(())
+}
+
+/// Launch ZCode when installed, otherwise open Z.ai's official download page.
+/// ICodeEasy never downloads, mirrors, or republishes the package.
+#[tauri::command]
+pub async fn launch_or_install_zcode_desktop(
+    app: AppHandle,
+) -> Result<ZcodeDesktopLaunchResult, String> {
+    if !cfg!(any(target_os = "macos", target_os = "windows")) {
+        return Err("ZCode setup supports macOS and Windows only".to_string());
+    }
+
+    if let Some(path) = zcode_desktop_app_path() {
+        launch_installed_zcode_desktop(&path)?;
+        return Ok(ZcodeDesktopLaunchResult {
+            method: "zcode-app",
+            desktop_was_installed: true,
+        });
+    }
+
+    app.opener()
+        .open_url(ZCODE_DOWNLOAD_URL, None::<String>)
+        .map_err(|e| format!("Failed to open the official ZCode download page: {e}"))?;
+
+    Ok(ZcodeDesktopLaunchResult {
+        method: "official-download",
+        desktop_was_installed: false,
+    })
+}
+
+/// 把 ICodeEasy 中转（自定义 provider + 默认模型条目）upsert 进
+/// `~/.zcode/v2/config.json`，保留用户既有的官方渠道与其他 provider。
+/// 运行中的 ZCode 不会自动重载配置，改动需重启 ZCode 生效。
+#[tauri::command]
+pub async fn configure_zcode_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::zcode_config::write_zcode_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("ZCode relay configure task failed: {e}"))?
+}
+
+const VALID_TOOLS: [&str; 9] = [
+    "claude", "codex", "gemini", "grok", "opencode", "openclaw", "hermes", "agy", "kimi",
 ];
 
 #[derive(Debug, Clone, serde::Deserialize)]
@@ -957,6 +1299,8 @@ fn tool_display_name(tool: &str) -> &'static str {
         "opencode" => "OpenCode",
         "openclaw" => "OpenClaw",
         "hermes" => "Hermes",
+        "agy" => "Antigravity CLI",
+        "kimi" => "Kimi Code",
         _ => "Unknown",
     }
 }
@@ -981,6 +1325,24 @@ const HERMES_INSTALL_UNIX: &str =
     "bash -c 'tmp=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh -o $tmp && bash $tmp; status=$?; rm -f $tmp; exit $status'";
 const HERMES_UPDATE_UNIX: &str =
     "hermes update || bash -c 'tmp=$(mktemp) && curl -fsSL https://raw.githubusercontent.com/NousResearch/hermes-agent/main/scripts/install.sh -o $tmp && bash $tmp; status=$?; rm -f $tmp; exit $status'";
+
+/// Antigravity CLI（`agy`）官方 installer：Google 只提供 shell 脚本（macOS/Linux）与
+/// winget 包（Windows），没有 npm 分发，因此与 hermes 一样不参与 npm fallback 链。
+/// `agy update` 是 CLI 自带的自更新子命令，失败时回退官方 installer 重装。
+const AGY_INSTALL_UNIX: &str =
+    "bash -c 'tmp=$(mktemp) && curl -fsSL https://antigravity.google/install.sh -o $tmp && bash $tmp; status=$?; rm -f $tmp; exit $status'";
+const AGY_UPDATE_UNIX: &str =
+    "agy update || bash -c 'tmp=$(mktemp) && curl -fsSL https://antigravity.google/install.sh -o $tmp && bash $tmp; status=$?; rm -f $tmp; exit $status'";
+
+#[cfg(target_os = "windows")]
+const AGY_INSTALL_WINDOWS: &str = "winget install Google.AntigravityCLI";
+
+/// Kimi Code 官方安装脚本（单二进制分发，无 Node 依赖）；npm 是替代渠道。
+const KIMI_INSTALL_UNIX: &str =
+    "bash -c 'tmp=$(mktemp) && curl -fsSL https://code.kimi.com/kimi-code/install.sh -o $tmp && bash $tmp; status=$?; rm -f $tmp; exit $status'";
+
+#[cfg(target_os = "windows")]
+const KIMI_INSTALL_WINDOWS_SCRIPT: &str = "irm https://code.kimi.com/kimi-code/install.ps1 | iex";
 
 #[cfg(target_os = "windows")]
 const HERMES_INSTALL_WINDOWS_SCRIPT: &str =
@@ -1026,6 +1388,14 @@ fn grok_install_windows_command() -> String {
 }
 
 #[cfg(target_os = "windows")]
+fn kimi_install_windows_command() -> String {
+    format!(
+        "powershell -NoProfile -ExecutionPolicy Bypass -EncodedCommand {}",
+        powershell_encoded_command(KIMI_INSTALL_WINDOWS_SCRIPT)
+    )
+}
+
+#[cfg(target_os = "windows")]
 fn hermes_update_windows_command() -> String {
     // fallback 是 powershell.exe，不是 .cmd/.bat；这里不需要 `call`。PowerShell 的
     // `irm | iex` 已被 EncodedCommand 收进单一参数,避免 `cmd.exe` 解析管道符。
@@ -1047,13 +1417,14 @@ fn npm_install_command_for(tool: &str) -> Option<&'static str> {
         "grok" => Some("npm i -g @xai-official/grok@latest"),
         "opencode" => Some("npm i -g opencode-ai@latest"),
         "openclaw" => Some("npm i -g openclaw@latest"),
+        "kimi" => Some("npm i -g @moonshot-ai/kimi-code@latest"),
         _ => None,
     }
 }
 
 fn official_update_args(tool: &str) -> Option<&'static str> {
     match tool {
-        "claude" | "codex" | "grok" | "hermes" => Some("update"),
+        "claude" | "codex" | "grok" | "hermes" | "agy" => Some("update"),
         "openclaw" => Some("update --yes"),
         "opencode" => Some("upgrade"),
         _ => None,
@@ -1131,6 +1502,46 @@ fn tool_action_shell_command_for_shell(
             }
             .to_string(),
         );
+    }
+
+    // agy 无 npm 分发：POSIX 走 Google 官方 shell installer，Windows 走 winget；
+    // 更新优先 `agy update` 自更新，POSIX 失败再回退 installer 重装。
+    if tool == "agy" {
+        return Some(
+            match (action, shell) {
+                (ToolLifecycleAction::Install, LifecycleCommandShell::Posix) => AGY_INSTALL_UNIX,
+                (ToolLifecycleAction::Update, LifecycleCommandShell::Posix) => AGY_UPDATE_UNIX,
+                #[cfg(target_os = "windows")]
+                (ToolLifecycleAction::Install, LifecycleCommandShell::WindowsBatch) => {
+                    AGY_INSTALL_WINDOWS
+                }
+                #[cfg(target_os = "windows")]
+                (ToolLifecycleAction::Update, LifecycleCommandShell::WindowsBatch) => "agy update",
+                #[cfg(not(target_os = "windows"))]
+                (_, LifecycleCommandShell::WindowsBatch) => return None,
+            }
+            .to_string(),
+        );
+    }
+
+    // Kimi Code 的 `kimi update` 是交互式 TUI 流程（检查更新后等用户选择"立即安装"），
+    // 静默 lifecycle 没有 stdin 会挂死；官方 installer 重装即升级到最新版，npm 做兜底。
+    if tool == "kimi" {
+        match shell {
+            LifecycleCommandShell::Posix => {
+                return Some(installer_with_npm_fallback(KIMI_INSTALL_UNIX, tool));
+            }
+            #[cfg(target_os = "windows")]
+            LifecycleCommandShell::WindowsBatch => {
+                return Some(chain_update_commands(
+                    kimi_install_windows_command(),
+                    npm_install_command_for(tool)?.to_string(),
+                    shell,
+                ));
+            }
+            #[cfg(not(target_os = "windows"))]
+            LifecycleCommandShell::WindowsBatch => return None,
+        }
     }
 
     let install = npm_install_command_for(tool)?;
@@ -1367,6 +1778,7 @@ async fn get_single_tool_version_impl(
         }
         "openclaw" => fetch_npm_latest_for_tool(&client, "openclaw", tool, local).await,
         "hermes" => fetch_pypi_latest_version(&client, "hermes-agent").await,
+        "kimi" => fetch_npm_latest_for_tool(&client, "@moonshot-ai/kimi-code", tool, local).await,
         _ => None,
     };
 
@@ -2631,6 +3043,7 @@ fn npm_package_for(tool: &str) -> Option<&'static str> {
         "grok" => Some("@xai-official/grok"),
         "opencode" => Some("opencode-ai"),
         "openclaw" => Some("openclaw"),
+        "kimi" => Some("@moonshot-ai/kimi-code"),
         _ => None,
     }
 }
@@ -3042,6 +3455,11 @@ fn anchored_command_from_paths(tool: &str, bin_path: &str, real_target: &str) ->
     if tool == "hermes" {
         return anchored_official_update_command(tool, bin_path);
     }
+    // agy 与 hermes 同理：CLI 自带 `agy update` 知道安装环境（Google installer 落到
+    // `~/.local/bin` 等位置），锚定到命令行命中的那处二进制即可。
+    if tool == "agy" {
+        return anchored_official_update_command(tool, bin_path);
+    }
     if tool == "claude"
         && (real_lower.contains("/.local/share/claude/")
             || real_lower.contains("/claude/versions/"))
@@ -3127,6 +3545,10 @@ fn package_manager_anchored_command_from_paths(tool: &str, bin_path: &str) -> Op
 #[cfg(target_os = "windows")]
 fn anchored_command_from_paths(tool: &str, bin_path: &str, real_target: &str) -> Option<String> {
     if tool == "hermes" {
+        return anchored_official_update_command(tool, bin_path);
+    }
+    // agy 与 hermes 同理：优先 CLI 自带的 `agy update`。
+    if tool == "agy" {
         return anchored_official_update_command(tool, bin_path);
     }
     if tool == "grok" && is_grok_native_install(bin_path, real_target) {
@@ -3237,6 +3659,8 @@ fn posix_install_command_for(tool: &str) -> String {
         "grok" => installer_with_npm_fallback(GROK_INSTALL_UNIX, tool),
         "opencode" => installer_with_npm_fallback(OPENCODE_INSTALL_UNIX, tool),
         "hermes" => HERMES_INSTALL_UNIX.to_string(),
+        "agy" => AGY_INSTALL_UNIX.to_string(),
+        "kimi" => installer_with_npm_fallback(KIMI_INSTALL_UNIX, tool),
         _ => static_fallback_command_for(tool, ToolLifecycleAction::Install),
     }
 }
@@ -5526,6 +5950,18 @@ mod tests {
         }
 
         #[test]
+        fn agy_uses_cli_update_anchor() {
+            // agy 自带 `agy update`;锚定到命令行命中的那处二进制（Google installer
+            // 落在 `~/.local/bin` 等位置,无同级 npm 可供包管理器锚定）。
+            let cmd = anchored_command_from_paths(
+                "agy",
+                "/Users/me/.local/bin/agy",
+                "/Users/me/.local/bin/agy",
+            );
+            assert_eq!(cmd.as_deref(), Some("/Users/me/.local/bin/agy update"));
+        }
+
+        #[test]
         fn opencode_native_install_uses_cli_upgrade_without_package_fallback() {
             // opencode install.sh 装到 ~/.opencode/bin（独立二进制、无同级 npm）：
             // 不能锚定到 `<dir>/npm`（必失败），但可以锚定到 CLI 自身跑官方 upgrade。
@@ -6032,6 +6468,69 @@ mod tests {
             assert!(
                 !fallback.contains('|') && !cmd.contains("python") && !cmd.contains("pip"),
                 "should not depend on pipefail or system Python/pip: {cmd}"
+            );
+        }
+
+        #[test]
+        fn agy_install_uses_official_installer() {
+            // agy 没有 npm 分发：安装直接走 Google 官方 shell installer，
+            // 且与 hermes 一样不依赖外层 pipefail（mktemp 落盘再 bash）。
+            let cmd = install_command_for("agy");
+            assert_eq!(
+                cmd,
+                "bash -c 'tmp=$(mktemp) && curl -fsSL https://antigravity.google/install.sh -o $tmp && bash $tmp; status=$?; rm -f $tmp; exit $status'"
+            );
+            assert!(
+                !cmd.contains('|') && !cmd.contains("npm"),
+                "should not depend on pipefail or npm: {cmd}"
+            );
+        }
+
+        #[test]
+        fn agy_update_fallback_uses_cli_update_then_installer() {
+            // 锚定失败时先让 PATH 上的 agy 自更新,失败再跑官方 installer 重装。
+            let cmd = static_fallback_command("agy");
+            assert!(
+                cmd.starts_with("agy update || bash -c 'tmp=$(mktemp) && curl -fsSL https://antigravity.google/install.sh"),
+                "should try CLI update before official installer: {cmd}"
+            );
+            assert!(
+                !cmd.contains("npm"),
+                "agy has no npm distribution, update must not fall back to npm: {cmd}"
+            );
+        }
+
+        #[test]
+        fn kimi_install_uses_official_installer_with_npm_fallback() {
+            // Kimi Code 首推官方单二进制 installer（无 Node 依赖），npm 包
+            // @moonshot-ai/kimi-code 作为网络受限时的兜底。
+            let cmd = install_command_for("kimi");
+            assert!(
+                cmd.starts_with(
+                    "bash -c 'tmp=$(mktemp) && curl -fsSL https://code.kimi.com/kimi-code/install.sh"
+                ),
+                "should use the official installer first: {cmd}"
+            );
+            assert!(
+                cmd.contains("|| npm i -g @moonshot-ai/kimi-code@latest"),
+                "should keep the npm package as fallback: {cmd}"
+            );
+        }
+
+        #[test]
+        fn kimi_update_reinstalls_via_installer_instead_of_interactive_self_update() {
+            // `kimi update` 是交互式 TUI 流程，静默 lifecycle 会挂死；更新 = 用官方
+            // installer 重装最新版（npm 兜底），绝不能拼出 `kimi update`。
+            let cmd = static_fallback_command("kimi");
+            assert!(
+                cmd.starts_with(
+                    "bash -c 'tmp=$(mktemp) && curl -fsSL https://code.kimi.com/kimi-code/install.sh"
+                ),
+                "update should reinstall via the official installer: {cmd}"
+            );
+            assert!(
+                !cmd.contains("kimi update") && !cmd.contains("kimi upgrade"),
+                "interactive self-update must not appear in silent lifecycle: {cmd}"
             );
         }
     }

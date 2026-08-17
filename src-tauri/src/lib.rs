@@ -17,6 +17,7 @@ mod gemini_mcp;
 mod grok_config;
 pub mod hermes_config;
 mod init_status;
+mod kimi_config;
 mod lightweight;
 #[cfg(target_os = "linux")]
 mod linux_fix;
@@ -37,6 +38,7 @@ mod store;
 mod tray;
 mod usage_events;
 mod usage_script;
+mod zcode_config;
 
 pub use app_config::{AppType, InstalledSkill, McpApps, McpServer, MultiAppConfig, SkillApps};
 pub use codex_config::{
@@ -1640,6 +1642,13 @@ pub fn run() {
             commands::launch_or_install_codex_desktop,
             commands::get_claude_suite_status,
             commands::launch_or_install_claude_desktop,
+            commands::get_gemini_suite_status,
+            commands::launch_or_install_antigravity_desktop,
+            commands::get_kimi_suite_status,
+            commands::configure_kimi_relay,
+            commands::get_zcode_suite_status,
+            commands::launch_or_install_zcode_desktop,
+            commands::configure_zcode_relay,
             // Provider terminal
             commands::open_provider_terminal,
             // Universal Provider management
