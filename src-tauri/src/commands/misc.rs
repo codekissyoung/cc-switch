@@ -296,6 +296,19 @@ pub struct GrokSuiteStatus {
     relay_configured: bool,
 }
 
+/// OpenCode CLI readiness + ICodeEasy relay state for the ICodeEasy OpenCode page.
+/// OpenCode is a terminal-only product, so there is no desktop field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OpencodeSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    relay_configured: bool,
+}
+
 const CHATGPT_CODEX_LANDING_URL: &str = "https://chatgpt.com/codex?app-landing-page=true";
 const CHATGPT_WINDOWS_INSTALLER_URL: &str =
     "https://get.microsoft.com/installer/download/9PLM9XGG6VKS?cid=website_cta_psi";
@@ -810,6 +823,16 @@ fn grok_suite_platform() -> &'static str {
     }
 }
 
+fn opencode_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
 #[tauri::command]
 pub async fn get_kimi_suite_status() -> Result<KimiSuiteStatus, String> {
     tokio::task::spawn_blocking(|| {
@@ -882,6 +905,44 @@ pub async fn configure_grok_relay(api_key: String) -> Result<(), String> {
     })
     .await
     .map_err(|e| format!("Grok relay configure task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn get_opencode_suite_status() -> Result<OpencodeSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("opencode");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        let relay_configured = crate::opencode_config::read_opencode_config()
+            .map(|config| crate::opencode_config::opencode_relay_configured(&config))
+            .unwrap_or(false);
+
+        OpencodeSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: opencode_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("OpenCode suite probe task failed: {e}"))
+}
+
+/// Upsert the ICodeEasy relay provider in `~/.config/opencode/opencode.json` and
+/// select it as the default model, preserving the user's themes, plugins, MCP
+/// servers and other provider entries.
+#[tauri::command]
+pub async fn configure_opencode_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::opencode_config::write_opencode_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("OpenCode relay configure task failed: {e}"))?
 }
 
 /// ZCode desktop readiness + ICodeEasy relay state for the ICodeEasy ZCode page.

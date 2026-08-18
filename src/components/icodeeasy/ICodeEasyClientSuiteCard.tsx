@@ -26,7 +26,8 @@ interface ICodeEasyClientSuiteCardProps {
     | "icodeeasyGoogle"
     | "icodeeasyKimi"
     | "icodeeasyGrok"
-    | "icodeeasyZcode";
+    | "icodeeasyZcode"
+    | "icodeeasyOpencode";
   status: ClientSuiteStatus | null;
   monitoringInstall: boolean;
   cliLatestVersion: string | null;

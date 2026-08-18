@@ -15,6 +15,7 @@ import {
   GeminiIcon,
   GrokIcon,
   KimiIcon,
+  OpenCodeIcon,
   ZcodeIcon,
 } from "@/components/BrandIcons";
 import { cn } from "@/lib/utils";
@@ -68,6 +69,7 @@ interface ICodeEasySidebarProps {
   isKimiActive: boolean;
   isGrokActive: boolean;
   isZcodeActive: boolean;
+  isOpencodeActive: boolean;
   activeSettingsSection: ICodeEasySettingsSection;
   onHomeSelect: () => void;
   onCodexSelect: () => void;
@@ -76,6 +78,7 @@ interface ICodeEasySidebarProps {
   onKimiSelect: () => void;
   onGrokSelect: () => void;
   onZcodeSelect: () => void;
+  onOpencodeSelect: () => void;
   onSettingsSectionSelect: (section: ICodeEasySettingsSection) => void;
   style?: CSSProperties;
 }
@@ -88,6 +91,7 @@ export function ICodeEasySidebar({
   isKimiActive,
   isGrokActive,
   isZcodeActive,
+  isOpencodeActive,
   activeSettingsSection,
   onHomeSelect,
   onCodexSelect,
@@ -96,6 +100,7 @@ export function ICodeEasySidebar({
   onKimiSelect,
   onGrokSelect,
   onZcodeSelect,
+  onOpencodeSelect,
   onSettingsSectionSelect,
   style,
 }: ICodeEasySidebarProps) {
@@ -215,6 +220,18 @@ export function ICodeEasySidebar({
           <span>{t("icodeeasyNavigation.zcode")}</span>
         </button>
 
+        <button
+          type="button"
+          aria-current={isOpencodeActive ? "page" : undefined}
+          onClick={onOpencodeSelect}
+          className={itemClass(isOpencodeActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <OpenCodeIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.opencode")}</span>
+        </button>
+
         <div className="my-3 border-t border-border/60" />
 
         <div className="space-y-1">
@@ -227,6 +244,7 @@ export function ICodeEasySidebar({
               !isKimiActive &&
               !isGrokActive &&
               !isZcodeActive &&
+              !isOpencodeActive &&
               activeSettingsSection === item.id;
             const Icon = item.icon;
 

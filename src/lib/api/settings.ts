@@ -99,6 +99,15 @@ export interface GrokSuiteStatus {
   relayConfigured: boolean;
 }
 
+export interface OpencodeSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  relayConfigured: boolean;
+}
+
 export interface ZcodeSuiteStatus {
   supported: boolean;
   platform: "macos" | "windows" | "unsupported";
@@ -392,6 +401,14 @@ export const settingsApi = {
 
   async configureGrokRelay(apiKey: string): Promise<void> {
     await invoke("configure_grok_relay", { apiKey });
+  },
+
+  async getOpencodeSuiteStatus(): Promise<OpencodeSuiteStatus> {
+    return await invoke("get_opencode_suite_status");
+  },
+
+  async configureOpencodeRelay(apiKey: string): Promise<void> {
+    await invoke("configure_opencode_relay", { apiKey });
   },
 
   async getZcodeSuiteStatus(): Promise<ZcodeSuiteStatus> {

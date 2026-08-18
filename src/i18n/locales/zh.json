@@ -50,6 +50,7 @@
     "kimi": "Kimi",
     "grok": "Grok",
     "zcode": "ZCode",
+    "opencode": "OpenCode",
     "statistics": "统计"
   },
   "firstRunNotice": {
@@ -329,6 +330,42 @@
       "notInstalled": "未安装",
       "waitingForInstall": "等待安装完成…",
       "officialInstallerHint": "ZCode 只有桌面版（macOS / Windows 安装包）；未安装时会打开 Z.ai 官方下载页，也可以用 brew install --cask zcode 安装。"
+    }
+  },
+  "icodeeasyOpencode": {
+    "loadError": "读取 OpenCode 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy 供应商（OpenAI / Responses 协议，GPT-5.6 Sol · 默认 high 推理档）写入 ~/.config/opencode/opencode.json，并将默认模型切换为 icodeeasy/gpt-5.6-sol；现有主题、插件、MCP 与其他 provider 配置会保留。",
+      "configured": "OpenCode 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "OpenCode 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 OpenCode CLI。"
+    },
+    "cli": {
+      "name": "OpenCode CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "OpenCode CLI 已就绪",
+      "installFailed": "OpenCode CLI 安装或更新失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "OpenCode 优先使用官方 install 脚本，npm 作为兜底渠道；安装与更新仍由 OpenCode 官方工具完成。",
+      "cliVerificationFailed": "OpenCode CLI 安装后未通过版本验证"
     }
   },
   "apiKeyInput": {

@@ -294,6 +294,161 @@ pub fn remove_plugins_by_prefixes(prefixes: &[&str]) -> Result<(), AppError> {
     write_opencode_config(&config)
 }
 
+/// ICodeEasy 中转在 OpenCode 配置里的 provider id、显示名与端点。
+pub const OPENCODE_RELAY_PROVIDER_ID: &str = "icodeeasy";
+pub const OPENCODE_RELAY_PROVIDER_NAME: &str = "ICodeEasy";
+pub const OPENCODE_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
+/// 与 Codex 套件同一网关模型；high 推理档作为模型基础 options 写入（默认生效），
+/// low/medium/xhigh 仍保留在 variants 里供运行时切换。模型元数据与
+/// `opencodeProviderPresets.ts` 里 `@ai-sdk/openai` 的 gpt-5.6-sol 条目保持一致。
+pub const OPENCODE_RELAY_MODEL: &str = "gpt-5.6-sol";
+pub const OPENCODE_RELAY_MODEL_NAME: &str = "GPT-5.6 Sol";
+pub const OPENCODE_RELAY_MODEL_CONTEXT: u64 = 400_000;
+pub const OPENCODE_RELAY_MODEL_OUTPUT: u64 = 128_000;
+
+/// OpenCode 走 Responses 协议（`@ai-sdk/openai`），与网关的 Codex/Grok 链路一致。
+const OPENCODE_RELAY_NPM: &str = "@ai-sdk/openai";
+
+fn relay_model_variant(effort: &str) -> Value {
+    json!({
+        "reasoningEffort": effort,
+        "reasoningSummary": "auto",
+        "textVerbosity": "medium",
+    })
+}
+
+fn icodeeasy_model_definition() -> Value {
+    json!({
+        "name": OPENCODE_RELAY_MODEL_NAME,
+        "limit": {
+            "context": OPENCODE_RELAY_MODEL_CONTEXT,
+            "output": OPENCODE_RELAY_MODEL_OUTPUT,
+        },
+        "modalities": { "input": ["text", "image"], "output": ["text"] },
+        "options": relay_model_variant("high"),
+        "variants": {
+            "low": relay_model_variant("low"),
+            "medium": relay_model_variant("medium"),
+            "high": relay_model_variant("high"),
+            "xhigh": relay_model_variant("xhigh"),
+        },
+    })
+}
+
+fn relay_base_url_matches(entry: &Value) -> bool {
+    entry
+        .get("options")
+        .and_then(|options| options.get("baseURL"))
+        .and_then(Value::as_str)
+        .is_some_and(|url| url.trim_end_matches('/') == OPENCODE_RELAY_BASE_URL)
+}
+
+fn relay_has_api_key(entry: &Value) -> bool {
+    entry
+        .get("options")
+        .and_then(|options| options.get("apiKey"))
+        .and_then(Value::as_str)
+        .is_some_and(|key| !key.trim().is_empty())
+}
+
+/// Whether the live OpenCode config selects the ICodeEasy relay as default model.
+pub fn opencode_relay_configured(config: &Value) -> bool {
+    let Some(entry) = config
+        .get("provider")
+        .and_then(Value::as_object)
+        .and_then(|providers| providers.get(OPENCODE_RELAY_PROVIDER_ID))
+    else {
+        return false;
+    };
+    let default_matches = config
+        .get("model")
+        .and_then(Value::as_str)
+        .is_some_and(|model| {
+            model == format!("{OPENCODE_RELAY_PROVIDER_ID}/{OPENCODE_RELAY_MODEL}")
+        });
+
+    relay_base_url_matches(entry) && relay_has_api_key(entry) && default_matches
+}
+
+/// Upsert the ICodeEasy relay provider into an OpenCode config document and
+/// select the relay model as default. 用户在 ICodeEasy 条目下自行添加的其它
+/// 模型、其余 provider 条目与顶层配置（theme / plugin / mcp 等）都会保留；
+/// 默认模型条目本身每次重写回 canonical 形状，保证重新配置后能恢复可用。
+pub fn apply_opencode_icodeeasy_relay(config: &Value, api_key: &str) -> Result<Value, AppError> {
+    let mut full_config = config.clone();
+
+    // 与 set_provider 同一归一化语义：provider 段缺失或不是对象时重置为空对象。
+    if !full_config.get("provider").is_some_and(Value::is_object) {
+        if full_config.get("provider").is_some() {
+            log::warn!("opencode.json 的 provider 不是对象，已重置为空对象");
+        }
+        full_config["provider"] = json!({});
+    }
+    let providers = full_config["provider"]
+        .as_object_mut()
+        .expect("provider section normalized to object");
+
+    let entry = providers
+        .entry(OPENCODE_RELAY_PROVIDER_ID.to_string())
+        .or_insert_with(|| json!({}));
+    if !entry.is_object() {
+        log::warn!("opencode.json 的 provider.{OPENCODE_RELAY_PROVIDER_ID} 不是对象，已重置");
+        *entry = json!({});
+    }
+
+    let mut models = entry
+        .get("models")
+        .and_then(Value::as_object)
+        .cloned()
+        .unwrap_or_default();
+    models.insert(
+        OPENCODE_RELAY_MODEL.to_string(),
+        icodeeasy_model_definition(),
+    );
+
+    *entry = json!({
+        "npm": OPENCODE_RELAY_NPM,
+        "name": OPENCODE_RELAY_PROVIDER_NAME,
+        "options": {
+            "baseURL": OPENCODE_RELAY_BASE_URL,
+            "apiKey": api_key,
+        },
+        "models": models,
+    });
+
+    full_config["model"] = Value::String(format!(
+        "{OPENCODE_RELAY_PROVIDER_ID}/{OPENCODE_RELAY_MODEL}"
+    ));
+    Ok(full_config)
+}
+
+/// Persist the ICodeEasy OpenCode relay atomically. The file contains a secret,
+/// so the config is tightened to owner read/write on Unix after writing.
+pub fn write_opencode_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+    let api_key = api_key.trim();
+    if api_key.is_empty() {
+        return Err(AppError::localized(
+            "opencode_relay_key_required",
+            "请先填写 ICodeEasy API Key",
+            "Enter the ICodeEasy API key first",
+        ));
+    }
+
+    let config = read_opencode_config()?;
+    let updated = apply_opencode_icodeeasy_relay(&config, api_key)?;
+    write_opencode_config(&updated)?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let path = get_opencode_config_path();
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600))
+            .map_err(|error| AppError::io(&path, error))?;
+    }
+
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -365,5 +520,111 @@ mod tests {
             config["model"], "keep-me",
             "unrelated user config must be preserved"
         );
+    }
+
+    #[test]
+    fn apply_icodeeasy_relay_writes_provider_and_default_model() {
+        let config = json!({ "$schema": "https://opencode.ai/config.json" });
+        let updated = apply_opencode_icodeeasy_relay(&config, "sk-test-key").expect("apply relay");
+
+        let entry = &updated["provider"][OPENCODE_RELAY_PROVIDER_ID];
+        assert_eq!(entry["npm"], "@ai-sdk/openai");
+        assert_eq!(entry["name"], OPENCODE_RELAY_PROVIDER_NAME);
+        assert_eq!(entry["options"]["baseURL"], OPENCODE_RELAY_BASE_URL);
+        assert_eq!(entry["options"]["apiKey"], "sk-test-key");
+
+        let model = &entry["models"][OPENCODE_RELAY_MODEL];
+        assert_eq!(model["name"], OPENCODE_RELAY_MODEL_NAME);
+        assert_eq!(
+            model["limit"]["context"].as_u64(),
+            Some(OPENCODE_RELAY_MODEL_CONTEXT)
+        );
+        // 默认 high 档落在模型基础 options 上，variants 里保留全部档位
+        assert_eq!(model["options"]["reasoningEffort"], "high");
+        assert_eq!(model["variants"]["xhigh"]["reasoningEffort"], "xhigh");
+
+        assert_eq!(updated["model"], "icodeeasy/gpt-5.6-sol");
+        assert!(opencode_relay_configured(&updated));
+    }
+
+    #[test]
+    fn apply_icodeeasy_relay_preserves_user_config_and_extra_models() {
+        let config = json!({
+            "theme": "opencode",
+            "model": "other/some-model",
+            "provider": {
+                "other": {
+                    "npm": "@ai-sdk/anthropic",
+                    "options": { "baseURL": "https://example.com", "apiKey": "other-key" },
+                    "models": {},
+                },
+                OPENCODE_RELAY_PROVIDER_ID: {
+                    "npm": "@ai-sdk/openai",
+                    "name": "ICodeEasy",
+                    "options": { "baseURL": OPENCODE_RELAY_BASE_URL, "apiKey": "old-key" },
+                    "models": { "gpt-5.6-sol-mini": { "name": "User Added" } },
+                },
+            },
+        });
+
+        let updated = apply_opencode_icodeeasy_relay(&config, "sk-new-key").expect("apply relay");
+
+        assert_eq!(updated["theme"], "opencode");
+        assert_eq!(
+            updated["provider"]["other"]["options"]["apiKey"],
+            "other-key"
+        );
+        let entry = &updated["provider"][OPENCODE_RELAY_PROVIDER_ID];
+        // 刷新密钥，同时保留用户自行添加的模型条目
+        assert_eq!(entry["options"]["apiKey"], "sk-new-key");
+        assert_eq!(entry["models"]["gpt-5.6-sol-mini"]["name"], "User Added");
+        assert!(opencode_relay_configured(&updated));
+    }
+
+    #[test]
+    fn relay_detection_requires_base_url_key_and_default_selection() {
+        assert!(!opencode_relay_configured(&json!({})));
+
+        let configured =
+            apply_opencode_icodeeasy_relay(&json!({}), "sk-test-key").expect("relay config");
+
+        // 缺默认模型选择
+        let mut no_default = configured.clone();
+        no_default["model"] = json!("other/model");
+        assert!(!opencode_relay_configured(&no_default));
+
+        // 密钥为空
+        let mut no_key = configured.clone();
+        no_key["provider"][OPENCODE_RELAY_PROVIDER_ID]["options"]["apiKey"] = json!(" ");
+        assert!(!opencode_relay_configured(&no_key));
+
+        // 端点指向别处
+        let mut other_endpoint = configured.clone();
+        other_endpoint["provider"][OPENCODE_RELAY_PROVIDER_ID]["options"]["baseURL"] =
+            json!("https://example.com/v1");
+        assert!(!opencode_relay_configured(&other_endpoint));
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn write_icodeeasy_relay_rejects_empty_key_and_persists() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let _guard = TestHomeGuard::set(temp.path());
+
+        assert!(write_opencode_icodeeasy_relay("  ").is_err());
+
+        write_opencode_icodeeasy_relay("sk-test-key").expect("write relay");
+        let config = read_opencode_config().expect("reload");
+        assert!(opencode_relay_configured(&config));
+
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            let mode = std::fs::metadata(get_opencode_config_path())
+                .expect("metadata")
+                .permissions()
+                .mode();
+            assert_eq!(mode & 0o777, 0o600, "config contains a secret");
+        }
     }
 }

@@ -11,6 +11,7 @@ import OpenClawSvg from "@/icons/extracted/claw.svg?url";
 import KimiSvg from "@/icons/extracted/kimi.svg?url";
 import GrokSvg from "@/icons/extracted/grok.svg?url";
 import ZcodeSvg from "@/icons/extracted/zcode.svg?url";
+import OpenCodeSvg from "@/icons/extracted/opencode-logo-light.svg?url";
 
 export function ClaudeIcon({ size = 16, className = "" }: IconProps) {
   return (
@@ -98,6 +99,19 @@ export function ZcodeIcon({ size = 16, className = "" }: IconProps) {
       height={size}
       className={className}
       alt="ZCode"
+      loading="lazy"
+    />
+  );
+}
+
+export function OpenCodeIcon({ size = 16, className = "" }: IconProps) {
+  return (
+    <img
+      src={OpenCodeSvg}
+      width={size}
+      height={size}
+      className={`dark:brightness-0 dark:invert ${className}`}
+      alt="OpenCode"
       loading="lazy"
     />
   );

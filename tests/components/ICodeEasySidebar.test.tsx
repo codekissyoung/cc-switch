@@ -13,12 +13,14 @@ const renderSidebar = (overrides?: {
   isKimiActive?: boolean;
   isGrokActive?: boolean;
   isZcodeActive?: boolean;
+  isOpencodeActive?: boolean;
   onCodexSelect?: () => void;
   onClaudeSelect?: () => void;
   onGoogleSelect?: () => void;
   onKimiSelect?: () => void;
   onGrokSelect?: () => void;
   onZcodeSelect?: () => void;
+  onOpencodeSelect?: () => void;
 }) =>
   render(
     <ICodeEasySidebar
@@ -29,6 +31,7 @@ const renderSidebar = (overrides?: {
       isKimiActive={overrides?.isKimiActive ?? false}
       isGrokActive={overrides?.isGrokActive ?? false}
       isZcodeActive={overrides?.isZcodeActive ?? false}
+      isOpencodeActive={overrides?.isOpencodeActive ?? false}
       activeSettingsSection="general"
       onHomeSelect={vi.fn()}
       onCodexSelect={overrides?.onCodexSelect ?? vi.fn()}
@@ -37,6 +40,7 @@ const renderSidebar = (overrides?: {
       onKimiSelect={overrides?.onKimiSelect ?? vi.fn()}
       onGrokSelect={overrides?.onGrokSelect ?? vi.fn()}
       onZcodeSelect={overrides?.onZcodeSelect ?? vi.fn()}
+      onOpencodeSelect={overrides?.onOpencodeSelect ?? vi.fn()}
       onSettingsSectionSelect={vi.fn()}
     />,
   );
@@ -56,6 +60,7 @@ describe("ICodeEasySidebar", () => {
     expect(screen.getByText("icodeeasyNavigation.kimi")).toBeVisible();
     expect(screen.getByText("icodeeasyNavigation.grok")).toBeVisible();
     expect(screen.getByText("icodeeasyNavigation.zcode")).toBeVisible();
+    expect(screen.getByText("icodeeasyNavigation.opencode")).toBeVisible();
     expect(screen.getByText("settings.tabGeneral")).toBeVisible();
     expect(screen.getByText("settings.tabProxy")).toBeVisible();
     expect(screen.getByText("settings.tabAdvanced")).toBeVisible();
@@ -160,5 +165,22 @@ describe("ICodeEasySidebar", () => {
 
     fireEvent.click(zcodeButton!);
     expect(onZcodeSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders OpenCode directly below ZCode and forwards clicks", () => {
+    const onOpencodeSelect = vi.fn();
+    renderSidebar({ isOpencodeActive: true, onOpencodeSelect });
+
+    const zcodeButton = screen
+      .getByText("icodeeasyNavigation.zcode")
+      .closest("button");
+    const opencodeButton = screen
+      .getByText("icodeeasyNavigation.opencode")
+      .closest("button");
+    expect(zcodeButton?.nextElementSibling).toBe(opencodeButton);
+    expect(opencodeButton).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(opencodeButton!);
+    expect(onOpencodeSelect).toHaveBeenCalledTimes(1);
   });
 });

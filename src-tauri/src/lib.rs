@@ -1646,6 +1646,8 @@ pub fn run() {
             commands::configure_kimi_relay,
             commands::get_grok_suite_status,
             commands::configure_grok_relay,
+            commands::get_opencode_suite_status,
+            commands::configure_opencode_relay,
             commands::get_zcode_suite_status,
             commands::launch_or_install_zcode_desktop,
             commands::configure_zcode_relay,

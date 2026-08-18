@@ -87,6 +87,7 @@ import { ICodeEasyGooglePage } from "@/components/icodeeasy/ICodeEasyGooglePage"
 import { ICodeEasyKimiPage } from "@/components/icodeeasy/ICodeEasyKimiPage";
 import { ICodeEasyGrokPage } from "@/components/icodeeasy/ICodeEasyGrokPage";
 import { ICodeEasyZcodePage } from "@/components/icodeeasy/ICodeEasyZcodePage";
+import { ICodeEasyOpenCodePage } from "@/components/icodeeasy/ICodeEasyOpenCodePage";
 import {
   ICODEEASY_SETTINGS_NAV_ITEMS,
   ICODEEASY_SIDEBAR_WIDTH,
@@ -115,6 +116,7 @@ type View =
   | "kimi"
   | "grok"
   | "zcode"
+  | "opencode"
   | "settings"
   | "prompts"
   | "skills"
@@ -175,6 +177,7 @@ const VALID_VIEWS: View[] = [
   "kimi",
   "grok",
   "zcode",
+  "opencode",
   "settings",
   "prompts",
   "skills",
@@ -249,6 +252,9 @@ function App({ compatibilityProviderManager = false }: AppProps) {
     }
     if (currentView === "zcode") {
       return t("icodeeasyNavigation.zcode");
+    }
+    if (currentView === "opencode") {
+      return t("icodeeasyNavigation.opencode");
     }
     if (currentView === "settings") {
       const item = ICODEEASY_SETTINGS_NAV_ITEMS.find(
@@ -987,6 +993,8 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           return <ICodeEasyGrokPage />;
         case "zcode":
           return <ICodeEasyZcodePage />;
+        case "opencode":
+          return <ICodeEasyOpenCodePage />;
         case "settings":
           return (
             <SettingsPage
@@ -1169,6 +1177,7 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           isKimiActive={currentView === "kimi"}
           isGrokActive={currentView === "grok"}
           isZcodeActive={currentView === "zcode"}
+          isOpencodeActive={currentView === "opencode"}
           activeSettingsSection={settingsDefaultTab}
           onHomeSelect={() => setCurrentView("providers")}
           onCodexSelect={() => setCurrentView("codex")}
@@ -1177,6 +1186,7 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           onKimiSelect={() => setCurrentView("kimi")}
           onGrokSelect={() => setCurrentView("grok")}
           onZcodeSelect={() => setCurrentView("zcode")}
+          onOpencodeSelect={() => setCurrentView("opencode")}
           onSettingsSectionSelect={(section) => {
             setSettingsDefaultTab(section);
             setCurrentView("settings");

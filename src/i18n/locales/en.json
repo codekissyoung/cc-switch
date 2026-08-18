@@ -50,6 +50,7 @@
     "kimi": "Kimi",
     "grok": "Grok",
     "zcode": "ZCode",
+    "opencode": "OpenCode",
     "statistics": "Statistics"
   },
   "firstRunNotice": {
@@ -329,6 +330,42 @@
       "notInstalled": "Not installed",
       "waitingForInstall": "Waiting for the installation to finish…",
       "officialInstallerHint": "ZCode ships as a desktop app only (macOS / Windows installers). When it is missing, the official Z.ai download page opens; you can also install it with brew install --cask zcode."
+    }
+  },
+  "icodeeasyOpencode": {
+    "loadError": "Failed to load the OpenCode configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy provider (OpenAI / Responses protocol, GPT-5.6 Sol with high reasoning effort by default) to ~/.config/opencode/opencode.json and selects icodeeasy/gpt-5.6-sol as the default model. Existing themes, plugins, MCP servers, and other providers are preserved.",
+      "configured": "OpenCode points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "OpenCode now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update the OpenCode CLI."
+    },
+    "cli": {
+      "name": "OpenCode CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "OpenCode CLI is ready",
+      "installFailed": "Failed to install or update the OpenCode CLI: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "OpenCode prefers its official install script, with npm as a fallback. Installation and updates remain handled by the official OpenCode tooling.",
+      "cliVerificationFailed": "OpenCode CLI did not pass version verification after installation"
     }
   },
   "apiKeyInput": {
