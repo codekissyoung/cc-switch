@@ -85,6 +85,7 @@ import { ICodeEasyCodexPage } from "@/components/icodeeasy/ICodeEasyCodexPage";
 import { ICodeEasyClaudePage } from "@/components/icodeeasy/ICodeEasyClaudePage";
 import { ICodeEasyGooglePage } from "@/components/icodeeasy/ICodeEasyGooglePage";
 import { ICodeEasyKimiPage } from "@/components/icodeeasy/ICodeEasyKimiPage";
+import { ICodeEasyGrokPage } from "@/components/icodeeasy/ICodeEasyGrokPage";
 import { ICodeEasyZcodePage } from "@/components/icodeeasy/ICodeEasyZcodePage";
 import {
   ICODEEASY_SETTINGS_NAV_ITEMS,
@@ -112,6 +113,7 @@ type View =
   | "claude"
   | "google"
   | "kimi"
+  | "grok"
   | "zcode"
   | "settings"
   | "prompts"
@@ -171,6 +173,7 @@ const VALID_VIEWS: View[] = [
   "claude",
   "google",
   "kimi",
+  "grok",
   "zcode",
   "settings",
   "prompts",
@@ -240,6 +243,9 @@ function App({ compatibilityProviderManager = false }: AppProps) {
     }
     if (currentView === "kimi") {
       return t("icodeeasyNavigation.kimi");
+    }
+    if (currentView === "grok") {
+      return t("icodeeasyNavigation.grok");
     }
     if (currentView === "zcode") {
       return t("icodeeasyNavigation.zcode");
@@ -977,6 +983,8 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           return <ICodeEasyGooglePage />;
         case "kimi":
           return <ICodeEasyKimiPage />;
+        case "grok":
+          return <ICodeEasyGrokPage />;
         case "zcode":
           return <ICodeEasyZcodePage />;
         case "settings":
@@ -1159,6 +1167,7 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           isClaudeActive={currentView === "claude"}
           isGoogleActive={currentView === "google"}
           isKimiActive={currentView === "kimi"}
+          isGrokActive={currentView === "grok"}
           isZcodeActive={currentView === "zcode"}
           activeSettingsSection={settingsDefaultTab}
           onHomeSelect={() => setCurrentView("providers")}
@@ -1166,6 +1175,7 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           onClaudeSelect={() => setCurrentView("claude")}
           onGoogleSelect={() => setCurrentView("google")}
           onKimiSelect={() => setCurrentView("kimi")}
+          onGrokSelect={() => setCurrentView("grok")}
           onZcodeSelect={() => setCurrentView("zcode")}
           onSettingsSectionSelect={(section) => {
             setSettingsDefaultTab(section);
@@ -1230,21 +1240,6 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           onDismiss={() => {
             setShowEnvBanner(false);
             sessionStorage.setItem("env_banner_dismissed", "true");
-          }}
-          onDeleted={async () => {
-            try {
-              const allConflicts = await checkAllEnvConflicts();
-              const flatConflicts = Object.values(allConflicts).flat();
-              setEnvConflicts(flatConflicts);
-              if (flatConflicts.length === 0) {
-                setShowEnvBanner(false);
-              }
-            } catch (error) {
-              console.error(
-                "[App] Failed to re-check conflicts after deletion:",
-                error,
-              );
-            }
           }}
         />
       )}

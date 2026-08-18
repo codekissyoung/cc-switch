@@ -48,6 +48,7 @@
     "claude": "Claude",
     "google": "Google",
     "kimi": "Kimi",
+    "grok": "Grok",
     "zcode": "ZCode",
     "statistics": "Statistics"
   },
@@ -261,6 +262,42 @@
       "installerUnavailable": "No supported CLI installer is available on this system",
       "officialInstallerHint": "Kimi Code prefers its official single-binary installer (no Node.js required), with npm as the fallback channel; updating reinstalls the latest version via the official script.",
       "cliVerificationFailed": "Kimi Code CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyGrok": {
+    "loadError": "Failed to load the Grok configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes ICodeEasy Responses and Grok 4.6 to ~/.grok/config.toml, selecting it for both the primary and secondary model. Existing CLI, MCP, UI settings, and the Grok 4.5 fallback profile are preserved.",
+      "configured": "Grok Build points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Grok Build now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update Grok Build CLI."
+    },
+    "cli": {
+      "name": "Grok Build CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "Grok Build CLI is ready",
+      "installFailed": "Failed to install or update Grok Build CLI: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "Grok Build prefers xAI's official native installer, with npm as a fallback. Installation, updates, and sign-in remain handled by the official Grok Build tooling.",
+      "cliVerificationFailed": "Grok Build CLI did not pass version verification after installation"
     }
   },
   "icodeeasyZcode": {
@@ -2418,36 +2455,22 @@
     },
     "actions": {
       "expand": "View Details",
-      "collapse": "Collapse",
-      "selectAll": "Select All",
-      "clearSelection": "Clear Selection",
-      "deleteSelected": "Delete Selected ({{count}})",
-      "deleting": "Deleting..."
+      "collapse": "Collapse"
+    },
+    "guidance": {
+      "title": "Review and resolve these entries manually",
+      "review": "Use the Source shown below to locate the configuration file or system environment variable.",
+      "edit": "After confirming the variable is no longer needed, comment out or remove the corresponding setting yourself.",
+      "restart": "Save your changes, start a new terminal, and restart the application before checking again.",
+      "readOnly": "ICodeEasy only detects and reports conflicts. It never modifies your configuration files or system environment variables."
     },
     "field": {
-      "value": "Value",
       "source": "Source"
     },
     "source": {
       "userRegistry": "User Environment Variable (Registry)",
       "systemRegistry": "System Environment Variable (Registry)",
       "systemEnv": "System Environment Variable"
-    },
-    "delete": {
-      "success": "Environment variables deleted successfully",
-      "error": "Failed to delete environment variables"
-    },
-    "backup": {
-      "location": "Backup location: {{path}}"
-    },
-    "confirm": {
-      "title": "Confirm Delete Environment Variables",
-      "message": "Are you sure you want to delete {{count}} environment variable(s)?",
-      "backupNotice": "A backup will be created automatically before deletion. You can restore it later. Changes take effect after restarting the application or terminal.",
-      "confirm": "Confirm Delete"
-    },
-    "error": {
-      "noSelection": "Please select environment variables to delete"
     }
   },
   "skills": {

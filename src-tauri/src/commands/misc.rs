@@ -283,6 +283,19 @@ pub struct KimiSuiteStatus {
     relay_configured: bool,
 }
 
+/// Grok Build CLI readiness + ICodeEasy relay state for the ICodeEasy Grok page.
+/// Grok Build is a terminal-only product, so there is no desktop field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GrokSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    relay_configured: bool,
+}
+
 const CHATGPT_CODEX_LANDING_URL: &str = "https://chatgpt.com/codex?app-landing-page=true";
 const CHATGPT_WINDOWS_INSTALLER_URL: &str =
     "https://get.microsoft.com/installer/download/9PLM9XGG6VKS?cid=website_cta_psi";
@@ -787,6 +800,16 @@ fn kimi_suite_platform() -> &'static str {
     }
 }
 
+fn grok_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
 #[tauri::command]
 pub async fn get_kimi_suite_status() -> Result<KimiSuiteStatus, String> {
     tokio::task::spawn_blocking(|| {
@@ -822,6 +845,43 @@ pub async fn configure_kimi_relay(api_key: String) -> Result<(), String> {
     })
     .await
     .map_err(|e| format!("Kimi relay configure task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn get_grok_suite_status() -> Result<GrokSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("grok");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        let relay_configured = crate::grok_config::read_grok_config_text()
+            .map(|text| crate::grok_config::grok_relay_configured(&text))
+            .unwrap_or(false);
+
+        GrokSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: grok_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("Grok suite probe task failed: {e}"))
+}
+
+/// Upsert the ICodeEasy Grok profile in `~/.grok/config.toml`, preserving the
+/// user's CLI, UI, MCP and fallback model configuration.
+#[tauri::command]
+pub async fn configure_grok_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::grok_config::write_grok_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Grok relay configure task failed: {e}"))?
 }
 
 /// ZCode desktop readiness + ICodeEasy relay state for the ICodeEasy ZCode page.

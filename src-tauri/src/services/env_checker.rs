@@ -6,7 +6,6 @@ use std::fs;
 #[serde(rename_all = "camelCase")]
 pub struct EnvConflict {
     pub var_name: String,
-    pub var_value: String,
     pub source_type: String, // "system" | "file"
     pub source_path: String, // Registry path or file path
 }
@@ -69,11 +68,10 @@ fn check_system_env(keywords: &[EnvKeyword]) -> Result<Vec<EnvConflict>, String>
 
     // Check HKEY_CURRENT_USER\Environment
     if let Ok(hkcu) = RegKey::predef(HKEY_CURRENT_USER).open_subkey("Environment") {
-        for (name, value) in hkcu.enum_values().filter_map(Result::ok) {
+        for (name, _) in hkcu.enum_values().filter_map(Result::ok) {
             if matches_env_keyword(&name, keywords) {
                 conflicts.push(EnvConflict {
                     var_name: name.clone(),
-                    var_value: value.to_string(),
                     source_type: "system".to_string(),
                     source_path: "HKEY_CURRENT_USER\\Environment".to_string(),
                 });
@@ -85,11 +83,10 @@ fn check_system_env(keywords: &[EnvKeyword]) -> Result<Vec<EnvConflict>, String>
     if let Ok(hklm) = RegKey::predef(HKEY_LOCAL_MACHINE)
         .open_subkey("SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment")
     {
-        for (name, value) in hklm.enum_values().filter_map(Result::ok) {
+        for (name, _) in hklm.enum_values().filter_map(Result::ok) {
             if matches_env_keyword(&name, keywords) {
                 conflicts.push(EnvConflict {
                     var_name: name.clone(),
-                    var_value: value.to_string(),
                     source_type: "system".to_string(),
                     source_path: "HKEY_LOCAL_MACHINE\\SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment".to_string(),
                 });
@@ -105,11 +102,10 @@ fn check_system_env(keywords: &[EnvKeyword]) -> Result<Vec<EnvConflict>, String>
     let mut conflicts = Vec::new();
 
     // Check current process environment
-    for (key, value) in std::env::vars() {
+    for (key, _) in std::env::vars() {
         if matches_env_keyword(&key, keywords) {
             conflicts.push(EnvConflict {
                 var_name: key,
-                var_value: value,
                 source_type: "system".to_string(),
                 source_path: "Process Environment".to_string(),
             });
@@ -149,16 +145,11 @@ fn check_shell_configs(keywords: &[EnvKeyword]) -> Result<Vec<EnvConflict>, Stri
 
                     if let Some(eq_pos) = export_line.find('=') {
                         let var_name = export_line[..eq_pos].trim();
-                        let var_value = export_line[eq_pos + 1..].trim();
 
                         // Check if variable name contains any keyword
                         if matches_env_keyword(var_name, keywords) {
                             conflicts.push(EnvConflict {
                                 var_name: var_name.to_string(),
-                                var_value: var_value
-                                    .trim_matches('"')
-                                    .trim_matches('\'')
-                                    .to_string(),
                                 source_type: "file".to_string(),
                                 source_path: format!("{}:{}", file_path, line_num + 1),
                             });

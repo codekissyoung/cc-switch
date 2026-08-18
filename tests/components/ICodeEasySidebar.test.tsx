@@ -11,11 +11,13 @@ const renderSidebar = (overrides?: {
   isClaudeActive?: boolean;
   isGoogleActive?: boolean;
   isKimiActive?: boolean;
+  isGrokActive?: boolean;
   isZcodeActive?: boolean;
   onCodexSelect?: () => void;
   onClaudeSelect?: () => void;
   onGoogleSelect?: () => void;
   onKimiSelect?: () => void;
+  onGrokSelect?: () => void;
   onZcodeSelect?: () => void;
 }) =>
   render(
@@ -25,6 +27,7 @@ const renderSidebar = (overrides?: {
       isClaudeActive={overrides?.isClaudeActive ?? false}
       isGoogleActive={overrides?.isGoogleActive ?? false}
       isKimiActive={overrides?.isKimiActive ?? false}
+      isGrokActive={overrides?.isGrokActive ?? false}
       isZcodeActive={overrides?.isZcodeActive ?? false}
       activeSettingsSection="general"
       onHomeSelect={vi.fn()}
@@ -32,6 +35,7 @@ const renderSidebar = (overrides?: {
       onClaudeSelect={overrides?.onClaudeSelect ?? vi.fn()}
       onGoogleSelect={overrides?.onGoogleSelect ?? vi.fn()}
       onKimiSelect={overrides?.onKimiSelect ?? vi.fn()}
+      onGrokSelect={overrides?.onGrokSelect ?? vi.fn()}
       onZcodeSelect={overrides?.onZcodeSelect ?? vi.fn()}
       onSettingsSectionSelect={vi.fn()}
     />,
@@ -50,6 +54,7 @@ describe("ICodeEasySidebar", () => {
     expect(screen.getByText("icodeeasyNavigation.claude")).toBeVisible();
     expect(screen.getByText("icodeeasyNavigation.google")).toBeVisible();
     expect(screen.getByText("icodeeasyNavigation.kimi")).toBeVisible();
+    expect(screen.getByText("icodeeasyNavigation.grok")).toBeVisible();
     expect(screen.getByText("icodeeasyNavigation.zcode")).toBeVisible();
     expect(screen.getByText("settings.tabGeneral")).toBeVisible();
     expect(screen.getByText("settings.tabProxy")).toBeVisible();
@@ -123,17 +128,34 @@ describe("ICodeEasySidebar", () => {
     expect(onKimiSelect).toHaveBeenCalledTimes(1);
   });
 
-  it("renders ZCode directly below Kimi and forwards clicks", () => {
-    const onZcodeSelect = vi.fn();
-    renderSidebar({ isZcodeActive: true, onZcodeSelect });
+  it("renders Grok directly below Kimi and forwards clicks", () => {
+    const onGrokSelect = vi.fn();
+    renderSidebar({ isGrokActive: true, onGrokSelect });
 
     const kimiButton = screen
       .getByText("icodeeasyNavigation.kimi")
       .closest("button");
+    const grokButton = screen
+      .getByText("icodeeasyNavigation.grok")
+      .closest("button");
+    expect(kimiButton?.nextElementSibling).toBe(grokButton);
+    expect(grokButton).toHaveAttribute("aria-current", "page");
+
+    fireEvent.click(grokButton!);
+    expect(onGrokSelect).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders ZCode directly below Grok and forwards clicks", () => {
+    const onZcodeSelect = vi.fn();
+    renderSidebar({ isZcodeActive: true, onZcodeSelect });
+
+    const grokButton = screen
+      .getByText("icodeeasyNavigation.grok")
+      .closest("button");
     const zcodeButton = screen
       .getByText("icodeeasyNavigation.zcode")
       .closest("button");
-    expect(kimiButton?.nextElementSibling).toBe(zcodeButton);
+    expect(grokButton?.nextElementSibling).toBe(zcodeButton);
     expect(zcodeButton).toHaveAttribute("aria-current", "page");
 
     fireEvent.click(zcodeButton!);

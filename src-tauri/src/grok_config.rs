@@ -1,6 +1,7 @@
 use serde_json::{json, Value};
 use std::fs;
 use std::path::PathBuf;
+use toml_edit::{DocumentMut, Item, Table};
 
 use crate::config::{get_home_dir, write_text_file};
 use crate::error::AppError;
@@ -9,6 +10,8 @@ use crate::provider::Provider;
 pub const DEFAULT_MODEL: &str = "grok-4.5";
 pub const DEFAULT_API_BACKEND: &str = "responses";
 pub const DEFAULT_CONTEXT_WINDOW: i64 = 500_000;
+pub const ICODEEASY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
+pub const ICODEEASY_DEFAULT_MODEL: &str = "grok-4.6";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct GrokModelConfig {
@@ -30,6 +33,156 @@ pub fn get_grok_config_dir() -> PathBuf {
 /// Grok Build live configuration path (`~/.grok/config.toml`).
 pub fn get_grok_config_path() -> PathBuf {
     get_grok_config_dir().join("config.toml")
+}
+
+/// Read the live Grok Build config; a missing file is an empty first-run config.
+pub fn read_grok_config_text() -> Result<String, AppError> {
+    let path = get_grok_config_path();
+    if path.exists() {
+        fs::read_to_string(&path).map_err(|error| AppError::io(&path, error))
+    } else {
+        Ok(String::new())
+    }
+}
+
+fn ensure_document_table_like<'a>(
+    document: &'a mut DocumentMut,
+    key: &str,
+) -> &'a mut dyn toml_edit::TableLike {
+    let needs_create = document
+        .get(key)
+        .map(|item| item.as_table_like().is_none())
+        .unwrap_or(true);
+    if needs_create {
+        document[key] = Item::Table(Table::new());
+    }
+    document[key]
+        .as_table_like_mut()
+        .expect("ensured table-like entry")
+}
+
+fn ensure_nested_table_like<'a>(
+    table: &'a mut dyn toml_edit::TableLike,
+    key: &str,
+) -> &'a mut dyn toml_edit::TableLike {
+    let needs_create = table
+        .get(key)
+        .map(|item| item.as_table_like().is_none())
+        .unwrap_or(true);
+    if needs_create {
+        table.insert(key, Item::Table(Table::new()));
+    }
+    table
+        .get_mut(key)
+        .and_then(Item::as_table_like_mut)
+        .expect("ensured nested table-like entry")
+}
+
+/// Whether the live Grok Build config fully selects the ICodeEasy Grok profile.
+pub fn grok_relay_configured(config_text: &str) -> bool {
+    let Ok(document) = config_text.parse::<DocumentMut>() else {
+        return false;
+    };
+    let default_matches = document
+        .get("models")
+        .and_then(|item| item.get("default"))
+        .and_then(Item::as_str)
+        .is_some_and(|model| model == ICODEEASY_DEFAULT_MODEL);
+    let secondary_matches = document
+        .get("ui")
+        .and_then(|item| item.get("fork_secondary_model"))
+        .and_then(Item::as_str)
+        .is_some_and(|model| model == ICODEEASY_DEFAULT_MODEL);
+    let Some(profile) = document
+        .get("model")
+        .and_then(|item| item.get(ICODEEASY_DEFAULT_MODEL))
+        .and_then(Item::as_table_like)
+    else {
+        return false;
+    };
+    let base_url_matches = profile
+        .get("base_url")
+        .and_then(Item::as_str)
+        .is_some_and(|url| url.trim_end_matches('/') == ICODEEASY_BASE_URL);
+    let backend_matches = profile
+        .get("api_backend")
+        .and_then(Item::as_str)
+        .is_some_and(|backend| backend == DEFAULT_API_BACKEND);
+    let has_key = profile
+        .get("api_key")
+        .and_then(Item::as_str)
+        .is_some_and(|key| !key.trim().is_empty());
+
+    default_matches && secondary_matches && base_url_matches && backend_matches && has_key
+}
+
+/// Upsert the ICodeEasy-owned Grok profile while preserving MCP, CLI, UI and
+/// fallback model entries already present in the user's document.
+pub fn apply_grok_icodeeasy_relay(config_text: &str, api_key: &str) -> Result<String, AppError> {
+    let mut document = if config_text.trim().is_empty() {
+        DocumentMut::new()
+    } else {
+        config_text.parse::<DocumentMut>().map_err(|error| {
+            AppError::localized(
+                "provider.grokbuild.config.invalid_toml",
+                format!("Grok Build config.toml 格式错误: {error}"),
+                format!("Invalid Grok Build config.toml: {error}"),
+            )
+        })?
+    };
+
+    let ui = ensure_document_table_like(&mut document, "ui");
+    ui.insert(
+        "fork_secondary_model",
+        toml_edit::value(ICODEEASY_DEFAULT_MODEL),
+    );
+
+    let models = ensure_document_table_like(&mut document, "models");
+    models.insert("default", toml_edit::value(ICODEEASY_DEFAULT_MODEL));
+    models.insert("default_reasoning_effort", toml_edit::value("high"));
+
+    let model_profiles = ensure_document_table_like(&mut document, "model");
+    let profile = ensure_nested_table_like(model_profiles, ICODEEASY_DEFAULT_MODEL);
+    profile.insert("model", toml_edit::value(ICODEEASY_DEFAULT_MODEL));
+    profile.insert("base_url", toml_edit::value(ICODEEASY_BASE_URL));
+    profile.insert("name", toml_edit::value("ICodeEasy Grok 4.6"));
+    profile.insert(
+        "description",
+        toml_edit::value("Grok 4.6 through api.icodeeasy.cc"),
+    );
+    profile.insert("api_key", toml_edit::value(api_key));
+    profile.remove("env_key");
+    profile.insert("api_backend", toml_edit::value(DEFAULT_API_BACKEND));
+    profile.insert("context_window", toml_edit::value(DEFAULT_CONTEXT_WINDOW));
+
+    Ok(document.to_string())
+}
+
+/// Persist the ICodeEasy Grok profile atomically. The file contains a secret,
+/// so a newly-created config is tightened to owner read/write on Unix.
+pub fn write_grok_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+    let api_key = api_key.trim();
+    if api_key.is_empty() {
+        return Err(AppError::localized(
+            "grok_relay_key_required",
+            "请先填写 ICodeEasy API Key",
+            "Enter the ICodeEasy API key first",
+        ));
+    }
+
+    let path = get_grok_config_path();
+    let old_text = read_grok_config_text()?;
+    let new_text = apply_grok_icodeeasy_relay(&old_text, api_key)?;
+    write_text_file(&path, &new_text)?;
+
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        fs::set_permissions(&path, fs::Permissions::from_mode(0o600))
+            .map_err(|error| AppError::io(&path, error))?;
+    }
+
+    Ok(())
 }
 
 fn required_non_empty_string<'a>(
@@ -443,6 +596,86 @@ env_key = "GROK_TEST_API_KEY"
 api_backend = "responses"
 context_window = 500000
 "#
+    }
+
+    #[test]
+    fn apply_icodeeasy_relay_writes_current_primary_and_secondary_model() {
+        let text = apply_grok_icodeeasy_relay("", "sk-test-key")
+            .expect("apply ICodeEasy relay on empty config");
+        let document = text.parse::<DocumentMut>().expect("valid TOML output");
+
+        assert_eq!(
+            document["models"]["default"].as_str(),
+            Some(ICODEEASY_DEFAULT_MODEL)
+        );
+        assert_eq!(
+            document["ui"]["fork_secondary_model"].as_str(),
+            Some(ICODEEASY_DEFAULT_MODEL)
+        );
+        let profile = &document["model"][ICODEEASY_DEFAULT_MODEL];
+        assert_eq!(profile["model"].as_str(), Some(ICODEEASY_DEFAULT_MODEL));
+        assert_eq!(profile["base_url"].as_str(), Some(ICODEEASY_BASE_URL));
+        assert_eq!(profile["api_key"].as_str(), Some("sk-test-key"));
+        assert_eq!(profile["api_backend"].as_str(), Some(DEFAULT_API_BACKEND));
+        assert_eq!(
+            profile["context_window"].as_integer(),
+            Some(DEFAULT_CONTEXT_WINDOW)
+        );
+        assert!(grok_relay_configured(&text));
+    }
+
+    #[test]
+    fn apply_icodeeasy_relay_preserves_cli_mcp_and_fallback_model() {
+        let existing = r#"# keep this comment
+[cli]
+installer = "internal"
+
+[ui]
+theme = "auto"
+
+[model."grok-4.5"]
+base_url = "https://fallback.example/v1"
+api_key = "fallback-secret"
+api_backend = "responses"
+
+[mcp_servers.echo]
+command = "echo"
+"#;
+        let text = apply_grok_icodeeasy_relay(existing, "sk-new").expect("apply relay");
+        let document = text.parse::<DocumentMut>().expect("valid TOML output");
+
+        assert!(text.contains("# keep this comment"));
+        assert_eq!(document["cli"]["installer"].as_str(), Some("internal"));
+        assert_eq!(document["ui"]["theme"].as_str(), Some("auto"));
+        assert_eq!(
+            document["model"]["grok-4.5"]["api_key"].as_str(),
+            Some("fallback-secret")
+        );
+        assert_eq!(
+            document["mcp_servers"]["echo"]["command"].as_str(),
+            Some("echo")
+        );
+        assert!(grok_relay_configured(&text));
+    }
+
+    #[test]
+    fn relay_detection_requires_selected_model_secondary_and_key() {
+        assert!(!grok_relay_configured(""));
+        assert!(!grok_relay_configured("not = [valid"));
+
+        let configured = apply_grok_icodeeasy_relay("", "sk-test-key").expect("relay config");
+        assert!(!grok_relay_configured(&configured.replace(
+            "fork_secondary_model = \"grok-4.6\"",
+            "fork_secondary_model = \"grok-4.5\""
+        )));
+        assert!(!grok_relay_configured(
+            &configured.replace("api_key = \"sk-test-key\"", "api_key = \" \"")
+        ));
+    }
+
+    #[test]
+    fn apply_icodeeasy_relay_rejects_invalid_toml() {
+        assert!(apply_grok_icodeeasy_relay("models = [broken", "sk-test-key").is_err());
     }
 
     #[test]

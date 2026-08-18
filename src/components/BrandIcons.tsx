@@ -9,6 +9,7 @@ import OpenAISvg from "@/icons/extracted/openai.svg?url";
 import GeminiSvg from "@/icons/extracted/gemini.svg?url";
 import OpenClawSvg from "@/icons/extracted/claw.svg?url";
 import KimiSvg from "@/icons/extracted/kimi.svg?url";
+import GrokSvg from "@/icons/extracted/grok.svg?url";
 import ZcodeSvg from "@/icons/extracted/zcode.svg?url";
 
 export function ClaudeIcon({ size = 16, className = "" }: IconProps) {
@@ -71,6 +72,19 @@ export function KimiIcon({ size = 16, className = "" }: IconProps) {
       height={size}
       className={className}
       alt="Kimi"
+      loading="lazy"
+    />
+  );
+}
+
+export function GrokIcon({ size = 16, className = "" }: IconProps) {
+  return (
+    <img
+      src={GrokSvg}
+      width={size}
+      height={size}
+      className={className}
+      alt="Grok"
       loading="lazy"
     />
   );

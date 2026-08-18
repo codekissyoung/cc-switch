@@ -1536,10 +1536,8 @@ pub fn run() {
             commands::import_from_deeplink,
             commands::import_from_deeplink_unified,
             update_tray_menu,
-            // Environment variable management
+            // Environment variable conflict detection (read-only)
             commands::check_env_conflicts,
-            commands::delete_env_vars,
-            commands::restore_env_backup,
             // Skill management (v3.10.0+ unified)
             commands::get_installed_skills,
             commands::get_skill_backups,
@@ -1646,6 +1644,8 @@ pub fn run() {
             commands::launch_or_install_antigravity_desktop,
             commands::get_kimi_suite_status,
             commands::configure_kimi_relay,
+            commands::get_grok_suite_status,
+            commands::configure_grok_relay,
             commands::get_zcode_suite_status,
             commands::launch_or_install_zcode_desktop,
             commands::configure_zcode_relay,

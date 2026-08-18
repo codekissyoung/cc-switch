@@ -25,13 +25,14 @@ interface ICodeEasyClientSuiteCardProps {
     | "icodeeasyClaude"
     | "icodeeasyGoogle"
     | "icodeeasyKimi"
+    | "icodeeasyGrok"
     | "icodeeasyZcode";
   status: ClientSuiteStatus | null;
   monitoringInstall: boolean;
   cliLatestVersion: string | null;
   cliInstallBlocked?: boolean;
   installingCli: boolean;
-  /** 无桌面版的产品（Kimi Code）不传这两个 prop，桌面行整体不渲染。 */
+  /** 无桌面版的产品（Kimi Code / Grok Build）不传这两个 prop，桌面行整体不渲染。 */
   launchingDesktop?: boolean;
   onLaunchDesktop?: () => void;
   /** 无 CLI 的产品（ZCode）不传此 prop，CLI 行整体不渲染。 */

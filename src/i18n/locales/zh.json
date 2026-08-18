@@ -48,6 +48,7 @@
     "claude": "Claude",
     "google": "Google",
     "kimi": "Kimi",
+    "grok": "Grok",
     "zcode": "ZCode",
     "statistics": "统计"
   },
@@ -261,6 +262,42 @@
       "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
       "officialInstallerHint": "Kimi Code 优先使用官方单二进制安装脚本（无需 Node.js），npm 作为兜底渠道；更新等价于用官方脚本重装最新版。",
       "cliVerificationFailed": "Kimi Code CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyGrok": {
+    "loadError": "读取 Grok 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy Responses 接入与 Grok 4.6 写入 ~/.grok/config.toml，并将主模型和 secondary model 一并切换；现有 CLI、MCP、界面设置及 Grok 4.5 回退条目会保留。",
+      "configured": "Grok Build 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Grok Build 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 Grok Build CLI。"
+    },
+    "cli": {
+      "name": "Grok Build CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "Grok Build CLI 已就绪",
+      "installFailed": "Grok Build CLI 安装或更新失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "Grok Build 优先使用 xAI 官方 native installer，npm 作为兜底渠道；安装、更新与登录仍由 Grok Build 官方工具完成。",
+      "cliVerificationFailed": "Grok Build CLI 安装后未通过版本验证"
     }
   },
   "icodeeasyZcode": {
@@ -2418,36 +2455,22 @@
     },
     "actions": {
       "expand": "查看详情",
-      "collapse": "收起",
-      "selectAll": "全选",
-      "clearSelection": "取消选择",
-      "deleteSelected": "删除选中 ({{count}})",
-      "deleting": "删除中..."
+      "collapse": "收起"
+    },
+    "guidance": {
+      "title": "请手动检查并处理",
+      "review": "根据下方“来源”定位配置文件或系统环境变量。",
+      "edit": "确认变量不再需要后，手动注释或删除对应配置。",
+      "restart": "保存后启动新终端并重启应用，再检查配置是否生效。",
+      "readOnly": "ICodeEasy 只检测并提示，不会修改您的配置文件或系统环境变量。"
     },
     "field": {
-      "value": "值",
       "source": "来源"
     },
     "source": {
       "userRegistry": "用户环境变量 (注册表)",
       "systemRegistry": "系统环境变量 (注册表)",
       "systemEnv": "系统环境变量"
-    },
-    "delete": {
-      "success": "环境变量已成功删除",
-      "error": "删除环境变量失败"
-    },
-    "backup": {
-      "location": "备份位置: {{path}}"
-    },
-    "confirm": {
-      "title": "确认删除环境变量",
-      "message": "确定要删除 {{count}} 个环境变量吗？",
-      "backupNotice": "删除前将自动备份,您可以稍后恢复。删除后需要重启应用或终端才能生效。",
-      "confirm": "确认删除"
-    },
-    "error": {
-      "noSelection": "请选择要删除的环境变量"
     }
   },
   "skills": {

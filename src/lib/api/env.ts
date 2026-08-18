@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { EnvConflict, BackupInfo } from "@/types/env";
+import type { EnvConflict } from "@/types/env";
 
 /**
  * 环境变量管理 API
@@ -14,25 +14,6 @@ export async function checkEnvConflicts(
   appType: string,
 ): Promise<EnvConflict[]> {
   return invoke<EnvConflict[]>("check_env_conflicts", { app: appType });
-}
-
-/**
- * 删除指定的环境变量 (会自动备份)
- * @param conflicts 要删除的环境变量冲突列表
- * @returns 备份信息
- */
-export async function deleteEnvVars(
-  conflicts: EnvConflict[],
-): Promise<BackupInfo> {
-  return invoke<BackupInfo>("delete_env_vars", { conflicts });
-}
-
-/**
- * 从备份文件恢复环境变量
- * @param backupPath 备份文件路径
- */
-export async function restoreEnvBackup(backupPath: string): Promise<void> {
-  return invoke<void>("restore_env_backup", { backupPath });
 }
 
 /**

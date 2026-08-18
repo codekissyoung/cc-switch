@@ -13,6 +13,7 @@ import {
   ClaudeIcon,
   CodexIcon,
   GeminiIcon,
+  GrokIcon,
   KimiIcon,
   ZcodeIcon,
 } from "@/components/BrandIcons";
@@ -65,6 +66,7 @@ interface ICodeEasySidebarProps {
   isClaudeActive: boolean;
   isGoogleActive: boolean;
   isKimiActive: boolean;
+  isGrokActive: boolean;
   isZcodeActive: boolean;
   activeSettingsSection: ICodeEasySettingsSection;
   onHomeSelect: () => void;
@@ -72,6 +74,7 @@ interface ICodeEasySidebarProps {
   onClaudeSelect: () => void;
   onGoogleSelect: () => void;
   onKimiSelect: () => void;
+  onGrokSelect: () => void;
   onZcodeSelect: () => void;
   onSettingsSectionSelect: (section: ICodeEasySettingsSection) => void;
   style?: CSSProperties;
@@ -83,6 +86,7 @@ export function ICodeEasySidebar({
   isClaudeActive,
   isGoogleActive,
   isKimiActive,
+  isGrokActive,
   isZcodeActive,
   activeSettingsSection,
   onHomeSelect,
@@ -90,6 +94,7 @@ export function ICodeEasySidebar({
   onClaudeSelect,
   onGoogleSelect,
   onKimiSelect,
+  onGrokSelect,
   onZcodeSelect,
   onSettingsSectionSelect,
   style,
@@ -188,6 +193,18 @@ export function ICodeEasySidebar({
 
         <button
           type="button"
+          aria-current={isGrokActive ? "page" : undefined}
+          onClick={onGrokSelect}
+          className={itemClass(isGrokActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <GrokIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.grok")}</span>
+        </button>
+
+        <button
+          type="button"
           aria-current={isZcodeActive ? "page" : undefined}
           onClick={onZcodeSelect}
           className={itemClass(isZcodeActive)}
@@ -208,6 +225,7 @@ export function ICodeEasySidebar({
               !isClaudeActive &&
               !isGoogleActive &&
               !isKimiActive &&
+              !isGrokActive &&
               !isZcodeActive &&
               activeSettingsSection === item.id;
             const Icon = item.icon;

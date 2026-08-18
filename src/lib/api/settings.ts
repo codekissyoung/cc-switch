@@ -90,6 +90,15 @@ export interface KimiSuiteStatus {
   relayConfigured: boolean;
 }
 
+export interface GrokSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  relayConfigured: boolean;
+}
+
 export interface ZcodeSuiteStatus {
   supported: boolean;
   platform: "macos" | "windows" | "unsupported";
@@ -375,6 +384,14 @@ export const settingsApi = {
 
   async configureKimiRelay(apiKey: string): Promise<void> {
     await invoke("configure_kimi_relay", { apiKey });
+  },
+
+  async getGrokSuiteStatus(): Promise<GrokSuiteStatus> {
+    return await invoke("get_grok_suite_status");
+  },
+
+  async configureGrokRelay(apiKey: string): Promise<void> {
+    await invoke("configure_grok_relay", { apiKey });
   },
 
   async getZcodeSuiteStatus(): Promise<ZcodeSuiteStatus> {
