@@ -60,4 +60,8 @@ test("rejects unknown files instead of publishing them", () => {
     () => classifyReleaseAsset("debug-symbols.zip", "3.17.1"),
     /Unsupported release asset name/,
   );
+  assert.throws(
+    () => classifyReleaseAsset("ICodeEasy-v3.17.1-macOS.zip", "3.17.1"),
+    /Unsupported release asset name/,
+  );
 });

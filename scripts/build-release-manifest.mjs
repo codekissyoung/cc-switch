@@ -15,14 +15,14 @@ function escapeRegex(value) {
 export function classifyReleaseAsset(name, version) {
   const escapedVersion = escapeRegex(version);
   let match = name.match(
-    new RegExp(`^ICodeEasy-v${escapedVersion}-macOS\\.(dmg|zip)$`),
+    new RegExp(`^ICodeEasy-v${escapedVersion}-macOS\\.dmg$`),
   );
   if (match) {
     return {
-      id: `macos-universal-${match[1]}`,
+      id: "macos-universal-dmg",
       platform: "macOS",
       arch: "universal",
-      format: match[1].toUpperCase(),
+      format: "DMG",
     };
   }
 
