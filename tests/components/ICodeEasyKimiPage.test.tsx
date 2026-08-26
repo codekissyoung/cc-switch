@@ -8,6 +8,7 @@ const apiMocks = vi.hoisted(() => ({
   upsertUniversal: vi.fn(),
   getKimiSuiteStatus: vi.fn(),
   configureKimiRelay: vi.fn(),
+  installGitBash: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
   toastSuccess: vi.fn(),
@@ -22,6 +23,7 @@ vi.mock("@/lib/api", () => ({
   settingsApi: {
     getKimiSuiteStatus: apiMocks.getKimiSuiteStatus,
     configureKimiRelay: apiMocks.configureKimiRelay,
+    installGitBash: apiMocks.installGitBash,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
   },
@@ -50,6 +52,20 @@ const storedProvider: UniversalProvider = {
   createdAt: 100,
 };
 
+const gitBashMissing = {
+  supported: true,
+  installed: false,
+  path: null,
+  source: null,
+};
+
+const gitBashReady = {
+  supported: true,
+  installed: true,
+  path: "C:\\Users\\t\\AppData\\Local\\ICodeEasy\\mingit\\bin\\bash.exe",
+  source: "icodeeasy-managed",
+};
+
 const readySuite = {
   supported: true,
   platform: "macos" as const,
@@ -57,6 +73,8 @@ const readySuite = {
   cliVersion: "0.36.1",
   cliBroken: false,
   relayConfigured: false,
+  // macOS 上 Git Bash 不适用
+  gitBash: { supported: false, installed: false, path: null, source: null },
 };
 
 describe("ICodeEasyKimiPage", () => {
@@ -65,6 +83,10 @@ describe("ICodeEasyKimiPage", () => {
     apiMocks.upsertUniversal.mockResolvedValue(true);
     apiMocks.getKimiSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.configureKimiRelay.mockResolvedValue(undefined);
+    apiMocks.installGitBash.mockResolvedValue({
+      bashPath: gitBashReady.path,
+      alreadyInstalled: false,
+    });
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
@@ -151,5 +173,66 @@ describe("ICodeEasyKimiPage", () => {
     expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
       "icodeeasyKimi.cli.installSuccess",
     );
+  });
+
+  it("hides the Git Bash card off Windows", async () => {
+    render(<ICodeEasyKimiPage />);
+
+    expect(
+      await screen.findByText("icodeeasyKimi.relay.notConfigured"),
+    ).toBeVisible();
+    expect(screen.queryByText("icodeeasyKimi.gitbash.title")).toBeNull();
+  });
+
+  it("installs Git Bash from the Kimi page on Windows", async () => {
+    apiMocks.getKimiSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      platform: "windows" as const,
+      gitBash: gitBashMissing,
+    });
+    apiMocks.installGitBash.mockImplementation(async () => {
+      apiMocks.getKimiSuiteStatus.mockResolvedValue({
+        ...readySuite,
+        platform: "windows" as const,
+        gitBash: gitBashReady,
+      });
+      return { bashPath: gitBashReady.path, alreadyInstalled: false };
+    });
+    render(<ICodeEasyKimiPage />);
+
+    expect(
+      await screen.findByText("icodeeasyKimi.gitbash.notInstalled"),
+    ).toBeVisible();
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "icodeeasyKimi.gitbash.install",
+      }),
+    );
+
+    await waitFor(() => expect(apiMocks.installGitBash).toHaveBeenCalled());
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyKimi.gitbash.installSuccess",
+    );
+    expect(
+      await screen.findByText("icodeeasyKimi.gitbash.installed"),
+    ).toBeVisible();
+  });
+
+  it("shows the detected Git Bash path without an install button", async () => {
+    apiMocks.getKimiSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      platform: "windows" as const,
+      gitBash: gitBashReady,
+    });
+    render(<ICodeEasyKimiPage />);
+
+    expect(
+      await screen.findByText("icodeeasyKimi.gitbash.installed"),
+    ).toBeVisible();
+    expect(screen.getByText(gitBashReady.path)).toBeVisible();
+    expect(
+      screen.queryByRole("button", { name: "icodeeasyKimi.gitbash.install" }),
+    ).toBeNull();
   });
 });

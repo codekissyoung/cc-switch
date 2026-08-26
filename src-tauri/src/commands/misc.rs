@@ -281,6 +281,8 @@ pub struct KimiSuiteStatus {
     cli_version: Option<String>,
     cli_broken: bool,
     relay_configured: bool,
+    /// Windows 上 Kimi Code CLI 的 shell 依赖；其它平台 supported=false，前端忽略。
+    git_bash: crate::git_bash::GitBashStatus,
 }
 
 /// Grok Build CLI readiness + ICodeEasy relay state for the ICodeEasy Grok page.
@@ -853,10 +855,20 @@ pub async fn get_kimi_suite_status() -> Result<KimiSuiteStatus, String> {
             cli_version: selected.and_then(|install| install.version.clone()),
             cli_broken: !installs.is_empty() && selected.is_none(),
             relay_configured,
+            git_bash: crate::git_bash::probe_git_bash(),
         }
     })
     .await
     .map_err(|e| format!("Kimi suite probe task failed: {e}"))
+}
+
+/// Windows 上一键安装 Git Bash（托管 MinGit 下载 → sha256 校验 → 解压到
+/// `%LOCALAPPDATA%\ICodeEasy\mingit` → `setx KIMI_SHELL_PATH`）。已安装时幂等返回。
+#[tauri::command]
+pub async fn install_git_bash() -> Result<crate::git_bash::GitBashInstallResult, String> {
+    crate::git_bash::install_managed_git_bash()
+        .await
+        .map_err(|e| e.to_string())
 }
 
 /// 把 ICodeEasy 中转（provider + 模型条目 + default_model）upsert 进

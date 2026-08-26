@@ -254,6 +254,17 @@
       "installSuccess": "Kimi Code CLI 已就绪",
       "installFailed": "Kimi Code CLI 安装或更新失败：{{error}}"
     },
+    "gitbash": {
+      "title": "运行环境（Git Bash）",
+      "description": "Windows 上的 Kimi Code CLI 需要 Git Bash 作为 shell 环境，缺失时 CLI 启动会直接报错退出。可一键安装 MinGit（Git for Windows 官方精简发行版，约 39MB，免管理员权限），也可以自行安装 Git for Windows。",
+      "installed": "Git Bash 已就绪",
+      "notInstalled": "未检测到 Git Bash",
+      "install": "一键安装",
+      "installing": "正在下载安装…",
+      "installSuccess": "Git Bash 安装完成，请新开一个终端窗口再运行 kimi",
+      "installFailed": "Git Bash 安装失败：{{error}}",
+      "restartHint": "安装完成后请新开一个终端窗口再运行 kimi（环境变量只对新进程生效）。"
+    },
     "suite": {
       "installed": "已安装",
       "notInstalled": "未安装",

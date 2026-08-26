@@ -254,6 +254,17 @@
       "installSuccess": "Kimi Code CLI is ready",
       "installFailed": "Failed to install or update Kimi Code CLI: {{error}}"
     },
+    "gitbash": {
+      "title": "Runtime (Git Bash)",
+      "description": "Kimi Code CLI on Windows needs Git Bash as its shell environment; without it the CLI exits with an error on launch. Install MinGit with one click (the official minimal Git for Windows distribution, ~39 MB, no admin rights required), or install Git for Windows yourself.",
+      "installed": "Git Bash is ready",
+      "notInstalled": "Git Bash not detected",
+      "install": "Install now",
+      "installing": "Downloading and installing…",
+      "installSuccess": "Git Bash installed. Open a new terminal window before running kimi",
+      "installFailed": "Failed to install Git Bash: {{error}}",
+      "restartHint": "After installation, open a new terminal window before running kimi (environment variables only apply to new processes)."
+    },
     "suite": {
       "installed": "Installed",
       "notInstalled": "Not installed",

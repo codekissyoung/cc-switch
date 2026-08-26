@@ -14,6 +14,7 @@ mod deeplink;
 mod error;
 mod gemini_config;
 mod gemini_mcp;
+mod git_bash;
 mod grok_config;
 pub mod hermes_config;
 mod init_status;
@@ -1644,6 +1645,7 @@ pub fn run() {
             commands::launch_or_install_antigravity_desktop,
             commands::get_kimi_suite_status,
             commands::configure_kimi_relay,
+            commands::install_git_bash,
             commands::get_grok_suite_status,
             commands::configure_grok_relay,
             commands::get_opencode_suite_status,

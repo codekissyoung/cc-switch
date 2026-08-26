@@ -81,6 +81,20 @@ export interface AntigravityDesktopLaunchResult {
   desktopWasInstalled: boolean;
 }
 
+export interface GitBashStatus {
+  /** 仅 Windows 需要 Git Bash；其它平台为 false，不渲染对应卡片。 */
+  supported: boolean;
+  installed: boolean;
+  path: string | null;
+  /** 命中来源：env-override / icodeeasy-managed / git-on-path / well-known-location */
+  source: string | null;
+}
+
+export interface GitBashInstallResult {
+  bashPath: string;
+  alreadyInstalled: boolean;
+}
+
 export interface KimiSuiteStatus {
   supported: boolean;
   platform: "macos" | "windows" | "unsupported";
@@ -88,6 +102,7 @@ export interface KimiSuiteStatus {
   cliVersion: string | null;
   cliBroken: boolean;
   relayConfigured: boolean;
+  gitBash: GitBashStatus;
 }
 
 export interface GrokSuiteStatus {
@@ -393,6 +408,10 @@ export const settingsApi = {
 
   async configureKimiRelay(apiKey: string): Promise<void> {
     await invoke("configure_kimi_relay", { apiKey });
+  },
+
+  async installGitBash(): Promise<GitBashInstallResult> {
+    return await invoke("install_git_bash");
   },
 
   async getGrokSuiteStatus(): Promise<GrokSuiteStatus> {

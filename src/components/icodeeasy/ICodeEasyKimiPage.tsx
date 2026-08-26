@@ -5,6 +5,7 @@ import {
   CircleAlert,
   KeyRound,
   LoaderCircle,
+  TerminalSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import { KimiIcon } from "@/components/BrandIcons";
@@ -39,6 +40,7 @@ export function ICodeEasyKimiPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
+  const [installingGitBash, setInstallingGitBash] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -119,6 +121,26 @@ export function ICodeEasyKimiPage() {
     }
   };
 
+  const handleInstallGitBash = async () => {
+    if (installingGitBash) return;
+
+    setInstallingGitBash(true);
+    try {
+      await settingsApi.installGitBash();
+      await refreshSuite();
+      toast.success(t("icodeeasyKimi.gitbash.installSuccess"));
+    } catch (error) {
+      console.error("[ICodeEasyKimi] Failed to install Git Bash", error);
+      toast.error(
+        t("icodeeasyKimi.gitbash.installFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setInstallingGitBash(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -179,6 +201,66 @@ export function ICodeEasyKimiPage() {
           </div>
         </CardContent>
       </Card>
+
+      {suiteStatus?.platform === "windows" && suiteStatus.gitBash.supported && (
+        <Card className="border-border/70 shadow-sm">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-lg">
+              <TerminalSquare className="h-5 w-5 text-sky-500" />
+              {t("icodeeasyKimi.gitbash.title")}
+            </CardTitle>
+            <CardDescription>
+              {t("icodeeasyKimi.gitbash.description")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2 text-sm">
+              {suiteStatus.gitBash.installed ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+                  <span className="font-medium text-emerald-600">
+                    {t("icodeeasyKimi.gitbash.installed")}
+                  </span>
+                </>
+              ) : (
+                <>
+                  <CircleAlert className="h-4 w-4 text-amber-500" />
+                  <span className="font-medium text-amber-600">
+                    {t("icodeeasyKimi.gitbash.notInstalled")}
+                  </span>
+                </>
+              )}
+            </div>
+            {suiteStatus.gitBash.installed && suiteStatus.gitBash.path && (
+              <p className="break-all font-mono text-xs text-muted-foreground">
+                {suiteStatus.gitBash.path}
+              </p>
+            )}
+            {!suiteStatus.gitBash.installed && (
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs leading-5 text-muted-foreground">
+                  {t("icodeeasyKimi.gitbash.restartHint")}
+                </p>
+                <Button
+                  size="sm"
+                  className="ml-auto bg-sky-600 text-white hover:bg-sky-700"
+                  disabled={installingGitBash}
+                  onClick={() => void handleInstallGitBash()}
+                >
+                  {installingGitBash && (
+                    <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  {t(
+                    installingGitBash
+                      ? "icodeeasyKimi.gitbash.installing"
+                      : "icodeeasyKimi.gitbash.install",
+                  )}
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <ICodeEasyClientSuiteCard
         icon={<KimiIcon size={24} />}
