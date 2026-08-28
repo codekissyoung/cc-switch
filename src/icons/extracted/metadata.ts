@@ -696,6 +696,13 @@ export const iconMetadata: Record<string, IconMetadata> = {
     keywords: ["stepfun", "step", "jieyue", "阶跃星辰"],
     defaultColor: "#005AFF",
   },
+  xycai: {
+    name: "xycai",
+    displayName: "XycAi",
+    category: "ai-provider",
+    keywords: ["xycai", "xyc", "aggregator", "relay", "gateway", "token"],
+    defaultColor: "#1E88E5",
+  },
 };
 
 export function getIconMetadata(name: string): IconMetadata | undefined {
