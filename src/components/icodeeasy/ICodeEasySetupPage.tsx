@@ -1,7 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import {
   CheckCircle2,
+  ChevronRight,
+  CircleAlert,
   ExternalLink,
   Eye,
   EyeOff,
@@ -10,7 +12,18 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ClaudeIcon, CodexIcon, GeminiIcon } from "@/components/BrandIcons";
+import {
+  ClaudeIcon,
+  CodexIcon,
+  GeminiIcon,
+  GrokIcon,
+  HermesIcon,
+  KimiIcon,
+  OpenClawIcon,
+  OpenCodeIcon,
+  PiIcon,
+  ZcodeIcon,
+} from "@/components/BrandIcons";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,10 +32,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { providersApi, settingsApi, universalProvidersApi } from "@/lib/api";
-import type { AppId } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
   createICodeEasyUniversalProvider,
@@ -30,58 +41,133 @@ import {
   ICODEEASY_UNIVERSAL_PROVIDER_ID,
 } from "@/config/universalProviderPresets";
 import { extractErrorMessage } from "@/utils/errorUtils";
-import { cn } from "@/lib/utils";
 
-type SetupAppId = Extract<AppId, "claude" | "codex" | "gemini">;
+export type ICodeEasyToolView =
+  | "codex"
+  | "claude"
+  | "claudeDesktop"
+  | "google"
+  | "kimi"
+  | "grok"
+  | "zcode"
+  | "opencode"
+  | "pi"
+  | "openclaw"
+  | "hermes";
 
-interface SetupApp {
-  id: SetupAppId;
-  providerId: string;
+type ToolStatus = "configured" | "unconfigured" | "unknown";
+
+interface ToolEntry {
+  view: ICodeEasyToolView;
   labelKey: string;
-  descriptionKey: string;
+  icon: ReactNode;
+  probe: () => Promise<boolean>;
 }
 
-const SETUP_APPS: SetupApp[] = [
+const currentProviderIs = async (
+  appId: "claude" | "codex" | "gemini",
+  providerId: string,
+): Promise<boolean> => (await providersApi.getCurrent(appId)) === providerId;
+
+const TOOLS: ToolEntry[] = [
   {
-    id: "claude",
-    providerId: `universal-claude-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
-    labelKey: "icodeeasySetup.apps.claude.name",
-    descriptionKey: "icodeeasySetup.apps.claude.description",
+    view: "codex",
+    labelKey: "icodeeasyNavigation.codex",
+    icon: <CodexIcon size={24} />,
+    probe: () =>
+      currentProviderIs(
+        "codex",
+        `universal-codex-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
+      ),
   },
   {
-    id: "codex",
-    providerId: `universal-codex-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
-    labelKey: "icodeeasySetup.apps.codex.name",
-    descriptionKey: "icodeeasySetup.apps.codex.description",
+    view: "claude",
+    labelKey: "icodeeasyNavigation.claude",
+    icon: <ClaudeIcon size={24} />,
+    probe: () =>
+      currentProviderIs(
+        "claude",
+        `universal-claude-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
+      ),
   },
   {
-    id: "gemini",
-    providerId: `universal-gemini-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
-    labelKey: "icodeeasySetup.apps.gemini.name",
-    descriptionKey: "icodeeasySetup.apps.gemini.description",
+    view: "claudeDesktop",
+    labelKey: "icodeeasyNavigation.claudeDesktop",
+    icon: <ClaudeIcon size={24} />,
+    probe: async () =>
+      (await providersApi.getCurrent("claude-desktop")) ===
+      `universal-claude-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
+  },
+  {
+    view: "google",
+    labelKey: "icodeeasyNavigation.google",
+    icon: <GeminiIcon size={24} />,
+    probe: () =>
+      currentProviderIs(
+        "gemini",
+        `universal-gemini-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`,
+      ),
+  },
+  {
+    view: "kimi",
+    labelKey: "icodeeasyNavigation.kimi",
+    icon: <KimiIcon size={24} />,
+    probe: async () => (await settingsApi.getKimiSuiteStatus()).relayConfigured,
+  },
+  {
+    view: "grok",
+    labelKey: "icodeeasyNavigation.grok",
+    icon: <GrokIcon size={24} />,
+    probe: async () => (await settingsApi.getGrokSuiteStatus()).relayConfigured,
+  },
+  {
+    view: "zcode",
+    labelKey: "icodeeasyNavigation.zcode",
+    icon: <ZcodeIcon size={24} />,
+    probe: async () =>
+      (await settingsApi.getZcodeSuiteStatus()).relayConfigured,
+  },
+  {
+    view: "opencode",
+    labelKey: "icodeeasyNavigation.opencode",
+    icon: <OpenCodeIcon size={24} />,
+    probe: async () =>
+      (await settingsApi.getOpencodeSuiteStatus()).relayConfigured,
+  },
+  {
+    view: "pi",
+    labelKey: "icodeeasyNavigation.pi",
+    icon: <PiIcon size={24} />,
+    probe: async () => (await settingsApi.getPiSuiteStatus()).relayConfigured,
+  },
+  {
+    view: "openclaw",
+    labelKey: "icodeeasyNavigation.openclaw",
+    icon: <OpenClawIcon size={24} />,
+    probe: async () =>
+      (await settingsApi.getOpenclawSuiteStatus()).relayConfigured,
+  },
+  {
+    view: "hermes",
+    labelKey: "icodeeasyNavigation.hermes",
+    icon: <HermesIcon size={24} />,
+    probe: async () =>
+      (await settingsApi.getHermesSuiteStatus()).relayConfigured,
   },
 ];
 
-function SetupAppIcon({ appId }: { appId: SetupAppId }) {
-  if (appId === "claude") return <ClaudeIcon size={28} />;
-  if (appId === "codex") return <CodexIcon size={28} />;
-  return <GeminiIcon size={28} />;
+interface ICodeEasySetupPageProps {
+  onNavigate: (view: ICodeEasyToolView) => void;
 }
 
-export function ICodeEasySetupPage() {
+export function ICodeEasySetupPage({ onNavigate }: ICodeEasySetupPageProps) {
   const { t } = useTranslation();
   const [provider, setProvider] = useState<UniversalProvider | null>(null);
   const [apiKey, setApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
-  const [selectedApps, setSelectedApps] = useState<Set<SetupAppId>>(
-    () => new Set(["codex"]),
-  );
-  const [configuredApps, setConfiguredApps] = useState<Set<SetupAppId>>(
-    () => new Set(),
-  );
-  const [failedApps, setFailedApps] = useState<Set<SetupAppId>>(
-    () => new Set(),
-  );
+  const [statuses, setStatuses] = useState<Partial<
+    Record<ICodeEasyToolView, ToolStatus>
+  > | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -98,23 +184,28 @@ export function ICodeEasySetupPage() {
           await universalProvidersApi.upsert(currentProvider);
         }
 
-        const currentProviderIds = await Promise.all(
-          SETUP_APPS.map(async (app) => ({
-            app,
-            currentId: await providersApi.getCurrent(app.id),
-          })),
+        const entries = await Promise.all(
+          TOOLS.map(async (tool) => {
+            try {
+              const configured = await tool.probe();
+              return [
+                tool.view,
+                configured ? "configured" : "unconfigured",
+              ] as const;
+            } catch (error) {
+              console.warn(
+                `[ICodeEasySetup] Failed to probe ${tool.view} relay status`,
+                error,
+              );
+              return [tool.view, "unknown"] as const;
+            }
+          }),
         );
 
         if (!active) return;
         setProvider(currentProvider);
         setApiKey(currentProvider.apiKey);
-        setConfiguredApps(
-          new Set(
-            currentProviderIds
-              .filter(({ app, currentId }) => currentId === app.providerId)
-              .map(({ app }) => app.id),
-          ),
-        );
+        setStatuses(Object.fromEntries(entries));
       } catch (error) {
         console.error("[ICodeEasySetup] Failed to load configuration", error);
         toast.error(
@@ -133,21 +224,13 @@ export function ICodeEasySetupPage() {
     };
   }, [t]);
 
-  const toggleApp = (appId: SetupAppId, checked: boolean) => {
-    setSelectedApps((previous) => {
-      const next = new Set(previous);
-      if (checked) next.add(appId);
-      else next.delete(appId);
-      return next;
-    });
-  };
+  const apiKeyDirty = apiKey.trim() !== (provider?.apiKey ?? "");
 
-  const handleConfigure = async () => {
+  const handleSaveKey = async () => {
     const trimmedKey = apiKey.trim();
-    if (!trimmedKey || selectedApps.size === 0 || saving) return;
+    if (!trimmedKey || !apiKeyDirty || saving) return;
 
     setSaving(true);
-    setFailedApps(new Set());
     try {
       const normalizedProvider = createICodeEasyUniversalProvider(
         trimmedKey,
@@ -156,40 +239,13 @@ export function ICodeEasySetupPage() {
       await universalProvidersApi.upsert(normalizedProvider);
       await universalProvidersApi.sync(ICODEEASY_UNIVERSAL_PROVIDER_ID);
 
-      const nextConfigured = new Set(configuredApps);
-      const nextFailed = new Set<SetupAppId>();
-      for (const app of SETUP_APPS) {
-        if (!selectedApps.has(app.id)) continue;
-        try {
-          await providersApi.switch(app.providerId, app.id);
-          nextConfigured.add(app.id);
-        } catch (error) {
-          console.error(
-            `[ICodeEasySetup] Failed to configure ${app.id}`,
-            error,
-          );
-          nextFailed.add(app.id);
-        }
-      }
-
       setProvider(normalizedProvider);
       setApiKey(trimmedKey);
-      setConfiguredApps(nextConfigured);
-      setFailedApps(nextFailed);
-
-      if (nextFailed.size === 0) {
-        toast.success(t("icodeeasySetup.configureSuccess"));
-      } else {
-        toast.warning(
-          t("icodeeasySetup.configurePartial", {
-            count: nextFailed.size,
-          }),
-        );
-      }
+      toast.success(t("icodeeasySetup.apiKeySaved"));
     } catch (error) {
-      console.error("[ICodeEasySetup] Failed to save configuration", error);
+      console.error("[ICodeEasySetup] Failed to save API key", error);
       toast.error(
-        t("icodeeasySetup.configureError", {
+        t("icodeeasySetup.apiKeySaveError", {
           error: extractErrorMessage(error),
         }),
       );
@@ -263,6 +319,15 @@ export function ICodeEasySetupPage() {
             </div>
             <Button
               type="button"
+              className="h-11 shrink-0 bg-blue-600 text-white hover:bg-blue-700"
+              disabled={!apiKey.trim() || !apiKeyDirty || saving}
+              onClick={() => void handleSaveKey()}
+            >
+              {saving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
+              {t("icodeeasySetup.saveApiKey")}
+            </Button>
+            <Button
+              type="button"
               variant="outline"
               className="h-11 shrink-0"
               onClick={() => void openKeysPage()}
@@ -281,77 +346,56 @@ export function ICodeEasySetupPage() {
       <Card className="border-border/70 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="text-lg">
-            {t("icodeeasySetup.selectAppsTitle")}
+            {t("icodeeasySetup.statusTitle")}
           </CardTitle>
           <CardDescription>
-            {t("icodeeasySetup.selectAppsDescription")}
+            {t("icodeeasySetup.statusDescription")}
           </CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-3 md:grid-cols-3">
-          {SETUP_APPS.map((app) => {
-            const checked = selectedApps.has(app.id);
-            const configured = configuredApps.has(app.id);
-            const failed = failedApps.has(app.id);
+        <CardContent className="grid gap-3 md:grid-cols-2">
+          {TOOLS.map((tool) => {
+            const status = statuses?.[tool.view] ?? null;
+            const name = t(tool.labelKey);
             return (
-              <label
-                key={app.id}
-                className={cn(
-                  "relative flex cursor-pointer items-start gap-3 rounded-xl border p-4 transition-colors",
-                  checked
-                    ? "border-blue-500/50 bg-blue-500/5"
-                    : "border-border hover:border-blue-500/30",
-                )}
+              <button
+                key={tool.view}
+                type="button"
+                onClick={() => onNavigate(tool.view)}
+                aria-label={t("icodeeasySetup.openTool", { name })}
+                className="flex items-center gap-3 rounded-xl border border-border p-4 text-left transition-colors hover:border-blue-500/30 hover:bg-blue-500/5"
               >
-                <Checkbox
-                  checked={checked}
-                  onCheckedChange={(value) => toggleApp(app.id, value === true)}
-                  aria-label={t(app.labelKey)}
-                  className="mt-1"
-                />
-                <div className="min-w-0 flex-1 space-y-2">
-                  <div className="flex items-center gap-2">
-                    <SetupAppIcon appId={app.id} />
-                    <span className="font-medium">{t(app.labelKey)}</span>
-                  </div>
-                  <p className="text-xs leading-5 text-muted-foreground">
-                    {t(app.descriptionKey)}
-                  </p>
-                  {(configured || failed) && (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1 text-xs font-medium",
-                        failed ? "text-amber-600" : "text-emerald-600",
-                      )}
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                      {t(
-                        failed
-                          ? "icodeeasySetup.configureFailed"
-                          : "icodeeasySetup.configured",
-                      )}
-                    </span>
-                  )}
-                </div>
-              </label>
+                <span className="flex h-7 w-7 flex-shrink-0 items-center justify-center">
+                  {tool.icon}
+                </span>
+                <span className="min-w-0 flex-1 truncate font-medium">
+                  {name}
+                </span>
+                {status === null && (
+                  <LoaderCircle className="h-4 w-4 flex-shrink-0 animate-spin text-muted-foreground" />
+                )}
+                {status === "configured" && (
+                  <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs font-medium text-emerald-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    {t("icodeeasySetup.toolConfigured")}
+                  </span>
+                )}
+                {status === "unconfigured" && (
+                  <span className="inline-flex flex-shrink-0 items-center gap-1 text-xs font-medium text-amber-600">
+                    <CircleAlert className="h-3.5 w-3.5" />
+                    {t("icodeeasySetup.toolNotConfigured")}
+                  </span>
+                )}
+                {status === "unknown" && (
+                  <span className="flex-shrink-0 text-xs text-muted-foreground">
+                    {t("icodeeasySetup.toolStatusUnknown")}
+                  </span>
+                )}
+                <ChevronRight className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
+              </button>
             );
           })}
         </CardContent>
       </Card>
-
-      <div className="flex flex-col gap-3 rounded-xl border border-border/70 bg-muted/30 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
-          {t("icodeeasySetup.compatibilityHint")}
-        </p>
-        <Button
-          size="lg"
-          className="min-w-40 bg-blue-600 text-white hover:bg-blue-700"
-          disabled={!apiKey.trim() || selectedApps.size === 0 || saving}
-          onClick={() => void handleConfigure()}
-        >
-          {saving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-          {t("icodeeasySetup.configureButton", { count: selectedApps.size })}
-        </Button>
-      </div>
     </div>
   );
 }

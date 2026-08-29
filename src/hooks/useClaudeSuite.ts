@@ -7,7 +7,7 @@ const CLAUDE_SUITE_ADAPTER = {
   getStatus: () => settingsApi.getClaudeSuiteStatus(),
   runCliAction: (action: "install" | "update") =>
     settingsApi.runToolLifecycleAction(["claude"], action),
-  launchDesktop: () => settingsApi.launchOrInstallClaudeDesktop(),
+  // 桌面版职责已拆到 Claude Desktop 页（useClaudeDesktopSuite）：这里只保留 CLI 生命周期。
 };
 
 export function useClaudeSuite() {

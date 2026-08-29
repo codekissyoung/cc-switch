@@ -23,11 +23,15 @@ interface ICodeEasyClientSuiteCardProps {
   i18nPrefix:
     | "icodeeasyCodex"
     | "icodeeasyClaude"
+    | "icodeeasyClaudeDesktop"
     | "icodeeasyGoogle"
     | "icodeeasyKimi"
     | "icodeeasyGrok"
     | "icodeeasyZcode"
-    | "icodeeasyOpencode";
+    | "icodeeasyOpencode"
+    | "icodeeasyPi"
+    | "icodeeasyOpenclaw"
+    | "icodeeasyHermes";
   status: ClientSuiteStatus | null;
   monitoringInstall: boolean;
   cliLatestVersion: string | null;

@@ -311,6 +311,45 @@ pub struct OpencodeSuiteStatus {
     relay_configured: bool,
 }
 
+/// Pi CLI readiness + ICodeEasy relay state for the ICodeEasy Pi page.
+/// Pi is a terminal-only product, so there is no desktop field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct PiSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    relay_configured: bool,
+}
+
+/// OpenClaw CLI readiness + ICodeEasy relay state for the ICodeEasy OpenClaw page.
+/// OpenClaw is a terminal-only product, so there is no desktop field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct OpenclawSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    relay_configured: bool,
+}
+
+/// Hermes CLI readiness + ICodeEasy relay state for the ICodeEasy Hermes page.
+/// Hermes is a terminal-only product, so there is no desktop field.
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HermesSuiteStatus {
+    supported: bool,
+    platform: &'static str,
+    cli_installed: bool,
+    cli_version: Option<String>,
+    cli_broken: bool,
+    relay_configured: bool,
+}
+
 const CHATGPT_CODEX_LANDING_URL: &str = "https://chatgpt.com/codex?app-landing-page=true";
 const CHATGPT_WINDOWS_INSTALLER_URL: &str =
     "https://get.microsoft.com/installer/download/9PLM9XGG6VKS?cid=website_cta_psi";
@@ -835,6 +874,36 @@ fn opencode_suite_platform() -> &'static str {
     }
 }
 
+fn pi_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+fn openclaw_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
+fn hermes_suite_platform() -> &'static str {
+    if cfg!(target_os = "macos") {
+        "macos"
+    } else if cfg!(target_os = "windows") {
+        "windows"
+    } else {
+        "unsupported"
+    }
+}
+
 #[tauri::command]
 pub async fn get_kimi_suite_status() -> Result<KimiSuiteStatus, String> {
     tokio::task::spawn_blocking(|| {
@@ -955,6 +1024,114 @@ pub async fn configure_opencode_relay(api_key: String) -> Result<(), String> {
     })
     .await
     .map_err(|e| format!("OpenCode relay configure task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn get_pi_suite_status() -> Result<PiSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("pi");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        let relay_configured = crate::pi_config::relay::pi_relay_configured().unwrap_or(false);
+
+        PiSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: pi_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("Pi suite probe task failed: {e}"))
+}
+
+/// Upsert the ICodeEasy provider entry into Pi's `~/.pi/agent/models.json`,
+/// preserving the user's other providers and self-added models. Pi's default
+/// model selection lives in `settings.json` and is intentionally left alone.
+#[tauri::command]
+pub async fn configure_pi_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::pi_config::relay::write_pi_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Pi relay configure task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn get_openclaw_suite_status() -> Result<OpenclawSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("openclaw");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        let relay_configured = crate::openclaw_config::openclaw_relay_configured().unwrap_or(false);
+
+        OpenclawSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: openclaw_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("OpenClaw suite probe task failed: {e}"))
+}
+
+/// Upsert the ICodeEasy provider into `~/.openclaw/openclaw.json`
+/// (`models.providers.icodeeasy`) and switch `agents.defaults.model.primary`
+/// to `icodeeasy/gpt-5.6-sol`, preserving other providers and fallbacks.
+#[tauri::command]
+pub async fn configure_openclaw_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::openclaw_config::write_openclaw_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("OpenClaw relay configure task failed: {e}"))?
+}
+
+#[tauri::command]
+pub async fn get_hermes_suite_status() -> Result<HermesSuiteStatus, String> {
+    tokio::task::spawn_blocking(|| {
+        let installs = enumerate_tool_installations("hermes");
+        let selected = installs
+            .iter()
+            .find(|install| install.is_path_default && install.runnable)
+            .or_else(|| installs.iter().find(|install| install.runnable));
+
+        let relay_configured = crate::hermes_config::hermes_relay_configured().unwrap_or(false);
+
+        HermesSuiteStatus {
+            supported: cfg!(any(target_os = "macos", target_os = "windows")),
+            platform: hermes_suite_platform(),
+            cli_installed: selected.is_some(),
+            cli_version: selected.and_then(|install| install.version.clone()),
+            cli_broken: !installs.is_empty() && selected.is_none(),
+            relay_configured,
+        }
+    })
+    .await
+    .map_err(|e| format!("Hermes suite probe task failed: {e}"))
+}
+
+/// Upsert the ICodeEasy entry into `~/.hermes/config.yaml` (`custom_providers`)
+/// and switch the top-level default model to it, preserving other providers
+/// and config sections.
+#[tauri::command]
+pub async fn configure_hermes_relay(api_key: String) -> Result<(), String> {
+    tokio::task::spawn_blocking(move || {
+        crate::hermes_config::write_hermes_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| format!("Hermes relay configure task failed: {e}"))?
 }
 
 /// ZCode desktop readiness + ICodeEasy relay state for the ICodeEasy ZCode page.

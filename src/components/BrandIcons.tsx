@@ -12,6 +12,7 @@ import KimiSvg from "@/icons/extracted/kimi.svg?url";
 import GrokSvg from "@/icons/extracted/grok.svg?url";
 import ZcodeSvg from "@/icons/extracted/zcode.svg?url";
 import OpenCodeSvg from "@/icons/extracted/opencode-logo-light.svg?url";
+import HermesPng from "@/icons/extracted/hermes.png?url";
 
 export function ClaudeIcon({ size = 16, className = "" }: IconProps) {
   return (
@@ -117,6 +118,19 @@ export function OpenCodeIcon({ size = 16, className = "" }: IconProps) {
   );
 }
 
+export function HermesIcon({ size = 16, className = "" }: IconProps) {
+  return (
+    <img
+      src={HermesPng}
+      width={size}
+      height={size}
+      className={`dark:brightness-0 dark:invert ${className}`}
+      alt="Hermes"
+      loading="lazy"
+    />
+  );
+}
+
 // MCP icon uses inline SVG to support currentColor for hover effects
 export function McpIcon({ size = 16, className = "" }: IconProps) {
   return (
@@ -131,6 +145,27 @@ export function McpIcon({ size = 16, className = "" }: IconProps) {
     >
       <path d="M15.688 2.343a2.588 2.588 0 00-3.61 0l-9.626 9.44a.863.863 0 01-1.203 0 .823.823 0 010-1.18l9.626-9.44a4.313 4.313 0 016.016 0 4.116 4.116 0 011.204 3.54 4.3 4.3 0 013.609 1.18l.05.05a4.115 4.115 0 010 5.9l-8.706 8.537a.274.274 0 000 .393l1.788 1.754a.823.823 0 010 1.18.863.863 0 01-1.203 0l-1.788-1.753a1.92 1.92 0 010-2.754l8.706-8.538a2.47 2.47 0 000-3.54l-.05-.049a2.588 2.588 0 00-3.607-.003l-7.172 7.034-.002.002-.098.097a.863.863 0 01-1.204 0 .823.823 0 010-1.18l7.273-7.133a2.47 2.47 0 00-.003-3.537z" />
       <path d="M14.485 4.703a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a4.115 4.115 0 000 5.9 4.314 4.314 0 006.016 0l7.12-6.982a.823.823 0 000-1.18.863.863 0 00-1.204 0l-7.119 6.982a2.588 2.588 0 01-3.61 0 2.47 2.47 0 010-3.54l7.12-6.982z" />
+    </svg>
+  );
+}
+
+// Pi 官方标记（https://github.com/earendil-works/pi README），
+// currentColor 随文本色，深浅主题自适应，无需 dark:invert。
+export function PiIcon({ size = 16, className = "" }: IconProps) {
+  return (
+    <svg
+      fill="currentColor"
+      height={size}
+      width={size}
+      className={className}
+      viewBox="0 0 800 800"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        fillRule="evenodd"
+        d="M165.29 165.29H517.36V400H400V517.36H282.65V634.72H165.29ZM282.65 282.65V400H400V282.65Z"
+      />
+      <path d="M517.36 400H634.72V634.72H517.36Z" />
     </svg>
   );
 }

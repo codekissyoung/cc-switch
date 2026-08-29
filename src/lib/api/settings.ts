@@ -123,6 +123,33 @@ export interface OpencodeSuiteStatus {
   relayConfigured: boolean;
 }
 
+export interface PiSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  relayConfigured: boolean;
+}
+
+export interface OpenclawSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  relayConfigured: boolean;
+}
+
+export interface HermesSuiteStatus {
+  supported: boolean;
+  platform: "macos" | "windows" | "unsupported";
+  cliInstalled: boolean;
+  cliVersion: string | null;
+  cliBroken: boolean;
+  relayConfigured: boolean;
+}
+
 export interface ZcodeSuiteStatus {
   supported: boolean;
   platform: "macos" | "windows" | "unsupported";
@@ -428,6 +455,30 @@ export const settingsApi = {
 
   async configureOpencodeRelay(apiKey: string): Promise<void> {
     await invoke("configure_opencode_relay", { apiKey });
+  },
+
+  async getPiSuiteStatus(): Promise<PiSuiteStatus> {
+    return await invoke("get_pi_suite_status");
+  },
+
+  async configurePiRelay(apiKey: string): Promise<void> {
+    await invoke("configure_pi_relay", { apiKey });
+  },
+
+  async getOpenclawSuiteStatus(): Promise<OpenclawSuiteStatus> {
+    return await invoke("get_openclaw_suite_status");
+  },
+
+  async configureOpenclawRelay(apiKey: string): Promise<void> {
+    await invoke("configure_openclaw_relay", { apiKey });
+  },
+
+  async getHermesSuiteStatus(): Promise<HermesSuiteStatus> {
+    return await invoke("get_hermes_suite_status");
+  },
+
+  async configureHermesRelay(apiKey: string): Promise<void> {
+    await invoke("configure_hermes_relay", { apiKey });
   },
 
   async getZcodeSuiteStatus(): Promise<ZcodeSuiteStatus> {

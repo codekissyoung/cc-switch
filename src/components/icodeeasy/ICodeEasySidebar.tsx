@@ -14,8 +14,11 @@ import {
   CodexIcon,
   GeminiIcon,
   GrokIcon,
+  HermesIcon,
   KimiIcon,
+  OpenClawIcon,
   OpenCodeIcon,
+  PiIcon,
   ZcodeIcon,
 } from "@/components/BrandIcons";
 import { cn } from "@/lib/utils";
@@ -65,20 +68,28 @@ interface ICodeEasySidebarProps {
   isHomeActive: boolean;
   isCodexActive: boolean;
   isClaudeActive: boolean;
+  isClaudeDesktopActive: boolean;
   isGoogleActive: boolean;
   isKimiActive: boolean;
   isGrokActive: boolean;
   isZcodeActive: boolean;
   isOpencodeActive: boolean;
+  isPiActive: boolean;
+  isOpenclawActive: boolean;
+  isHermesActive: boolean;
   activeSettingsSection: ICodeEasySettingsSection;
   onHomeSelect: () => void;
   onCodexSelect: () => void;
   onClaudeSelect: () => void;
+  onClaudeDesktopSelect: () => void;
   onGoogleSelect: () => void;
   onKimiSelect: () => void;
   onGrokSelect: () => void;
   onZcodeSelect: () => void;
   onOpencodeSelect: () => void;
+  onPiSelect: () => void;
+  onOpenclawSelect: () => void;
+  onHermesSelect: () => void;
   onSettingsSectionSelect: (section: ICodeEasySettingsSection) => void;
   style?: CSSProperties;
 }
@@ -87,20 +98,28 @@ export function ICodeEasySidebar({
   isHomeActive,
   isCodexActive,
   isClaudeActive,
+  isClaudeDesktopActive,
   isGoogleActive,
   isKimiActive,
   isGrokActive,
   isZcodeActive,
   isOpencodeActive,
+  isPiActive,
+  isOpenclawActive,
+  isHermesActive,
   activeSettingsSection,
   onHomeSelect,
   onCodexSelect,
   onClaudeSelect,
+  onClaudeDesktopSelect,
   onGoogleSelect,
   onKimiSelect,
   onGrokSelect,
   onZcodeSelect,
   onOpencodeSelect,
+  onPiSelect,
+  onOpenclawSelect,
+  onHermesSelect,
   onSettingsSectionSelect,
   style,
 }: ICodeEasySidebarProps) {
@@ -174,6 +193,18 @@ export function ICodeEasySidebar({
 
         <button
           type="button"
+          aria-current={isClaudeDesktopActive ? "page" : undefined}
+          onClick={onClaudeDesktopSelect}
+          className={itemClass(isClaudeDesktopActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <ClaudeIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.claudeDesktop")}</span>
+        </button>
+
+        <button
+          type="button"
           aria-current={isGoogleActive ? "page" : undefined}
           onClick={onGoogleSelect}
           className={itemClass(isGoogleActive)}
@@ -232,6 +263,42 @@ export function ICodeEasySidebar({
           <span>{t("icodeeasyNavigation.opencode")}</span>
         </button>
 
+        <button
+          type="button"
+          aria-current={isPiActive ? "page" : undefined}
+          onClick={onPiSelect}
+          className={itemClass(isPiActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <PiIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.pi")}</span>
+        </button>
+
+        <button
+          type="button"
+          aria-current={isOpenclawActive ? "page" : undefined}
+          onClick={onOpenclawSelect}
+          className={itemClass(isOpenclawActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <OpenClawIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.openclaw")}</span>
+        </button>
+
+        <button
+          type="button"
+          aria-current={isHermesActive ? "page" : undefined}
+          onClick={onHermesSelect}
+          className={itemClass(isHermesActive)}
+        >
+          <span className="flex h-[18px] w-[18px] flex-shrink-0 items-center justify-center">
+            <HermesIcon size={16} />
+          </span>
+          <span>{t("icodeeasyNavigation.hermes")}</span>
+        </button>
+
         <div className="my-3 border-t border-border/60" />
 
         <div className="space-y-1">
@@ -240,11 +307,15 @@ export function ICodeEasySidebar({
               !isHomeActive &&
               !isCodexActive &&
               !isClaudeActive &&
+              !isClaudeDesktopActive &&
               !isGoogleActive &&
               !isKimiActive &&
               !isGrokActive &&
               !isZcodeActive &&
               !isOpencodeActive &&
+              !isPiActive &&
+              !isOpenclawActive &&
+              !isHermesActive &&
               activeSettingsSection === item.id;
             const Icon = item.icon;
 

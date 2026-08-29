@@ -14,7 +14,6 @@ const apiMocks = vi.hoisted(() => ({
   syncClaudeProviderToDesktop: vi.fn(),
   getClaudeSuiteStatus: vi.fn(),
   runToolLifecycleAction: vi.fn(),
-  launchOrInstallClaudeDesktop: vi.fn(),
   getToolVersions: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -34,7 +33,6 @@ vi.mock("@/lib/api", () => ({
   settingsApi: {
     getClaudeSuiteStatus: apiMocks.getClaudeSuiteStatus,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
-    launchOrInstallClaudeDesktop: apiMocks.launchOrInstallClaudeDesktop,
     getToolVersions: apiMocks.getToolVersions,
   },
 }));
@@ -81,10 +79,6 @@ describe("ICodeEasyClaudePage", () => {
     apiMocks.syncClaudeProviderToDesktop.mockResolvedValue(true);
     apiMocks.getClaudeSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
-    apiMocks.launchOrInstallClaudeDesktop.mockResolvedValue({
-      method: "claude-app",
-      desktopWasInstalled: true,
-    });
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "claude",
@@ -98,7 +92,7 @@ describe("ICodeEasyClaudePage", () => {
     ]);
   });
 
-  it("reports configured only when Claude Code and Desktop both use ICodeEasy", async () => {
+  it("reports configured when Claude Code uses ICodeEasy and renders no desktop row", async () => {
     apiMocks.getCurrent.mockResolvedValue(CLAUDE_PROVIDER_ID);
     render(<ICodeEasyClaudePage />);
 
@@ -106,53 +100,12 @@ describe("ICodeEasyClaudePage", () => {
       await screen.findByText("icodeeasyClaude.relay.configured"),
     ).toBeVisible();
     expect(screen.getByText("icodeeasyClaude.cli.name")).toBeVisible();
-    expect(screen.getByText("icodeeasyClaude.desktop.name")).toBeVisible();
+    // 桌面行已迁往「桌面版 Claude」页
+    expect(screen.queryByText("icodeeasyClaude.desktop.name")).toBeNull();
   });
 
-  it("synchronizes and switches both Claude clients", async () => {
-    apiMocks.getCurrent.mockImplementation(async (app: string) =>
-      app === "claude" ? "claude-official" : "claude-desktop-official",
-    );
-    render(<ICodeEasyClaudePage />);
-
-    fireEvent.click(
-      await screen.findByRole("button", {
-        name: "icodeeasyClaude.relay.configure",
-      }),
-    );
-
-    await waitFor(() =>
-      expect(apiMocks.syncClaudeProviderToDesktop).toHaveBeenCalledWith(
-        CLAUDE_PROVIDER_ID,
-      ),
-    );
-    expect(apiMocks.switchProvider).toHaveBeenNthCalledWith(
-      1,
-      CLAUDE_PROVIDER_ID,
-      "claude-desktop",
-    );
-    expect(apiMocks.switchProvider).toHaveBeenNthCalledWith(
-      2,
-      CLAUDE_PROVIDER_ID,
-      "claude",
-    );
-    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
-      "icodeeasyClaude.relay.configureSuccess",
-    );
-  });
-
-  it("restores the Desktop provider when the Claude Code switch fails", async () => {
-    apiMocks.getCurrent.mockImplementation(async (app: string) =>
-      app === "claude" ? "claude-official" : "claude-desktop-official",
-    );
-    apiMocks.switchProvider.mockImplementation(
-      async (id: string, app: string) => {
-        if (id === CLAUDE_PROVIDER_ID && app === "claude") {
-          throw new Error("Claude write failed");
-        }
-        return { warnings: [] };
-      },
-    );
+  it("synchronizes and switches Claude Code only", async () => {
+    apiMocks.getCurrent.mockResolvedValue("claude-official");
     render(<ICodeEasyClaudePage />);
 
     fireEvent.click(
@@ -163,8 +116,38 @@ describe("ICodeEasyClaudePage", () => {
 
     await waitFor(() =>
       expect(apiMocks.switchProvider).toHaveBeenCalledWith(
-        "claude-desktop-official",
-        "claude-desktop",
+        CLAUDE_PROVIDER_ID,
+        "claude",
+      ),
+    );
+    expect(apiMocks.switchProvider).toHaveBeenCalledTimes(1);
+    // Desktop 同步职责已迁出本页
+    expect(apiMocks.syncClaudeProviderToDesktop).not.toHaveBeenCalled();
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyClaude.relay.configureSuccess",
+    );
+  });
+
+  it("restores the previous provider when the Claude Code switch fails", async () => {
+    apiMocks.getCurrent.mockResolvedValue("claude-official");
+    apiMocks.switchProvider.mockImplementation(async (id: string) => {
+      if (id === CLAUDE_PROVIDER_ID) {
+        throw new Error("Claude write failed");
+      }
+      return { warnings: [] };
+    });
+    render(<ICodeEasyClaudePage />);
+
+    fireEvent.click(
+      await screen.findByRole("button", {
+        name: "icodeeasyClaude.relay.configure",
+      }),
+    );
+
+    await waitFor(() =>
+      expect(apiMocks.switchProvider).toHaveBeenCalledWith(
+        "claude-official",
+        "claude",
       ),
     );
     expect(apiMocks.toastError).toHaveBeenCalled();

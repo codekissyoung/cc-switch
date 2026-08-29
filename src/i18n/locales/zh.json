@@ -49,11 +49,15 @@
     "home": "首页",
     "codex": "Codex",
     "claude": "Claude",
+    "claudeDesktop": "Claude Desktop",
     "google": "Google",
     "kimi": "Kimi",
     "grok": "Grok",
     "zcode": "ZCode",
     "opencode": "OpenCode",
+    "pi": "Pi",
+    "openclaw": "OpenClaw",
+    "hermes": "Hermes",
     "statistics": "统计"
   },
   "firstRunNotice": {
@@ -69,31 +73,17 @@
     "apiKeyPlaceholder": "粘贴你的 ICodeEasy API Key",
     "showApiKey": "显示 API Key",
     "hideApiKey": "隐藏 API Key",
+    "saveApiKey": "保存",
+    "apiKeySaved": "API Key 已保存",
+    "apiKeySaveError": "保存 API Key 失败：{{error}}",
     "getApiKey": "获取 API Key",
     "localStorageHint": "Key 仅写入本机 ICodeEasy 数据库和所选 CLI 的本地配置。",
-    "selectAppsTitle": "选择要配置的工具",
-    "selectAppsDescription": "可以一次配置一个或多个工具；未选中的工具不会改动当前运行配置。",
-    "apps": {
-      "claude": {
-        "name": "Claude Code",
-        "description": "配置 Anthropic 兼容接入，并保留 Claude Code 自身的模型选择。"
-      },
-      "codex": {
-        "name": "ChatGPT Codex + CLI",
-        "description": "配置 ICodeEasy Responses 接入和推荐模型 gpt-5.6-sol；客户端安装与启动在 Codex 页管理。"
-      },
-      "gemini": {
-        "name": "Gemini CLI",
-        "description": "配置 Gemini 原生 v1beta 接入和推荐模型 gemini-3.6-flash。"
-      }
-    },
-    "configured": "已使用 ICodeEasy",
-    "configureFailed": "本次配置失败",
-    "compatibilityHint": "升级用户的历史供应商和配置会继续保留在兼容层中，但不会出现在普通用户界面。写入前会备份当前 CLI 配置，单个工具失败时会自动回滚该工具。",
-    "configureButton": "配置所选工具（{{count}}）",
-    "configureSuccess": "所选工具已配置为 ICodeEasy",
-    "configurePartial": "配置完成，但有 {{count}} 个工具失败并已保留原配置",
-    "configureError": "保存 ICodeEasy 配置失败：{{error}}",
+    "statusTitle": "工具配置总览",
+    "statusDescription": "各工具的 ICodeEasy 中转配置状态，点按跳转到对应页面完成配置。",
+    "toolConfigured": "已配置",
+    "toolNotConfigured": "未配置",
+    "toolStatusUnknown": "未知",
+    "openTool": "打开{{name}}页",
     "loadError": "读取 ICodeEasy 配置失败：{{error}}",
     "openKeysError": "无法打开 API Key 页面：{{error}}"
   },
@@ -145,18 +135,18 @@
     "loadError": "读取 Claude 配置失败：{{error}}",
     "relay": {
       "title": "ICodeEasy 中转配置",
-      "description": "将 ICodeEasy Anthropic Messages 接入分别写入 Claude Code settings.json 与 Claude Desktop 3P profile；两端配置独立，但在这里一次完成。",
-      "configured": "Claude Code 与 Desktop 已指向 ICodeEasy",
-      "notConfigured": "尚未完成双端中转配置",
+      "description": "将 ICodeEasy Anthropic Messages 接入写入 Claude Code settings.json；Claude Desktop 的中转在「桌面版 Claude」页单独配置。",
+      "configured": "Claude Code 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
       "configure": "配置中转",
       "reconfigure": "重新配置",
-      "configureSuccess": "Claude Code 与 Desktop 已配置为 ICodeEasy；若 Desktop 正在运行，请重启后生效",
+      "configureSuccess": "Claude Code 已配置为 ICodeEasy 中转",
       "configureError": "配置中转失败，已尝试恢复原配置：{{error}}",
       "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
     },
     "clients": {
       "title": "客户端",
-      "description": "检查、安装并更新 Claude Code；获取或启动 Claude Desktop。"
+      "description": "检查、安装并更新 Claude Code。"
     },
     "cli": {
       "name": "Claude Code",
@@ -166,21 +156,13 @@
       "installSuccess": "Claude Code 已就绪",
       "installFailed": "Claude Code 安装或更新失败：{{error}}"
     },
-    "desktop": {
-      "name": "Claude Desktop",
-      "launch": "启动",
-      "get": "获取桌面版",
-      "launchFailed": "启动桌面版失败：{{error}}"
-    },
     "suite": {
-      "installed": "已安装",
       "notInstalled": "未安装",
-      "waitingForInstall": "请在 Anthropic 官方安装器中完成安装",
       "version": "已安装 · {{version}}",
       "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
       "needsRepair": "已安装但需要修复",
       "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
-      "officialInstallerHint": "Claude Code 优先使用 Anthropic 官方 native installer；Claude Desktop 始终来自 Anthropic 官方下载。系统安装确认和登录仍需由你完成。",
+      "officialInstallerHint": "Claude Code 优先使用 Anthropic 官方 native installer；系统安装确认和登录仍需由你完成。",
       "cliVerificationFailed": "Claude Code 安装后未通过版本验证"
     }
   },
@@ -380,6 +362,142 @@
       "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
       "officialInstallerHint": "OpenCode 优先使用官方 install 脚本，npm 作为兜底渠道；安装与更新仍由 OpenCode 官方工具完成。",
       "cliVerificationFailed": "OpenCode CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyClaudeDesktop": {
+    "loadError": "读取 Claude Desktop 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "将 ICodeEasy Anthropic Messages 接入写入 Claude Desktop 3P profile；Claude Code 的中转在「Claude」页单独配置。",
+      "configured": "Claude Desktop 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Claude Desktop 已配置为 ICodeEasy 中转，重启后生效",
+      "configureError": "配置中转失败，已尝试恢复原配置：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。",
+      "restartHint": "运行中的 Claude Desktop 不会自动重载配置，改动在重启 Claude Desktop 后生效。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并启动 Claude Desktop。"
+    },
+    "desktop": {
+      "name": "Claude Desktop",
+      "launch": "启动",
+      "get": "获取桌面版",
+      "launchFailed": "启动桌面版失败：{{error}}"
+    },
+    "suite": {
+      "installed": "已安装",
+      "notInstalled": "未安装",
+      "waitingForInstall": "请在 Anthropic 官方安装器中完成安装",
+      "officialInstallerHint": "Claude Desktop 始终来自 Anthropic 官方下载；未安装时会打开官方下载页，安装确认和登录仍需由你完成。"
+    }
+  },
+  "icodeeasyPi": {
+    "loadError": "读取 Pi 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy 供应商（OpenAI / Responses 协议，gpt-5.6-sol · 272K）写入 ~/.pi/agent/models.json；配置后在 Pi 里用 /model 选择 icodeeasy/gpt-5.6-sol。默认模型选择住在 settings.json，这里不改动；你的其他供应商与自加模型会保留。",
+      "configured": "Pi 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Pi 已配置为 ICodeEasy 中转，请在 Pi 里用 /model 选择 icodeeasy/gpt-5.6-sol",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 Pi CLI。"
+    },
+    "cli": {
+      "name": "Pi CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "Pi CLI 已就绪",
+      "installFailed": "Pi CLI 安装或更新失败：{{error}}"
+    },
+    "suite": {
+      "notInstalled": "未安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "Pi 通过 npm 分发（需要 Node.js）；安装、更新与登录仍由 Pi 官方工具完成。",
+      "cliVerificationFailed": "Pi CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyOpenclaw": {
+    "loadError": "读取 OpenClaw 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy 供应商（OpenAI / Responses 协议，gpt-5.6-sol · 400K）写入 ~/.openclaw/openclaw.json 的 models.providers，并把 agents.defaults.model 的主模型切换为 icodeeasy/gpt-5.6-sol；你的其他供应商与回退列表会保留。",
+      "configured": "OpenClaw 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "OpenClaw 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 OpenClaw CLI。"
+    },
+    "cli": {
+      "name": "OpenClaw CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "OpenClaw CLI 已就绪",
+      "installFailed": "OpenClaw CLI 安装或更新失败：{{error}}"
+    },
+    "suite": {
+      "notInstalled": "未安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "OpenClaw 通过 npm 分发（需要 Node.js）；安装、更新与登录仍由 OpenClaw 官方工具完成。",
+      "cliVerificationFailed": "OpenClaw CLI 安装后未通过版本验证"
+    }
+  },
+  "icodeeasyHermes": {
+    "loadError": "读取 Hermes 配置失败：{{error}}",
+    "relay": {
+      "title": "ICodeEasy 中转配置",
+      "description": "把 ICodeEasy 供应商（Responses 协议，gpt-5.6-sol · 400K）写入 ~/.hermes/config.yaml 的 custom_providers，并把默认模型切换为 icodeeasy/gpt-5.6-sol；你的其他供应商与配置段会保留。",
+      "configured": "Hermes 已指向 ICodeEasy",
+      "notConfigured": "尚未配置中转",
+      "configure": "配置中转",
+      "reconfigure": "重新配置",
+      "configureSuccess": "Hermes 已配置为 ICodeEasy 中转",
+      "configureError": "配置中转失败：{{error}}",
+      "noKeyHint": "请先在首页填写并保存 ICodeEasy API Key。"
+    },
+    "clients": {
+      "title": "客户端",
+      "description": "检查、安装并更新 Hermes CLI。"
+    },
+    "cli": {
+      "name": "Hermes CLI",
+      "install": "安装 CLI",
+      "repair": "修复重装",
+      "update": "更新",
+      "installSuccess": "Hermes CLI 已就绪",
+      "installFailed": "Hermes CLI 安装或更新失败：{{error}}"
+    },
+    "suite": {
+      "notInstalled": "未安装",
+      "version": "已安装 · {{version}}",
+      "versionOutdated": "已安装 · {{version}}，可更新至 {{latest}}",
+      "needsRepair": "已安装但需要修复",
+      "installerUnavailable": "当前系统没有可用的 CLI 安装方式",
+      "officialInstallerHint": "Hermes 使用官方安装脚本；安装、更新与登录仍由 Hermes 官方工具完成。",
+      "cliVerificationFailed": "Hermes CLI 安装后未通过版本验证"
     }
   },
   "apiKeyInput": {

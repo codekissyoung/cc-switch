@@ -7,7 +7,7 @@ import {
   LoaderCircle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { ClaudeIcon } from "@/components/BrandIcons";
+import { PiIcon } from "@/components/BrandIcons";
 import { ICodeEasyClientSuiteCard } from "@/components/icodeeasy/ICodeEasyClientSuiteCard";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,27 +17,25 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { providersApi, universalProvidersApi } from "@/lib/api";
+import { settingsApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
   createICodeEasyUniversalProvider,
   ICODEEASY_UNIVERSAL_PROVIDER_ID,
 } from "@/config/universalProviderPresets";
-import { useClaudeSuite } from "@/hooks/useClaudeSuite";
+import { usePiSuite } from "@/hooks/usePiSuite";
 import { extractErrorMessage } from "@/utils/errorUtils";
 
-const CLAUDE_PROVIDER_ID = `universal-claude-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`;
-
-export function ICodeEasyClaudePage() {
+export function ICodeEasyPiPage() {
   const { t } = useTranslation();
   const {
     status: suiteStatus,
+    refresh: refreshSuite,
     runCliAction,
     cliLatestVersion,
-  } = useClaudeSuite();
+  } = usePiSuite();
 
   const [provider, setProvider] = useState<UniversalProvider | null>(null);
-  const [configured, setConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
@@ -54,15 +52,13 @@ export function ICodeEasyClaudePage() {
           currentProvider = createICodeEasyUniversalProvider("");
           await universalProvidersApi.upsert(currentProvider);
         }
-        const claudeId = await providersApi.getCurrent("claude");
 
         if (!active) return;
         setProvider(currentProvider);
-        setConfigured(claudeId === CLAUDE_PROVIDER_ID);
       } catch (error) {
-        console.error("[ICodeEasyClaude] Failed to load configuration", error);
+        console.error("[ICodeEasyPi] Failed to load configuration", error);
         toast.error(
-          t("icodeeasyClaude.loadError", {
+          t("icodeeasyPi.loadError", {
             error: extractErrorMessage(error),
           }),
         );
@@ -78,42 +74,20 @@ export function ICodeEasyClaudePage() {
   }, [t]);
 
   const hasApiKey = Boolean(provider?.apiKey.trim());
+  const configured = Boolean(suiteStatus?.relayConfigured);
 
   const handleConfigure = async () => {
     if (!provider || !hasApiKey || saving) return;
 
     setSaving(true);
-    let previousClaudeId: string | null = null;
-    let switchAttempted = false;
     try {
-      const normalizedProvider = createICodeEasyUniversalProvider(
-        provider.apiKey,
-        provider,
-      );
-      await universalProvidersApi.upsert(normalizedProvider);
-      await universalProvidersApi.sync(ICODEEASY_UNIVERSAL_PROVIDER_ID);
-
-      previousClaudeId = await providersApi.getCurrent("claude");
-      switchAttempted = true;
-      await providersApi.switch(CLAUDE_PROVIDER_ID, "claude");
-
-      setProvider(normalizedProvider);
-      setConfigured(true);
-      toast.success(t("icodeeasyClaude.relay.configureSuccess"));
+      await settingsApi.configurePiRelay(provider.apiKey.trim());
+      await refreshSuite();
+      toast.success(t("icodeeasyPi.relay.configureSuccess"));
     } catch (error) {
-      // switch 可能在写入部分配置后才失败，尽量切回原供应商。
-      if (
-        switchAttempted &&
-        previousClaudeId &&
-        previousClaudeId !== CLAUDE_PROVIDER_ID
-      ) {
-        await providersApi
-          .switch(previousClaudeId, "claude")
-          .catch(() => undefined);
-      }
-      console.error("[ICodeEasyClaude] Failed to configure relay", error);
+      console.error("[ICodeEasyPi] Failed to configure relay", error);
       toast.error(
-        t("icodeeasyClaude.relay.configureError", {
+        t("icodeeasyPi.relay.configureError", {
           error: extractErrorMessage(error),
         }),
       );
@@ -129,14 +103,14 @@ export function ICodeEasyClaudePage() {
     try {
       const next = await runCliAction(action);
       if (!next.cliInstalled) {
-        toast.error(t("icodeeasyClaude.suite.cliVerificationFailed"));
+        toast.error(t("icodeeasyPi.suite.cliVerificationFailed"));
       } else {
-        toast.success(t("icodeeasyClaude.cli.installSuccess"));
+        toast.success(t("icodeeasyPi.cli.installSuccess"));
       }
     } catch (error) {
-      console.error("[ICodeEasyClaude] Failed to manage Claude Code", error);
+      console.error("[ICodeEasyPi] Failed to manage Pi CLI", error);
       toast.error(
-        t("icodeeasyClaude.cli.installFailed", {
+        t("icodeeasyPi.cli.installFailed", {
           error: extractErrorMessage(error),
         }),
       );
@@ -148,7 +122,7 @@ export function ICodeEasyClaudePage() {
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
-        <LoaderCircle className="h-7 w-7 animate-spin text-orange-500" />
+        <LoaderCircle className="h-7 w-7 animate-spin text-sky-500" />
       </div>
     );
   }
@@ -158,11 +132,11 @@ export function ICodeEasyClaudePage() {
       <Card className="border-border/70 shadow-sm">
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
-            <KeyRound className="h-5 w-5 text-orange-500" />
-            {t("icodeeasyClaude.relay.title")}
+            <KeyRound className="h-5 w-5 text-sky-500" />
+            {t("icodeeasyPi.relay.title")}
           </CardTitle>
           <CardDescription>
-            {t("icodeeasyClaude.relay.description")}
+            {t("icodeeasyPi.relay.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -171,14 +145,14 @@ export function ICodeEasyClaudePage() {
               <>
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <span className="font-medium text-emerald-600">
-                  {t("icodeeasyClaude.relay.configured")}
+                  {t("icodeeasyPi.relay.configured")}
                 </span>
               </>
             ) : (
               <>
                 <CircleAlert className="h-4 w-4 text-amber-500" />
                 <span className="font-medium text-amber-600">
-                  {t("icodeeasyClaude.relay.notConfigured")}
+                  {t("icodeeasyPi.relay.notConfigured")}
                 </span>
               </>
             )}
@@ -186,20 +160,20 @@ export function ICodeEasyClaudePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {!hasApiKey && (
               <p className="text-xs leading-5 text-muted-foreground">
-                {t("icodeeasyClaude.relay.noKeyHint")}
+                {t("icodeeasyPi.relay.noKeyHint")}
               </p>
             )}
             <Button
               size="sm"
-              className="ml-auto bg-orange-600 text-white hover:bg-orange-700"
+              className="ml-auto bg-sky-600 text-white hover:bg-sky-700"
               disabled={!hasApiKey || saving}
               onClick={() => void handleConfigure()}
             >
               {saving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               {t(
                 configured
-                  ? "icodeeasyClaude.relay.reconfigure"
-                  : "icodeeasyClaude.relay.configure",
+                  ? "icodeeasyPi.relay.reconfigure"
+                  : "icodeeasyPi.relay.configure",
               )}
             </Button>
           </div>
@@ -207,8 +181,8 @@ export function ICodeEasyClaudePage() {
       </Card>
 
       <ICodeEasyClientSuiteCard
-        icon={<ClaudeIcon size={24} />}
-        i18nPrefix="icodeeasyClaude"
+        icon={<PiIcon size={24} />}
+        i18nPrefix="icodeeasyPi"
         status={suiteStatus}
         monitoringInstall={false}
         cliLatestVersion={cliLatestVersion}

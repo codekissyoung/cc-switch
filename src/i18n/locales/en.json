@@ -49,11 +49,15 @@
     "home": "Home",
     "codex": "Codex",
     "claude": "Claude",
+    "claudeDesktop": "Claude Desktop",
     "google": "Google",
     "kimi": "Kimi",
     "grok": "Grok",
     "zcode": "ZCode",
     "opencode": "OpenCode",
+    "pi": "Pi",
+    "openclaw": "OpenClaw",
+    "hermes": "Hermes",
     "statistics": "Statistics"
   },
   "firstRunNotice": {
@@ -69,31 +73,17 @@
     "apiKeyPlaceholder": "Paste your ICodeEasy API Key",
     "showApiKey": "Show API Key",
     "hideApiKey": "Hide API Key",
+    "saveApiKey": "Save",
+    "apiKeySaved": "API Key saved",
+    "apiKeySaveError": "Failed to save API Key: {{error}}",
     "getApiKey": "Get API Key",
     "localStorageHint": "The key is written only to the local ICodeEasy database and the selected CLI configuration files.",
-    "selectAppsTitle": "Choose tools to configure",
-    "selectAppsDescription": "Configure one or several tools at once. Unselected tools keep their current live configuration.",
-    "apps": {
-      "claude": {
-        "name": "Claude Code",
-        "description": "Sets up the Anthropic-compatible endpoint while preserving Claude Code's model selection."
-      },
-      "codex": {
-        "name": "ChatGPT Codex + CLI",
-        "description": "Sets up ICodeEasy Responses with the recommended gpt-5.6-sol model; client installation and launching live on the Codex page."
-      },
-      "gemini": {
-        "name": "Gemini CLI",
-        "description": "Sets up native Gemini v1beta with the recommended gemini-3.6-flash model."
-      }
-    },
-    "configured": "Using ICodeEasy",
-    "configureFailed": "Setup failed this time",
-    "compatibilityHint": "Existing providers and settings remain in the compatibility layer for upgrades, but are hidden from the normal interface. The current CLI config is backed up before writing, and a failed tool is rolled back automatically.",
-    "configureButton": "Configure selected ({{count}})",
-    "configureSuccess": "The selected tools now use ICodeEasy",
-    "configurePartial": "Setup finished, but {{count}} tool(s) failed and kept their previous configuration",
-    "configureError": "Failed to save ICodeEasy configuration: {{error}}",
+    "statusTitle": "Tool configuration overview",
+    "statusDescription": "ICodeEasy relay status for each tool. Select a tool to open its page and finish setup.",
+    "toolConfigured": "Configured",
+    "toolNotConfigured": "Not configured",
+    "toolStatusUnknown": "Unknown",
+    "openTool": "Open {{name}} page",
     "loadError": "Failed to load ICodeEasy configuration: {{error}}",
     "openKeysError": "Could not open the API Key page: {{error}}"
   },
@@ -145,18 +135,18 @@
     "loadError": "Failed to load the Claude configuration: {{error}}",
     "relay": {
       "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy Anthropic Messages connection to Claude Code settings.json and the Claude Desktop 3P profile. Their configs remain separate, but this action configures both.",
-      "configured": "Claude Code and Desktop point to ICodeEasy",
-      "notConfigured": "The two clients are not configured yet",
+      "description": "Writes the ICodeEasy Anthropic Messages connection to Claude Code settings.json. The Claude Desktop relay is configured separately on the Claude Desktop page.",
+      "configured": "Claude Code points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
       "configure": "Configure relay",
       "reconfigure": "Reconfigure",
-      "configureSuccess": "Claude Code and Desktop now use ICodeEasy. Restart Desktop if it is running.",
-      "configureError": "Failed to configure the relay; the previous providers were restored where possible: {{error}}",
+      "configureSuccess": "Claude Code now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay; the previous provider was restored where possible: {{error}}",
       "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
     },
     "clients": {
       "title": "Clients",
-      "description": "Check, install, and update Claude Code; get or launch Claude Desktop."
+      "description": "Check, install, and update Claude Code."
     },
     "cli": {
       "name": "Claude Code",
@@ -166,21 +156,13 @@
       "installSuccess": "Claude Code is ready",
       "installFailed": "Failed to install or update Claude Code: {{error}}"
     },
-    "desktop": {
-      "name": "Claude Desktop",
-      "launch": "Launch",
-      "get": "Get the desktop app",
-      "launchFailed": "Failed to launch the desktop app: {{error}}"
-    },
     "suite": {
-      "installed": "Installed",
       "notInstalled": "Not installed",
-      "waitingForInstall": "Finish installation in Anthropic's official installer",
       "version": "Installed · {{version}}",
       "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
       "needsRepair": "Installed but needs repair",
       "installerUnavailable": "No supported CLI installer is available on this system",
-      "officialInstallerHint": "Claude Code prefers Anthropic's official native installer. Claude Desktop always comes from Anthropic's official download. System installation prompts and sign-in still require your confirmation.",
+      "officialInstallerHint": "Claude Code prefers Anthropic's official native installer. System installation prompts and sign-in still require your confirmation.",
       "cliVerificationFailed": "Claude Code did not pass version verification after installation"
     }
   },
@@ -380,6 +362,142 @@
       "installerUnavailable": "No supported CLI installer is available on this system",
       "officialInstallerHint": "OpenCode prefers its official install script, with npm as a fallback. Installation and updates remain handled by the official OpenCode tooling.",
       "cliVerificationFailed": "OpenCode CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyClaudeDesktop": {
+    "loadError": "Failed to load the Claude Desktop configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy Anthropic Messages connection to the Claude Desktop 3P profile. The Claude Code relay is configured separately on the Claude page.",
+      "configured": "Claude Desktop points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Claude Desktop now uses the ICodeEasy relay — restart it to apply",
+      "configureError": "Failed to configure the relay; the previous provider was restored where possible: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first.",
+      "restartHint": "A running Claude Desktop instance does not reload its configuration; restart Claude Desktop for changes to take effect."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and launch Claude Desktop."
+    },
+    "desktop": {
+      "name": "Claude Desktop",
+      "launch": "Launch",
+      "get": "Get the desktop app",
+      "launchFailed": "Failed to launch the desktop app: {{error}}"
+    },
+    "suite": {
+      "installed": "Installed",
+      "notInstalled": "Not installed",
+      "waitingForInstall": "Finish installation in Anthropic's official installer",
+      "officialInstallerHint": "Claude Desktop always comes from Anthropic's official download. When it is missing, the official download page opens; installation prompts and sign-in still require your confirmation."
+    }
+  },
+  "icodeeasyPi": {
+    "loadError": "Failed to load the Pi configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy provider (OpenAI / Responses protocol, gpt-5.6-sol · 272K) to ~/.pi/agent/models.json. Afterwards, pick icodeeasy/gpt-5.6-sol in Pi with /model. The default model selection lives in settings.json and is left untouched; your other providers and self-added models are preserved.",
+      "configured": "Pi points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Pi now uses the ICodeEasy relay — pick icodeeasy/gpt-5.6-sol in Pi with /model",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update Pi CLI."
+    },
+    "cli": {
+      "name": "Pi CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "Pi CLI is ready",
+      "installFailed": "Failed to install or update Pi CLI: {{error}}"
+    },
+    "suite": {
+      "notInstalled": "Not installed",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "Pi is distributed via npm (Node.js required). Installation, updates, and sign-in remain handled by the official Pi tooling.",
+      "cliVerificationFailed": "Pi CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyOpenclaw": {
+    "loadError": "Failed to load the OpenClaw configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy provider (OpenAI / Responses protocol, gpt-5.6-sol · 400K) to models.providers in ~/.openclaw/openclaw.json and switches the primary model in agents.defaults.model to icodeeasy/gpt-5.6-sol. Your other providers and fallback list are preserved.",
+      "configured": "OpenClaw points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "OpenClaw now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update OpenClaw CLI."
+    },
+    "cli": {
+      "name": "OpenClaw CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "OpenClaw CLI is ready",
+      "installFailed": "Failed to install or update OpenClaw CLI: {{error}}"
+    },
+    "suite": {
+      "notInstalled": "Not installed",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "OpenClaw is distributed via npm (Node.js required). Installation, updates, and sign-in remain handled by the official OpenClaw tooling.",
+      "cliVerificationFailed": "OpenClaw CLI did not pass version verification after installation"
+    }
+  },
+  "icodeeasyHermes": {
+    "loadError": "Failed to load the Hermes configuration: {{error}}",
+    "relay": {
+      "title": "ICodeEasy relay configuration",
+      "description": "Writes the ICodeEasy provider (Responses protocol, gpt-5.6-sol · 400K) to custom_providers in ~/.hermes/config.yaml and switches the default model to icodeeasy/gpt-5.6-sol. Your other providers and config sections are preserved.",
+      "configured": "Hermes points to ICodeEasy",
+      "notConfigured": "Relay is not configured yet",
+      "configure": "Configure relay",
+      "reconfigure": "Reconfigure",
+      "configureSuccess": "Hermes now uses the ICodeEasy relay",
+      "configureError": "Failed to configure the relay: {{error}}",
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Check, install, and update Hermes CLI."
+    },
+    "cli": {
+      "name": "Hermes CLI",
+      "install": "Install CLI",
+      "repair": "Repair and reinstall",
+      "update": "Update",
+      "installSuccess": "Hermes CLI is ready",
+      "installFailed": "Failed to install or update Hermes CLI: {{error}}"
+    },
+    "suite": {
+      "notInstalled": "Not installed",
+      "version": "Installed · {{version}}",
+      "versionOutdated": "Installed · {{version}} (update to {{latest}} available)",
+      "needsRepair": "Installed but needs repair",
+      "installerUnavailable": "No supported CLI installer is available on this system",
+      "officialInstallerHint": "Hermes uses its official install script. Installation, updates, and sign-in remain handled by the official Hermes tooling.",
+      "cliVerificationFailed": "Hermes CLI did not pass version verification after installation"
     }
   },
   "apiKeyInput": {

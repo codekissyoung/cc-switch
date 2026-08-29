@@ -1709,6 +1709,12 @@ pub fn run() {
             commands::get_zcode_suite_status,
             commands::launch_or_install_zcode_desktop,
             commands::configure_zcode_relay,
+            commands::get_pi_suite_status,
+            commands::configure_pi_relay,
+            commands::get_openclaw_suite_status,
+            commands::configure_openclaw_relay,
+            commands::get_hermes_suite_status,
+            commands::configure_hermes_relay,
             // Provider terminal
             commands::open_provider_terminal,
             // Universal Provider management

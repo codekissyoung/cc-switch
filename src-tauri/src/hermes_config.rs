@@ -947,6 +947,81 @@ pub fn apply_switch_defaults(
 }
 
 // ============================================================================
+// ICodeEasy Relay (Hermes 套件页中转配置)
+// ============================================================================
+
+/// ICodeEasy 中转在 `custom_providers:` 中的条目名。
+pub(crate) const HERMES_RELAY_PROVIDER_KEY: &str = "icodeeasy";
+/// ICodeEasy 中转端点（OpenAI 兼容网关）。
+pub(crate) const HERMES_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
+/// 中转默认模型（与 Codex/OpenCode 套件同网关模型）。
+pub(crate) const HERMES_RELAY_MODEL: &str = "gpt-5.6-sol";
+/// Hermes `api_mode`：走网关的 Codex Responses 协议。
+pub(crate) const HERMES_RELAY_API_MODE: &str = "codex_responses";
+/// 默认模型的上下文窗口。
+pub(crate) const HERMES_RELAY_CONTEXT_LENGTH: u64 = 400_000;
+
+/// ICodeEasy 中转条目的 JSON 形态。`set_provider` 会把 `models` 数组归一化
+/// 为 Hermes YAML dict，并把首个模型 id 写到条目级 `model:` 字段；
+/// `apply_switch_defaults` 读同一数组取默认模型。
+fn hermes_relay_settings(api_key: &str) -> serde_json::Value {
+    serde_json::json!({
+        "base_url": HERMES_RELAY_BASE_URL,
+        "api_key": api_key,
+        "api_mode": HERMES_RELAY_API_MODE,
+        "models": [
+            { "id": HERMES_RELAY_MODEL, "context_length": HERMES_RELAY_CONTEXT_LENGTH }
+        ],
+    })
+}
+
+/// 写入 ICodeEasy 中转配置：upsert `custom_providers:` 条目 + 顶层 `model:`
+/// 默认值。其余 provider 条目、用户在 icodeeasy 条目上自加的字段以及其它
+/// 配置段都由 set_provider / apply_switch_defaults 的既有语义保留。
+pub(crate) fn write_hermes_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+    let api_key = api_key.trim();
+    if api_key.is_empty() {
+        return Err(AppError::localized(
+            "hermes_relay_key_required",
+            "请先填写 ICodeEasy API Key",
+            "Enter the ICodeEasy API key first",
+        ));
+    }
+
+    let settings = hermes_relay_settings(api_key);
+    set_provider(HERMES_RELAY_PROVIDER_KEY, settings.clone())?;
+    apply_switch_defaults(HERMES_RELAY_PROVIDER_KEY, &settings)?;
+    Ok(())
+}
+
+/// 探测 Hermes 是否已指向 ICodeEasy 中转：icodeeasy 条目存在、base_url 匹配
+/// （忽略尾斜杠）、api_key 非空，且顶层 `model.provider` 选中 icodeeasy。
+/// get_provider 注入的 `_cc_source` / `provider_key` 标记不影响判断。
+/// 配置读取失败（缺失/损坏）一律视为未配置。
+pub(crate) fn hermes_relay_configured() -> Result<bool, AppError> {
+    let provider = match get_provider(HERMES_RELAY_PROVIDER_KEY) {
+        Ok(Some(provider)) => provider,
+        Ok(None) | Err(_) => return Ok(false),
+    };
+
+    let base_url_matches = provider
+        .get("base_url")
+        .and_then(|v| v.as_str())
+        .is_some_and(|url| url.trim_end_matches('/') == HERMES_RELAY_BASE_URL);
+    let has_api_key = provider
+        .get("api_key")
+        .and_then(|v| v.as_str())
+        .is_some_and(|key| !key.trim().is_empty());
+    let model_provider_matches = get_model_config()
+        .ok()
+        .flatten()
+        .and_then(|model| model.provider)
+        .is_some_and(|p| p == HERMES_RELAY_PROVIDER_KEY);
+
+    Ok(base_url_matches && has_api_key && model_provider_matches)
+}
+
+// ============================================================================
 // MCP Section Access (for mcp/hermes.rs to use in Phase 4)
 // ============================================================================
 
@@ -2440,5 +2515,209 @@ user_profile_enabled: false
             inside.1, None,
             "with_test_home must clear ambient LOCALAPPDATA"
         );
+    }
+
+    // ---- ICodeEasy relay tests ----
+
+    #[test]
+    #[serial]
+    fn write_hermes_relay_populates_empty_config() {
+        with_test_home(|| {
+            write_hermes_icodeeasy_relay("sk-test-key").expect("write relay");
+
+            let provider = get_provider(HERMES_RELAY_PROVIDER_KEY)
+                .expect("get provider")
+                .expect("icodeeasy provider present");
+            assert_eq!(provider["base_url"], HERMES_RELAY_BASE_URL);
+            assert_eq!(provider["api_key"], "sk-test-key");
+            assert_eq!(provider["api_mode"], HERMES_RELAY_API_MODE);
+            // set_provider propagates the first model id to the singular field.
+            assert_eq!(provider["model"], HERMES_RELAY_MODEL);
+            let models = provider["models"].as_array().expect("models array");
+            assert_eq!(models.len(), 1);
+            assert_eq!(models[0]["id"], HERMES_RELAY_MODEL);
+            assert_eq!(
+                models[0]["context_length"].as_u64(),
+                Some(HERMES_RELAY_CONTEXT_LENGTH)
+            );
+
+            let model = get_model_config()
+                .expect("model config")
+                .expect("model section");
+            assert_eq!(model.default.as_deref(), Some(HERMES_RELAY_MODEL));
+            assert_eq!(model.provider.as_deref(), Some(HERMES_RELAY_PROVIDER_KEY));
+
+            assert!(hermes_relay_configured().expect("configured check"));
+        });
+    }
+
+    #[test]
+    #[serial]
+    fn write_hermes_relay_rewrites_key_idempotently() {
+        with_test_home(|| {
+            write_hermes_icodeeasy_relay("sk-old").expect("first write");
+            write_hermes_icodeeasy_relay("sk-new").expect("second write");
+
+            let provider = get_provider(HERMES_RELAY_PROVIDER_KEY)
+                .expect("get provider")
+                .expect("icodeeasy provider present");
+            assert_eq!(provider["api_key"], "sk-new");
+
+            // Still exactly one icodeeasy entry in custom_providers.
+            let config = read_hermes_config().expect("read config");
+            let entries = config
+                .get("custom_providers")
+                .and_then(|v| v.as_sequence())
+                .expect("custom_providers list");
+            let icodeeasy_count = entries
+                .iter()
+                .filter(|item| {
+                    item.get("name").and_then(|n| n.as_str()) == Some(HERMES_RELAY_PROVIDER_KEY)
+                })
+                .count();
+            assert_eq!(icodeeasy_count, 1);
+
+            assert!(hermes_relay_configured().expect("configured check"));
+        });
+    }
+
+    #[test]
+    #[serial]
+    fn write_hermes_relay_preserves_other_sections_and_providers() {
+        with_test_home(|| {
+            let yaml = "\
+model:
+  default: claude-opus-4-8
+  provider: acme
+  context_length: 200000
+agent:
+  max_turns: 50
+custom_providers:
+  - name: acme
+    base_url: https://acme.example.com/v1
+    api_key: sk-acme
+    models:
+      claude-opus-4-8:
+        context_length: 200000
+";
+            let config_path = get_hermes_config_path();
+            fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+            fs::write(&config_path, yaml).unwrap();
+
+            write_hermes_icodeeasy_relay("sk-test").expect("write relay");
+
+            let acme = get_provider("acme")
+                .expect("get acme")
+                .expect("acme provider preserved");
+            assert_eq!(acme["api_key"], "sk-acme");
+
+            let config = read_hermes_config().expect("read config");
+            assert_eq!(
+                config
+                    .get("agent")
+                    .and_then(|a| a.get("max_turns"))
+                    .and_then(|v| v.as_u64()),
+                Some(50),
+                "agent section must survive the relay write"
+            );
+
+            let model = get_model_config()
+                .expect("model config")
+                .expect("model section");
+            // Relay switches default/provider; pre-existing fields stay.
+            assert_eq!(model.provider.as_deref(), Some(HERMES_RELAY_PROVIDER_KEY));
+            assert_eq!(model.default.as_deref(), Some(HERMES_RELAY_MODEL));
+            assert_eq!(model.context_length, Some(200000));
+        });
+    }
+
+    #[test]
+    #[serial]
+    fn hermes_relay_configured_decision_matrix() {
+        with_test_home(|| {
+            let config_path = get_hermes_config_path();
+            fs::create_dir_all(config_path.parent().unwrap()).unwrap();
+
+            // Missing/empty config -> not configured (read failure -> false).
+            assert!(!hermes_relay_configured().expect("missing config"));
+            fs::write(&config_path, "").unwrap();
+            assert!(!hermes_relay_configured().expect("empty config"));
+
+            // Full relay shape; trailing slash on base_url is tolerated.
+            fs::write(
+                &config_path,
+                "\
+model:
+  default: gpt-5.6-sol
+  provider: icodeeasy
+custom_providers:
+  - name: icodeeasy
+    base_url: https://api.icodeeasy.cc/v1/
+    api_key: sk-x
+",
+            )
+            .unwrap();
+            assert!(hermes_relay_configured().expect("trailing slash tolerated"));
+
+            // Wrong endpoint -> not configured.
+            fs::write(
+                &config_path,
+                "\
+model:
+  default: gpt-5.6-sol
+  provider: icodeeasy
+custom_providers:
+  - name: icodeeasy
+    base_url: https://other.example.com/v1
+    api_key: sk-x
+",
+            )
+            .unwrap();
+            assert!(!hermes_relay_configured().expect("wrong endpoint"));
+
+            // Blank api_key -> not configured.
+            fs::write(
+                &config_path,
+                "\
+model:
+  default: gpt-5.6-sol
+  provider: icodeeasy
+custom_providers:
+  - name: icodeeasy
+    base_url: https://api.icodeeasy.cc/v1
+    api_key: \" \"
+",
+            )
+            .unwrap();
+            assert!(!hermes_relay_configured().expect("blank api key"));
+
+            // Provider entry fine but model.provider points elsewhere -> not configured.
+            fs::write(
+                &config_path,
+                "\
+model:
+  default: claude-opus-4-8
+  provider: acme
+custom_providers:
+  - name: icodeeasy
+    base_url: https://api.icodeeasy.cc/v1
+    api_key: sk-x
+",
+            )
+            .unwrap();
+            assert!(!hermes_relay_configured().expect("provider not selected"));
+        });
+    }
+
+    #[test]
+    #[serial]
+    fn write_hermes_relay_rejects_empty_key() {
+        with_test_home(|| {
+            assert!(write_hermes_icodeeasy_relay("   ").is_err());
+            assert!(get_provider(HERMES_RELAY_PROVIDER_KEY)
+                .expect("get provider")
+                .is_none());
+            assert!(!get_hermes_config_path().exists());
+        });
     }
 }

@@ -95,11 +95,15 @@ import { UniversalProviderPanel } from "@/components/universal";
 import { ICodeEasySetupPage } from "@/components/icodeeasy/ICodeEasySetupPage";
 import { ICodeEasyCodexPage } from "@/components/icodeeasy/ICodeEasyCodexPage";
 import { ICodeEasyClaudePage } from "@/components/icodeeasy/ICodeEasyClaudePage";
+import { ICodeEasyClaudeDesktopPage } from "@/components/icodeeasy/ICodeEasyClaudeDesktopPage";
 import { ICodeEasyGooglePage } from "@/components/icodeeasy/ICodeEasyGooglePage";
 import { ICodeEasyKimiPage } from "@/components/icodeeasy/ICodeEasyKimiPage";
 import { ICodeEasyGrokPage } from "@/components/icodeeasy/ICodeEasyGrokPage";
 import { ICodeEasyZcodePage } from "@/components/icodeeasy/ICodeEasyZcodePage";
 import { ICodeEasyOpenCodePage } from "@/components/icodeeasy/ICodeEasyOpenCodePage";
+import { ICodeEasyPiPage } from "@/components/icodeeasy/ICodeEasyPiPage";
+import { ICodeEasyOpenclawPage } from "@/components/icodeeasy/ICodeEasyOpenclawPage";
+import { ICodeEasyHermesPage } from "@/components/icodeeasy/ICodeEasyHermesPage";
 import {
   ICODEEASY_SETTINGS_NAV_ITEMS,
   ICODEEASY_SIDEBAR_WIDTH,
@@ -130,11 +134,15 @@ type View =
   | "providers"
   | "codex"
   | "claude"
+  | "claudeDesktop"
   | "google"
   | "kimi"
   | "grok"
   | "zcode"
   | "opencode"
+  | "pi"
+  | "openclaw"
+  | "hermes"
   | "settings"
   | "prompts"
   | "skills"
@@ -180,11 +188,15 @@ const VALID_VIEWS: View[] = [
   "providers",
   "codex",
   "claude",
+  "claudeDesktop",
   "google",
   "kimi",
   "grok",
   "zcode",
   "opencode",
+  "pi",
+  "openclaw",
+  "hermes",
   "settings",
   "prompts",
   "skills",
@@ -258,6 +270,9 @@ function App({ compatibilityProviderManager = false }: AppProps) {
     if (currentView === "claude") {
       return t("icodeeasyNavigation.claude");
     }
+    if (currentView === "claudeDesktop") {
+      return t("icodeeasyNavigation.claudeDesktop");
+    }
     if (currentView === "google") {
       return t("icodeeasyNavigation.google");
     }
@@ -272,6 +287,15 @@ function App({ compatibilityProviderManager = false }: AppProps) {
     }
     if (currentView === "opencode") {
       return t("icodeeasyNavigation.opencode");
+    }
+    if (currentView === "pi") {
+      return t("icodeeasyNavigation.pi");
+    }
+    if (currentView === "openclaw") {
+      return t("icodeeasyNavigation.openclaw");
+    }
+    if (currentView === "hermes") {
+      return t("icodeeasyNavigation.hermes");
     }
     if (currentView === "settings") {
       const item = ICODEEASY_SETTINGS_NAV_ITEMS.find(
@@ -1100,6 +1124,8 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           return <ICodeEasyCodexPage />;
         case "claude":
           return <ICodeEasyClaudePage />;
+        case "claudeDesktop":
+          return <ICodeEasyClaudeDesktopPage />;
         case "google":
           return <ICodeEasyGooglePage />;
         case "kimi":
@@ -1110,6 +1136,12 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           return <ICodeEasyZcodePage />;
         case "opencode":
           return <ICodeEasyOpenCodePage />;
+        case "pi":
+          return <ICodeEasyPiPage />;
+        case "openclaw":
+          return <ICodeEasyOpenclawPage />;
+        case "hermes":
+          return <ICodeEasyHermesPage />;
         case "settings":
           return (
             <SettingsPage
@@ -1193,7 +1225,9 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           return <AgentsDefaultsPanel />;
         default:
           if (singleProviderProductMode) {
-            return <ICodeEasySetupPage />;
+            return (
+              <ICodeEasySetupPage onNavigate={(view) => setCurrentView(view)} />
+            );
           }
           return (
             <div className="px-6 flex flex-col flex-1 min-h-0 overflow-hidden">
@@ -1300,20 +1334,28 @@ function App({ compatibilityProviderManager = false }: AppProps) {
           isHomeActive={currentView === "providers"}
           isCodexActive={currentView === "codex"}
           isClaudeActive={currentView === "claude"}
+          isClaudeDesktopActive={currentView === "claudeDesktop"}
           isGoogleActive={currentView === "google"}
           isKimiActive={currentView === "kimi"}
           isGrokActive={currentView === "grok"}
           isZcodeActive={currentView === "zcode"}
           isOpencodeActive={currentView === "opencode"}
+          isPiActive={currentView === "pi"}
+          isOpenclawActive={currentView === "openclaw"}
+          isHermesActive={currentView === "hermes"}
           activeSettingsSection={settingsDefaultTab}
           onHomeSelect={() => setCurrentView("providers")}
           onCodexSelect={() => setCurrentView("codex")}
           onClaudeSelect={() => setCurrentView("claude")}
+          onClaudeDesktopSelect={() => setCurrentView("claudeDesktop")}
           onGoogleSelect={() => setCurrentView("google")}
           onKimiSelect={() => setCurrentView("kimi")}
           onGrokSelect={() => setCurrentView("grok")}
           onZcodeSelect={() => setCurrentView("zcode")}
           onOpencodeSelect={() => setCurrentView("opencode")}
+          onPiSelect={() => setCurrentView("pi")}
+          onOpenclawSelect={() => setCurrentView("openclaw")}
+          onHermesSelect={() => setCurrentView("hermes")}
           onSettingsSectionSelect={(section) => {
             setSettingsDefaultTab(section);
             setCurrentView("settings");

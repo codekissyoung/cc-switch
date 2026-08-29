@@ -18,29 +18,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { providersApi, universalProvidersApi } from "@/lib/api";
+import type { AppId } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
   createICodeEasyUniversalProvider,
   ICODEEASY_UNIVERSAL_PROVIDER_ID,
 } from "@/config/universalProviderPresets";
-import { useClaudeSuite } from "@/hooks/useClaudeSuite";
+import { useClaudeDesktopSuite } from "@/hooks/useClaudeDesktopSuite";
 import { extractErrorMessage } from "@/utils/errorUtils";
 
 const CLAUDE_PROVIDER_ID = `universal-claude-${ICODEEASY_UNIVERSAL_PROVIDER_ID}`;
 
-export function ICodeEasyClaudePage() {
+interface PreviousProvider {
+  appId: Extract<AppId, "claude-desktop">;
+  id: string;
+  switched: boolean;
+}
+
+export function ICodeEasyClaudeDesktopPage() {
   const { t } = useTranslation();
   const {
     status: suiteStatus,
-    runCliAction,
-    cliLatestVersion,
-  } = useClaudeSuite();
+    monitoring: monitoringInstall,
+    launchDesktop,
+  } = useClaudeDesktopSuite();
 
   const [provider, setProvider] = useState<UniversalProvider | null>(null);
   const [configured, setConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [installingCli, setInstallingCli] = useState(false);
+  const [launchingDesktop, setLaunchingDesktop] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -54,15 +61,18 @@ export function ICodeEasyClaudePage() {
           currentProvider = createICodeEasyUniversalProvider("");
           await universalProvidersApi.upsert(currentProvider);
         }
-        const claudeId = await providersApi.getCurrent("claude");
+        const desktopId = await providersApi.getCurrent("claude-desktop");
 
         if (!active) return;
         setProvider(currentProvider);
-        setConfigured(claudeId === CLAUDE_PROVIDER_ID);
+        setConfigured(desktopId === CLAUDE_PROVIDER_ID);
       } catch (error) {
-        console.error("[ICodeEasyClaude] Failed to load configuration", error);
+        console.error(
+          "[ICodeEasyClaudeDesktop] Failed to load configuration",
+          error,
+        );
         toast.error(
-          t("icodeeasyClaude.loadError", {
+          t("icodeeasyClaudeDesktop.loadError", {
             error: extractErrorMessage(error),
           }),
         );
@@ -79,12 +89,19 @@ export function ICodeEasyClaudePage() {
 
   const hasApiKey = Boolean(provider?.apiKey.trim());
 
+  const rollbackProviders = async (previous: PreviousProvider[]) => {
+    await Promise.allSettled(
+      previous
+        .filter((item) => item.switched && item.id !== CLAUDE_PROVIDER_ID)
+        .map((item) => providersApi.switch(item.id, item.appId)),
+    );
+  };
+
   const handleConfigure = async () => {
     if (!provider || !hasApiKey || saving) return;
 
     setSaving(true);
-    let previousClaudeId: string | null = null;
-    let switchAttempted = false;
+    const previous: PreviousProvider[] = [];
     try {
       const normalizedProvider = createICodeEasyUniversalProvider(
         provider.apiKey,
@@ -92,28 +109,28 @@ export function ICodeEasyClaudePage() {
       );
       await universalProvidersApi.upsert(normalizedProvider);
       await universalProvidersApi.sync(ICODEEASY_UNIVERSAL_PROVIDER_ID);
+      await providersApi.syncClaudeProviderToDesktop(CLAUDE_PROVIDER_ID);
 
-      previousClaudeId = await providersApi.getCurrent("claude");
-      switchAttempted = true;
-      await providersApi.switch(CLAUDE_PROVIDER_ID, "claude");
+      previous.push({
+        appId: "claude-desktop",
+        id: await providersApi.getCurrent("claude-desktop"),
+        switched: false,
+      });
+
+      previous[0].switched = true;
+      await providersApi.switch(CLAUDE_PROVIDER_ID, "claude-desktop");
 
       setProvider(normalizedProvider);
       setConfigured(true);
-      toast.success(t("icodeeasyClaude.relay.configureSuccess"));
+      toast.success(t("icodeeasyClaudeDesktop.relay.configureSuccess"));
     } catch (error) {
-      // switch 可能在写入部分配置后才失败，尽量切回原供应商。
-      if (
-        switchAttempted &&
-        previousClaudeId &&
-        previousClaudeId !== CLAUDE_PROVIDER_ID
-      ) {
-        await providersApi
-          .switch(previousClaudeId, "claude")
-          .catch(() => undefined);
-      }
-      console.error("[ICodeEasyClaude] Failed to configure relay", error);
+      await rollbackProviders(previous);
+      console.error(
+        "[ICodeEasyClaudeDesktop] Failed to configure relay",
+        error,
+      );
       toast.error(
-        t("icodeeasyClaude.relay.configureError", {
+        t("icodeeasyClaudeDesktop.relay.configureError", {
           error: extractErrorMessage(error),
         }),
       );
@@ -122,26 +139,24 @@ export function ICodeEasyClaudePage() {
     }
   };
 
-  const handleCliAction = async (action: "install" | "update") => {
-    if (installingCli) return;
+  const handleLaunchDesktop = async () => {
+    if (launchingDesktop) return;
 
-    setInstallingCli(true);
+    setLaunchingDesktop(true);
     try {
-      const next = await runCliAction(action);
-      if (!next.cliInstalled) {
-        toast.error(t("icodeeasyClaude.suite.cliVerificationFailed"));
-      } else {
-        toast.success(t("icodeeasyClaude.cli.installSuccess"));
-      }
+      await launchDesktop();
     } catch (error) {
-      console.error("[ICodeEasyClaude] Failed to manage Claude Code", error);
+      console.error(
+        "[ICodeEasyClaudeDesktop] Failed to launch Claude Desktop",
+        error,
+      );
       toast.error(
-        t("icodeeasyClaude.cli.installFailed", {
+        t("icodeeasyClaudeDesktop.desktop.launchFailed", {
           error: extractErrorMessage(error),
         }),
       );
     } finally {
-      setInstallingCli(false);
+      setLaunchingDesktop(false);
     }
   };
 
@@ -159,10 +174,10 @@ export function ICodeEasyClaudePage() {
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-lg">
             <KeyRound className="h-5 w-5 text-orange-500" />
-            {t("icodeeasyClaude.relay.title")}
+            {t("icodeeasyClaudeDesktop.relay.title")}
           </CardTitle>
           <CardDescription>
-            {t("icodeeasyClaude.relay.description")}
+            {t("icodeeasyClaudeDesktop.relay.description")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
@@ -171,14 +186,14 @@ export function ICodeEasyClaudePage() {
               <>
                 <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                 <span className="font-medium text-emerald-600">
-                  {t("icodeeasyClaude.relay.configured")}
+                  {t("icodeeasyClaudeDesktop.relay.configured")}
                 </span>
               </>
             ) : (
               <>
                 <CircleAlert className="h-4 w-4 text-amber-500" />
                 <span className="font-medium text-amber-600">
-                  {t("icodeeasyClaude.relay.notConfigured")}
+                  {t("icodeeasyClaudeDesktop.relay.notConfigured")}
                 </span>
               </>
             )}
@@ -186,7 +201,7 @@ export function ICodeEasyClaudePage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             {!hasApiKey && (
               <p className="text-xs leading-5 text-muted-foreground">
-                {t("icodeeasyClaude.relay.noKeyHint")}
+                {t("icodeeasyClaudeDesktop.relay.noKeyHint")}
               </p>
             )}
             <Button
@@ -198,22 +213,26 @@ export function ICodeEasyClaudePage() {
               {saving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
               {t(
                 configured
-                  ? "icodeeasyClaude.relay.reconfigure"
-                  : "icodeeasyClaude.relay.configure",
+                  ? "icodeeasyClaudeDesktop.relay.reconfigure"
+                  : "icodeeasyClaudeDesktop.relay.configure",
               )}
             </Button>
           </div>
+          <p className="text-xs leading-5 text-muted-foreground">
+            {t("icodeeasyClaudeDesktop.relay.restartHint")}
+          </p>
         </CardContent>
       </Card>
 
       <ICodeEasyClientSuiteCard
         icon={<ClaudeIcon size={24} />}
-        i18nPrefix="icodeeasyClaude"
+        i18nPrefix="icodeeasyClaudeDesktop"
         status={suiteStatus}
-        monitoringInstall={false}
-        cliLatestVersion={cliLatestVersion}
-        installingCli={installingCli}
-        onCliAction={(action) => void handleCliAction(action)}
+        monitoringInstall={monitoringInstall}
+        cliLatestVersion={null}
+        installingCli={false}
+        launchingDesktop={launchingDesktop}
+        onLaunchDesktop={() => void handleLaunchDesktop()}
       />
     </div>
   );
