@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import {
   ArrowUpCircle,
   CheckCircle2,
+  KeyRound,
   LoaderCircle,
   Monitor,
   Terminal,
@@ -35,6 +36,15 @@ interface ICodeEasyClientSuiteCardProps {
   status: ClientSuiteStatus | null;
   monitoringInstall: boolean;
   cliLatestVersion: string | null;
+  /** ICodeEasy 中转配置合并为卡片首行；不传则不渲染该行。 */
+  relay?: {
+    configured: boolean;
+    saving: boolean;
+    hasApiKey: boolean;
+    onConfigure: () => void;
+    /** 行下补充提示（如 Pi 的 /model 指引、Claude Desktop/ZCode 的重启提示）。 */
+    hint?: string;
+  };
   cliInstallBlocked?: boolean;
   installingCli: boolean;
   /** 无桌面版的产品（Kimi Code / Grok Build）不传这两个 prop，桌面行整体不渲染。 */
@@ -59,6 +69,7 @@ export function ICodeEasyClientSuiteCard({
   status,
   monitoringInstall,
   cliLatestVersion,
+  relay,
   cliInstallBlocked = false,
   installingCli,
   launchingDesktop = false,
@@ -85,6 +96,60 @@ export function ICodeEasyClientSuiteCard({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
+        {relay && (
+          <div className="rounded-lg border border-border/70 bg-background/70 p-3">
+            <div className="flex items-center gap-3">
+              <KeyRound className="h-5 w-5 shrink-0 text-blue-500" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-medium">
+                  {t(`${i18nPrefix}.relay.name`)}
+                </p>
+                <p
+                  className={
+                    relay.configured
+                      ? "text-xs font-medium text-emerald-600"
+                      : "text-xs font-medium text-amber-600"
+                  }
+                >
+                  {t(
+                    relay.configured
+                      ? `${i18nPrefix}.relay.configured`
+                      : `${i18nPrefix}.relay.notConfigured`,
+                  )}
+                </p>
+              </div>
+              {relay.configured && (
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!relay.hasApiKey || relay.saving}
+                onClick={relay.onConfigure}
+              >
+                {relay.saving && (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                )}
+                {t(
+                  relay.configured
+                    ? `${i18nPrefix}.relay.reconfigure`
+                    : `${i18nPrefix}.relay.configure`,
+                )}
+              </Button>
+            </div>
+            {!relay.hasApiKey && (
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                {t(`${i18nPrefix}.relay.noKeyHint`)}
+              </p>
+            )}
+            {relay.hint && (
+              <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                {relay.hint}
+              </p>
+            )}
+          </div>
+        )}
+
         {onLaunchDesktop && (
           <div className="flex items-center gap-3 rounded-lg border border-border/70 bg-background/70 p-3">
             <Monitor className="h-5 w-5 shrink-0 text-blue-500" />

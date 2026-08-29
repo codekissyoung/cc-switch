@@ -99,6 +99,9 @@ describe("ICodeEasyClaudePage", () => {
     expect(
       await screen.findByText("icodeeasyClaude.relay.configured"),
     ).toBeVisible();
+    // 中转配置并入套件卡首行，不再有独立大卡
+    expect(screen.getByText("icodeeasyClaude.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyClaude.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyClaude.cli.name")).toBeVisible();
     // 桌面行已迁往「桌面版 Claude」页
     expect(screen.queryByText("icodeeasyClaude.desktop.name")).toBeNull();

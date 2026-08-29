@@ -98,14 +98,23 @@ describe("ICodeEasyCodexPage", () => {
     ]);
   });
 
-  it("shows relay and client status when everything is ready", async () => {
+  it("shows the relay row at the top of the suite card when everything is ready", async () => {
     apiMocks.getCurrent.mockResolvedValue(CODEX_PROVIDER_ID);
     render(<ICodeEasyCodexPage />);
 
     expect(
       await screen.findByText("icodeeasyCodex.relay.configured"),
     ).toBeVisible();
-    expect(await screen.findByText("icodeeasyCodex.cli.name")).toBeVisible();
+    // 中转配置并入客户端套件卡首行，不再有独立大卡
+    const relayName = screen.getByText("icodeeasyCodex.relay.name");
+    expect(relayName).toBeVisible();
+    expect(screen.queryByText("icodeeasyCodex.relay.title")).toBeNull();
+    const cliName = screen.getByText("icodeeasyCodex.cli.name");
+    expect(cliName).toBeVisible();
+    expect(
+      relayName.compareDocumentPosition(cliName) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
     expect(screen.getByText("icodeeasyCodex.desktop.name")).toBeVisible();
     expect(
       screen.getAllByText("icodeeasyCodex.suite.installed").length,

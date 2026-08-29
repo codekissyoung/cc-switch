@@ -77,6 +77,10 @@ describe("ICodeEasyZcodePage", () => {
     expect(
       await screen.findByText("icodeeasyZcode.relay.configured"),
     ).toBeVisible();
+    // 重启提示作为行下小字 hint 保留在套件卡首行
+    expect(screen.getByText("icodeeasyZcode.relay.name")).toBeVisible();
+    expect(screen.getByText("icodeeasyZcode.relay.hint")).toBeVisible();
+    expect(screen.queryByText("icodeeasyZcode.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyZcode.desktop.name")).toBeVisible();
     // ZCode 没有独立 CLI：CLI 行不渲染
     expect(screen.queryByText("icodeeasyZcode.cli.name")).toBeNull();

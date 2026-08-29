@@ -89,6 +89,8 @@ describe("ICodeEasyGrokPage", () => {
     expect(
       await screen.findByText("icodeeasyGrok.relay.configured"),
     ).toBeVisible();
+    expect(screen.getByText("icodeeasyGrok.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyGrok.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyGrok.cli.name")).toBeVisible();
     expect(screen.queryByText("icodeeasyGrok.desktop.name")).toBeNull();
   });

@@ -111,6 +111,8 @@ describe("ICodeEasyKimiPage", () => {
     expect(
       await screen.findByText("icodeeasyKimi.relay.configured"),
     ).toBeVisible();
+    expect(screen.getByText("icodeeasyKimi.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyKimi.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyKimi.cli.name")).toBeVisible();
     // Kimi Code 没有桌面版：桌面行不渲染
     expect(screen.queryByText("icodeeasyKimi.desktop.name")).toBeNull();

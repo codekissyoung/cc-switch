@@ -89,6 +89,8 @@ describe("ICodeEasyOpenclawPage", () => {
     expect(
       await screen.findByText("icodeeasyOpenclaw.relay.configured"),
     ).toBeVisible();
+    expect(screen.getByText("icodeeasyOpenclaw.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyOpenclaw.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyOpenclaw.cli.name")).toBeVisible();
     expect(screen.queryByText("icodeeasyOpenclaw.desktop.name")).toBeNull();
   });

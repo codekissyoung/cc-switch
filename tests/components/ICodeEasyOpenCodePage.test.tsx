@@ -89,6 +89,8 @@ describe("ICodeEasyOpenCodePage", () => {
     expect(
       await screen.findByText("icodeeasyOpencode.relay.configured"),
     ).toBeVisible();
+    expect(screen.getByText("icodeeasyOpencode.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyOpencode.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyOpencode.cli.name")).toBeVisible();
     expect(screen.queryByText("icodeeasyOpencode.desktop.name")).toBeNull();
   });

@@ -89,6 +89,10 @@ describe("ICodeEasyPiPage", () => {
     expect(
       await screen.findByText("icodeeasyPi.relay.configured"),
     ).toBeVisible();
+    // /model 指引作为行下小字 hint 保留在套件卡首行
+    expect(screen.getByText("icodeeasyPi.relay.name")).toBeVisible();
+    expect(screen.getByText("icodeeasyPi.relay.hint")).toBeVisible();
+    expect(screen.queryByText("icodeeasyPi.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyPi.cli.name")).toBeVisible();
     // Pi 没有桌面版：桌面行不渲染
     expect(screen.queryByText("icodeeasyPi.desktop.name")).toBeNull();

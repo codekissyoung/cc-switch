@@ -89,6 +89,8 @@ describe("ICodeEasyHermesPage", () => {
     expect(
       await screen.findByText("icodeeasyHermes.relay.configured"),
     ).toBeVisible();
+    expect(screen.getByText("icodeeasyHermes.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyHermes.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyHermes.cli.name")).toBeVisible();
     expect(screen.queryByText("icodeeasyHermes.desktop.name")).toBeNull();
   });

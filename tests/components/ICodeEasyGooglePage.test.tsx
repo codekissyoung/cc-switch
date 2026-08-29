@@ -107,6 +107,8 @@ describe("ICodeEasyGooglePage", () => {
     expect(
       await screen.findByText("icodeeasyGoogle.relay.configured"),
     ).toBeVisible();
+    expect(screen.getByText("icodeeasyGoogle.relay.name")).toBeVisible();
+    expect(screen.queryByText("icodeeasyGoogle.relay.title")).toBeNull();
     expect(screen.getByText("icodeeasyGoogle.cli.name")).toBeVisible();
     expect(screen.getByText("icodeeasyGoogle.desktop.name")).toBeVisible();
     expect(await screen.findByText("icodeeasyGoogle.agy.name")).toBeVisible();

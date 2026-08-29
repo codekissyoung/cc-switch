@@ -89,6 +89,10 @@ describe("ICodeEasyClaudeDesktopPage", () => {
     expect(
       await screen.findByText("icodeeasyClaudeDesktop.relay.configured"),
     ).toBeVisible();
+    // 中转配置并入套件卡首行，重启提示作为行下小字保留
+    expect(screen.getByText("icodeeasyClaudeDesktop.relay.name")).toBeVisible();
+    expect(screen.getByText("icodeeasyClaudeDesktop.relay.hint")).toBeVisible();
+    expect(screen.queryByText("icodeeasyClaudeDesktop.relay.title")).toBeNull();
     expect(
       screen.getByText("icodeeasyClaudeDesktop.desktop.name"),
     ).toBeVisible();

@@ -90,11 +90,10 @@
   "icodeeasyCodex": {
     "loadError": "Failed to load Codex configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy Responses endpoint and the recommended gpt-5.6-sol model to ~/.codex/config.toml and auth.json. The Codex CLI and the desktop app share this configuration, so one setup covers both.",
+      "name": "ICodeEasy relay",
       "configured": "Pointing to ICodeEasy",
       "notConfigured": "Relay not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Codex now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",
@@ -134,11 +133,10 @@
   "icodeeasyClaude": {
     "loadError": "Failed to load the Claude configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy Anthropic Messages connection to Claude Code settings.json. The Claude Desktop relay is configured separately on the Claude Desktop page.",
+      "name": "ICodeEasy relay",
       "configured": "Claude Code points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Claude Code now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay; the previous provider was restored where possible: {{error}}",
@@ -169,11 +167,10 @@
   "icodeeasyGoogle": {
     "loadError": "Failed to load the Google configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy Gemini v1beta connection and the recommended gemini-3.6-flash model to ~/.gemini/settings.json and .env. Only Gemini CLI supports the relay; the Antigravity desktop app and the Antigravity CLI (agy) sign in with a Google account instead.",
+      "name": "ICodeEasy relay",
       "configured": "Gemini CLI points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Gemini CLI now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",
@@ -217,11 +214,10 @@
   "icodeeasyKimi": {
     "loadError": "Failed to load the Kimi configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy connection and the Kimi K3 model entries (256K and 1M) to ~/.kimi-code/config.toml and switches the default model to ICodeEasy. Your Kimi Code sign-in and other providers are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "Kimi Code points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Kimi Code now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",
@@ -264,11 +260,10 @@
   "icodeeasyGrok": {
     "loadError": "Failed to load the Grok configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes ICodeEasy Responses and Grok 4.6 to ~/.grok/config.toml, selecting it for both the primary and secondary model. Existing CLI, MCP, UI settings, and the Grok 4.5 fallback profile are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "Grok Build points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Grok Build now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",
@@ -300,16 +295,15 @@
   "icodeeasyZcode": {
     "loadError": "Failed to load the ZCode configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy custom provider (OpenAI / Responses protocol, gpt-5.6-sol · 256K) to ~/.zcode/v2/config.json. Your Z.ai / BigModel channels and other providers are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "ZCode points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "ZCode now uses the ICodeEasy relay — restart ZCode to apply",
       "configureError": "Failed to configure the relay: {{error}}",
       "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first.",
-      "restartHint": "A running ZCode instance does not reload its configuration; restart ZCode for changes to take effect."
+      "hint": "A running ZCode instance does not reload its configuration; restart ZCode for changes to take effect."
     },
     "clients": {
       "title": "Clients",
@@ -331,11 +325,10 @@
   "icodeeasyOpencode": {
     "loadError": "Failed to load the OpenCode configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy provider (OpenAI / Responses protocol, GPT-5.6 Sol with high reasoning effort by default) to ~/.config/opencode/opencode.json and selects icodeeasy/gpt-5.6-sol as the default model. Existing themes, plugins, MCP servers, and other providers are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "OpenCode points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "OpenCode now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",
@@ -367,16 +360,15 @@
   "icodeeasyClaudeDesktop": {
     "loadError": "Failed to load the Claude Desktop configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy Anthropic Messages connection to the Claude Desktop 3P profile. The Claude Code relay is configured separately on the Claude page.",
+      "name": "ICodeEasy relay",
       "configured": "Claude Desktop points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Claude Desktop now uses the ICodeEasy relay — restart it to apply",
       "configureError": "Failed to configure the relay; the previous provider was restored where possible: {{error}}",
       "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first.",
-      "restartHint": "A running Claude Desktop instance does not reload its configuration; restart Claude Desktop for changes to take effect."
+      "hint": "A running Claude Desktop instance does not reload its configuration; restart Claude Desktop for changes to take effect."
     },
     "clients": {
       "title": "Clients",
@@ -398,15 +390,15 @@
   "icodeeasyPi": {
     "loadError": "Failed to load the Pi configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy provider (OpenAI / Responses protocol, gpt-5.6-sol · 272K) to ~/.pi/agent/models.json. Afterwards, pick icodeeasy/gpt-5.6-sol in Pi with /model. The default model selection lives in settings.json and is left untouched; your other providers and self-added models are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "Pi points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Pi now uses the ICodeEasy relay — pick icodeeasy/gpt-5.6-sol in Pi with /model",
       "configureError": "Failed to configure the relay: {{error}}",
-      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first."
+      "noKeyHint": "Enter and save your ICodeEasy API Key on the Home page first.",
+      "hint": "Afterwards, pick icodeeasy/gpt-5.6-sol in Pi with /model."
     },
     "clients": {
       "title": "Clients",
@@ -433,11 +425,10 @@
   "icodeeasyOpenclaw": {
     "loadError": "Failed to load the OpenClaw configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy provider (OpenAI / Responses protocol, gpt-5.6-sol · 400K) to models.providers in ~/.openclaw/openclaw.json and switches the primary model in agents.defaults.model to icodeeasy/gpt-5.6-sol. Your other providers and fallback list are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "OpenClaw points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "OpenClaw now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",
@@ -468,11 +459,10 @@
   "icodeeasyHermes": {
     "loadError": "Failed to load the Hermes configuration: {{error}}",
     "relay": {
-      "title": "ICodeEasy relay configuration",
-      "description": "Writes the ICodeEasy provider (Responses protocol, gpt-5.6-sol · 400K) to custom_providers in ~/.hermes/config.yaml and switches the default model to icodeeasy/gpt-5.6-sol. Your other providers and config sections are preserved.",
+      "name": "ICodeEasy relay",
       "configured": "Hermes points to ICodeEasy",
       "notConfigured": "Relay is not configured yet",
-      "configure": "Configure relay",
+      "configure": "Configure",
       "reconfigure": "Reconfigure",
       "configureSuccess": "Hermes now uses the ICodeEasy relay",
       "configureError": "Failed to configure the relay: {{error}}",

@@ -1,22 +1,9 @@
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  CheckCircle2,
-  CircleAlert,
-  KeyRound,
-  LoaderCircle,
-} from "lucide-react";
+import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { OpenClawIcon } from "@/components/BrandIcons";
 import { ICodeEasyClientSuiteCard } from "@/components/icodeeasy/ICodeEasyClientSuiteCard";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { settingsApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
@@ -132,63 +119,18 @@ export function ICodeEasyOpenclawPage() {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-6 py-8">
-      <Card className="border-border/70 shadow-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <KeyRound className="h-5 w-5 text-sky-500" />
-            {t("icodeeasyOpenclaw.relay.title")}
-          </CardTitle>
-          <CardDescription>
-            {t("icodeeasyOpenclaw.relay.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="flex items-center gap-2 text-sm">
-            {configured ? (
-              <>
-                <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                <span className="font-medium text-emerald-600">
-                  {t("icodeeasyOpenclaw.relay.configured")}
-                </span>
-              </>
-            ) : (
-              <>
-                <CircleAlert className="h-4 w-4 text-amber-500" />
-                <span className="font-medium text-amber-600">
-                  {t("icodeeasyOpenclaw.relay.notConfigured")}
-                </span>
-              </>
-            )}
-          </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            {!hasApiKey && (
-              <p className="text-xs leading-5 text-muted-foreground">
-                {t("icodeeasyOpenclaw.relay.noKeyHint")}
-              </p>
-            )}
-            <Button
-              size="sm"
-              className="ml-auto bg-sky-600 text-white hover:bg-sky-700"
-              disabled={!hasApiKey || saving}
-              onClick={() => void handleConfigure()}
-            >
-              {saving && <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />}
-              {t(
-                configured
-                  ? "icodeeasyOpenclaw.relay.reconfigure"
-                  : "icodeeasyOpenclaw.relay.configure",
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
       <ICodeEasyClientSuiteCard
         icon={<OpenClawIcon size={24} />}
         i18nPrefix="icodeeasyOpenclaw"
         status={suiteStatus}
         monitoringInstall={false}
         cliLatestVersion={cliLatestVersion}
+        relay={{
+          configured,
+          saving,
+          hasApiKey,
+          onConfigure: () => void handleConfigure(),
+        }}
         installingCli={installingCli}
         onCliAction={(action) => void handleCliAction(action)}
       />
