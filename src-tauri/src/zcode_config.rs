@@ -13,9 +13,10 @@ use serde_json::{json, Map, Value};
 use crate::config::{get_home_dir, write_text_file};
 use crate::error::AppError;
 
-/// ICodeEasy 中转在 ZCode 配置里的 provider 显示名与端点。
+/// ICodeEasy 中转在 ZCode 配置里的 provider 显示名。
+/// 端点不再硬编码：写入时由 `icodeeasy_endpoints` 按当前选定接入点派生
+/// （ZCode 的 baseURL 是纯 origin 形态，不带 /v1）。
 pub const ZCODE_RELAY_PROVIDER_NAME: &str = "ICodeEasy";
-pub const ZCODE_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc";
 /// 首次配置中转时写入的默认模型条目（与 Codex 套件同一网关模型，256K 上下文）。
 pub const ZCODE_RELAY_MODEL: &str = "gpt-5.6-sol";
 pub const ZCODE_RELAY_MODEL_CONTEXT: u64 = 256_000;
@@ -40,7 +41,7 @@ fn base_url_matches(provider: &Value) -> bool {
         .get("options")
         .and_then(|options| options.get("baseURL"))
         .and_then(Value::as_str)
-        .map(|url| url.trim_end_matches('/') == ZCODE_RELAY_BASE_URL)
+        .map(crate::icodeeasy_endpoints::is_known_relay_base_url)
         .unwrap_or(false)
 }
 
@@ -75,11 +76,16 @@ fn seed_model_entry() -> Value {
 
 /// 在既有配置文本上 upsert ICodeEasy 中转，返回新的配置文本。
 ///
-/// 覆盖范围：指向 ICodeEasy 端点的那个自定义 provider 条目（没有就新建，键为
-/// 随机 UUID，与 ZCode UI 添加自定义 provider 的键形态一致）；条目下已有非空
-/// 模型列表时保留，否则补一条默认模型。其余 provider（官方 Z.ai / 智谱渠道、
-/// 用户自建渠道）与未知顶层字段原样保留。
-pub fn apply_zcode_relay_config(config_text: &str, api_key: &str) -> Result<String, AppError> {
+/// 覆盖范围：指向 ICodeEasy 端点（任一已知接入点）的那个自定义 provider 条目
+/// （没有就新建，键为随机 UUID，与 ZCode UI 添加自定义 provider 的键形态一致）；
+/// 条目下已有非空模型列表时保留，否则补一条默认模型。其余 provider（官方
+/// Z.ai / 智谱渠道、用户自建渠道）与未知顶层字段原样保留。
+/// `relay_origin` 是纯 origin（不带 /v1），原样写入 baseURL。
+pub fn apply_zcode_relay_config(
+    config_text: &str,
+    api_key: &str,
+    relay_origin: &str,
+) -> Result<String, AppError> {
     let mut root = if config_text.trim().is_empty() {
         Value::Object(Map::new())
     } else {
@@ -129,7 +135,7 @@ pub fn apply_zcode_relay_config(config_text: &str, api_key: &str) -> Result<Stri
         "options".to_string(),
         json!({
             "apiKey": api_key,
-            "baseURL": ZCODE_RELAY_BASE_URL,
+            "baseURL": relay_origin,
             "apiKeyRequired": true
         }),
     );
@@ -145,7 +151,7 @@ pub fn apply_zcode_relay_config(config_text: &str, api_key: &str) -> Result<Stri
 /// 临时文件 + rename 的原子写，失败不会留下半写状态，无需额外回滚。
 /// ZCode 只在 UI 操作时回写该文件（运行中与退出时都不会覆盖外部改动），
 /// 但运行中的实例不会自动重载，改动需重启 ZCode 生效。
-pub fn write_zcode_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+pub fn write_zcode_icodeeasy_relay(api_key: &str, relay_origin: &str) -> Result<(), AppError> {
     let api_key = api_key.trim();
     if api_key.is_empty() {
         return Err(AppError::localized(
@@ -157,7 +163,7 @@ pub fn write_zcode_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
 
     let path = get_zcode_config_path();
     let old_text = read_zcode_config_text()?;
-    let new_text = apply_zcode_relay_config(&old_text, api_key)?;
+    let new_text = apply_zcode_relay_config(&old_text, api_key, relay_origin)?;
     write_text_file(&path, &new_text)
 }
 
@@ -167,7 +173,8 @@ mod tests {
 
     #[test]
     fn apply_relay_writes_uuid_keyed_provider_with_default_model() {
-        let text = apply_zcode_relay_config("", "sk-test-key").expect("apply on empty config");
+        let text = apply_zcode_relay_config("", "sk-test-key", "https://api.icodeeasy.cc")
+            .expect("apply on empty config");
         let value: Value = serde_json::from_str(&text).expect("valid JSON output");
 
         let providers = value["provider"].as_object().expect("provider map");
@@ -214,7 +221,8 @@ mod tests {
     }
   }
 }"#;
-        let text = apply_zcode_relay_config(existing, "sk-new").expect("apply on existing");
+        let text = apply_zcode_relay_config(existing, "sk-new", "https://api.icodeeasy.cc")
+            .expect("apply on existing");
         let value: Value = serde_json::from_str(&text).expect("valid JSON output");
         let providers = value["provider"].as_object().expect("provider map");
 
@@ -248,7 +256,8 @@ mod tests {
     }
   }
 }"#;
-        let text = apply_zcode_relay_config(existing, "sk-new").expect("re-apply");
+        let text = apply_zcode_relay_config(existing, "sk-new", "https://api.icodeeasy.cc")
+            .expect("re-apply");
         let value: Value = serde_json::from_str(&text).expect("valid JSON output");
         let providers = value["provider"].as_object().expect("provider map");
 
@@ -281,9 +290,53 @@ mod tests {
     }
 
     #[test]
+    fn relay_follows_selected_endpoint() {
+        // 换到日本节点：写入纯 origin，探测命中
+        let text = apply_zcode_relay_config("", "sk-k", "https://jp.icodeeasy.cc")
+            .expect("apply with jp endpoint");
+        let value: Value = serde_json::from_str(&text).expect("valid JSON output");
+        let providers = value["provider"].as_object().expect("provider map");
+        let (_, entry) = providers.iter().next().expect("one provider entry");
+        assert_eq!(
+            entry["options"]["baseURL"].as_str(),
+            Some("https://jp.icodeeasy.cc")
+        );
+        assert!(zcode_relay_configured(&text));
+
+        // 已按主站配置过的条目换节点重配：沿用同一 UUID 键并更新 baseURL
+        let existing = r#"{
+  "provider": {
+    "11b3e487-6abb-4f1b-9831-38cad9547872": {
+      "name": "ICodeEasy",
+      "kind": "openai",
+      "options": { "apiKey": "sk-old", "baseURL": "https://api.icodeeasy.cc", "apiKeyRequired": true },
+      "source": "custom",
+      "models": {}
+    }
+  }
+}"#;
+        let text = apply_zcode_relay_config(existing, "sk-new", "https://jp.icodeeasy.cc")
+            .expect("re-apply with jp endpoint");
+        let value: Value = serde_json::from_str(&text).expect("valid JSON output");
+        let providers = value["provider"].as_object().expect("provider map");
+        assert_eq!(providers.len(), 1);
+        let entry = &providers["11b3e487-6abb-4f1b-9831-38cad9547872"];
+        assert_eq!(
+            entry["options"]["baseURL"].as_str(),
+            Some("https://jp.icodeeasy.cc")
+        );
+        assert_eq!(entry["options"]["apiKey"].as_str(), Some("sk-new"));
+        assert!(zcode_relay_configured(&text));
+    }
+
+    #[test]
     fn apply_relay_rejects_invalid_existing_json() {
-        let err = apply_zcode_relay_config(r#"{"provider": [broken]"#, "sk-x")
-            .expect_err("invalid JSON must not be overwritten");
+        let err = apply_zcode_relay_config(
+            r#"{"provider": [broken]"#,
+            "sk-x",
+            "https://api.icodeeasy.cc",
+        )
+        .expect_err("invalid JSON must not be overwritten");
         assert!(err.to_string().contains("Invalid ZCode config.json"));
     }
 }

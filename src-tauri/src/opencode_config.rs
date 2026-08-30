@@ -349,10 +349,10 @@ pub fn remove_plugins_by_prefixes(path: &Path, prefixes: &[&str]) -> Result<bool
     Ok(true)
 }
 
-/// ICodeEasy 中转在 OpenCode 配置里的 provider id、显示名与端点。
+/// ICodeEasy 中转在 OpenCode 配置里的 provider id 与显示名。
+/// 端点不再硬编码：写入时由 `icodeeasy_endpoints` 按当前选定接入点派生。
 pub const OPENCODE_RELAY_PROVIDER_ID: &str = "icodeeasy";
 pub const OPENCODE_RELAY_PROVIDER_NAME: &str = "ICodeEasy";
-pub const OPENCODE_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
 /// 与 Codex 套件同一网关模型；high 推理档作为模型基础 options 写入（默认生效），
 /// low/medium/xhigh 仍保留在 variants 里供运行时切换。模型元数据与
 /// `opencodeProviderPresets.ts` 里 `@ai-sdk/openai` 的 gpt-5.6-sol 条目保持一致。
@@ -395,7 +395,7 @@ fn relay_base_url_matches(entry: &Value) -> bool {
         .get("options")
         .and_then(|options| options.get("baseURL"))
         .and_then(Value::as_str)
-        .is_some_and(|url| url.trim_end_matches('/') == OPENCODE_RELAY_BASE_URL)
+        .is_some_and(crate::icodeeasy_endpoints::is_known_relay_base_url)
 }
 
 fn relay_has_api_key(entry: &Value) -> bool {
@@ -429,7 +429,11 @@ pub fn opencode_relay_configured(config: &Value) -> bool {
 /// select the relay model as default. 用户在 ICodeEasy 条目下自行添加的其它
 /// 模型、其余 provider 条目与顶层配置（theme / plugin / mcp 等）都会保留；
 /// 默认模型条目本身每次重写回 canonical 形状，保证重新配置后能恢复可用。
-pub fn apply_opencode_icodeeasy_relay(config: &Value, api_key: &str) -> Result<Value, AppError> {
+pub fn apply_opencode_icodeeasy_relay(
+    config: &Value,
+    api_key: &str,
+    relay_base_url: &str,
+) -> Result<Value, AppError> {
     let mut full_config = config.clone();
 
     // 与 set_provider 同一归一化语义：provider 段缺失或不是对象时重置为空对象。
@@ -465,7 +469,7 @@ pub fn apply_opencode_icodeeasy_relay(config: &Value, api_key: &str) -> Result<V
         "npm": OPENCODE_RELAY_NPM,
         "name": OPENCODE_RELAY_PROVIDER_NAME,
         "options": {
-            "baseURL": OPENCODE_RELAY_BASE_URL,
+            "baseURL": relay_base_url,
             "apiKey": api_key,
         },
         "models": models,
@@ -479,7 +483,7 @@ pub fn apply_opencode_icodeeasy_relay(config: &Value, api_key: &str) -> Result<V
 
 /// Persist the ICodeEasy OpenCode relay atomically. The file contains a secret,
 /// so the config is tightened to owner read/write on Unix after writing.
-pub fn write_opencode_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+pub fn write_opencode_icodeeasy_relay(api_key: &str, relay_base_url: &str) -> Result<(), AppError> {
     let api_key = api_key.trim();
     if api_key.is_empty() {
         return Err(AppError::localized(
@@ -492,7 +496,7 @@ pub fn write_opencode_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
     let _guard = opencode_config_lock().lock()?;
     let path = get_opencode_config_path();
     let config = read_opencode_config_from_path(&path)?;
-    let updated = apply_opencode_icodeeasy_relay(&config, api_key)?;
+    let updated = apply_opencode_icodeeasy_relay(&config, api_key, relay_base_url)?;
     write_opencode_config_to_path_with_contents(&path, &updated)?;
 
     #[cfg(unix)]
@@ -581,12 +585,14 @@ mod tests {
     #[test]
     fn apply_icodeeasy_relay_writes_provider_and_default_model() {
         let config = json!({ "$schema": "https://opencode.ai/config.json" });
-        let updated = apply_opencode_icodeeasy_relay(&config, "sk-test-key").expect("apply relay");
+        let updated =
+            apply_opencode_icodeeasy_relay(&config, "sk-test-key", "https://api.icodeeasy.cc/v1")
+                .expect("apply relay");
 
         let entry = &updated["provider"][OPENCODE_RELAY_PROVIDER_ID];
         assert_eq!(entry["npm"], "@ai-sdk/openai");
         assert_eq!(entry["name"], OPENCODE_RELAY_PROVIDER_NAME);
-        assert_eq!(entry["options"]["baseURL"], OPENCODE_RELAY_BASE_URL);
+        assert_eq!(entry["options"]["baseURL"], "https://api.icodeeasy.cc/v1");
         assert_eq!(entry["options"]["apiKey"], "sk-test-key");
 
         let model = &entry["models"][OPENCODE_RELAY_MODEL];
@@ -617,13 +623,15 @@ mod tests {
                 OPENCODE_RELAY_PROVIDER_ID: {
                     "npm": "@ai-sdk/openai",
                     "name": "ICodeEasy",
-                    "options": { "baseURL": OPENCODE_RELAY_BASE_URL, "apiKey": "old-key" },
+                    "options": { "baseURL": "https://api.icodeeasy.cc/v1", "apiKey": "old-key" },
                     "models": { "gpt-5.6-sol-mini": { "name": "User Added" } },
                 },
             },
         });
 
-        let updated = apply_opencode_icodeeasy_relay(&config, "sk-new-key").expect("apply relay");
+        let updated =
+            apply_opencode_icodeeasy_relay(&config, "sk-new-key", "https://api.icodeeasy.cc/v1")
+                .expect("apply relay");
 
         assert_eq!(updated["theme"], "opencode");
         assert_eq!(
@@ -641,8 +649,12 @@ mod tests {
     fn relay_detection_requires_base_url_key_and_default_selection() {
         assert!(!opencode_relay_configured(&json!({})));
 
-        let configured =
-            apply_opencode_icodeeasy_relay(&json!({}), "sk-test-key").expect("relay config");
+        let configured = apply_opencode_icodeeasy_relay(
+            &json!({}),
+            "sk-test-key",
+            "https://api.icodeeasy.cc/v1",
+        )
+        .expect("relay config");
 
         // 缺默认模型选择
         let mut no_default = configured.clone();
@@ -662,14 +674,27 @@ mod tests {
     }
 
     #[test]
+    fn relay_follows_selected_endpoint() {
+        let updated =
+            apply_opencode_icodeeasy_relay(&json!({}), "sk-jp-key", "https://jp.icodeeasy.cc/v1")
+                .expect("apply with jp endpoint");
+
+        let entry = &updated["provider"][OPENCODE_RELAY_PROVIDER_ID];
+        assert_eq!(entry["options"]["baseURL"], "https://jp.icodeeasy.cc/v1");
+        assert_eq!(entry["options"]["apiKey"], "sk-jp-key");
+        assert!(opencode_relay_configured(&updated));
+    }
+
+    #[test]
     #[serial_test::serial]
     fn write_icodeeasy_relay_rejects_empty_key_and_persists() {
         let temp = tempfile::tempdir().expect("tempdir");
         let _guard = TestHomeGuard::set(temp.path());
 
-        assert!(write_opencode_icodeeasy_relay("  ").is_err());
+        assert!(write_opencode_icodeeasy_relay("  ", "https://api.icodeeasy.cc/v1").is_err());
 
-        write_opencode_icodeeasy_relay("sk-test-key").expect("write relay");
+        write_opencode_icodeeasy_relay("sk-test-key", "https://api.icodeeasy.cc/v1")
+            .expect("write relay");
         let config = read_opencode_config().expect("reload");
         assert!(opencode_relay_configured(&config));
 

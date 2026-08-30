@@ -34,6 +34,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ICodeEasyAppInfoCard } from "@/components/icodeeasy/ICodeEasyAppInfoCard";
+import { ICodeEasyEndpointCard } from "@/components/icodeeasy/ICodeEasyEndpointCard";
+import {
+  ICODEEASY_ENDPOINT_PRIMARY,
+  normalizeIcodeeasyEndpointOrigin,
+} from "@/config/icodeeasyEndpoints";
 import { providersApi, settingsApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
@@ -343,6 +348,18 @@ export function ICodeEasySetupPage({ onNavigate }: ICodeEasySetupPageProps) {
           </div>
         </CardContent>
       </Card>
+
+      <ICodeEasyEndpointCard
+        selectedOrigin={
+          normalizeIcodeeasyEndpointOrigin(provider?.baseUrl ?? "") ??
+          ICODEEASY_ENDPOINT_PRIMARY
+        }
+        onSwitched={(result) =>
+          setProvider((previous) =>
+            previous ? { ...previous, baseUrl: result.origin } : previous,
+          )
+        }
+      />
 
       <Card className="border-border/70 shadow-sm">
         <CardHeader className="pb-4">

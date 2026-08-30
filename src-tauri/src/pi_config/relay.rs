@@ -10,10 +10,10 @@ use super::{
 };
 use crate::error::AppError;
 
-/// ICodeEasy 中转在 Pi `models.json` 里的 provider key、显示名与端点。
+/// ICodeEasy 中转在 Pi `models.json` 里的 provider key 与显示名。
+/// 端点不再硬编码：写入时由调用方经 `icodeeasy_endpoints` 按当前选定接入点派生。
 pub(crate) const PI_RELAY_PROVIDER_KEY: &str = "icodeeasy";
 pub(crate) const PI_RELAY_PROVIDER_NAME: &str = "ICodeEasy";
-pub(crate) const PI_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
 /// 与 Codex/OpenCode 套件同一网关模型；Pi 走 Responses 协议（`openai-responses`），
 /// 模型元数据与 `piModelCatalog.ts` 的 `openai/gpt-5.6-sol` 条目保持一致。
 pub(crate) const PI_RELAY_MODEL_ID: &str = "gpt-5.6-sol";
@@ -34,7 +34,11 @@ fn icodeeasy_model_definition() -> Value {
 
 /// Build the canonical ICodeEasy provider entry. 用户在条目下自加的其它模型
 /// 保留；默认模型条目每次重写回 canonical 形状，保证重新配置后恢复可用。
-fn icodeeasy_provider_entry(existing: Option<&Value>, api_key: &str) -> Value {
+fn icodeeasy_provider_entry(
+    existing: Option<&Value>,
+    api_key: &str,
+    relay_base_url: &str,
+) -> Value {
     let mut models: Vec<Value> = existing
         .and_then(|entry| entry.get("models"))
         .and_then(Value::as_array)
@@ -45,7 +49,7 @@ fn icodeeasy_provider_entry(existing: Option<&Value>, api_key: &str) -> Value {
 
     json!({
         "name": PI_RELAY_PROVIDER_NAME,
-        "baseUrl": PI_RELAY_BASE_URL,
+        "baseUrl": relay_base_url,
         "api": "openai-responses",
         "apiKey": api_key,
         "models": models,
@@ -54,7 +58,10 @@ fn icodeeasy_provider_entry(existing: Option<&Value>, api_key: &str) -> Value {
 
 /// Upsert the ICodeEasy relay entry into Pi's `models.json`：已存在则整条目
 /// 替换（保留用户自加模型），不存在则插入；同值重写是无写 no-op。
-pub(crate) fn write_pi_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+pub(crate) fn write_pi_icodeeasy_relay(
+    api_key: &str,
+    relay_base_url: &str,
+) -> Result<(), AppError> {
     let api_key = api_key.trim();
     if api_key.is_empty() {
         return Err(AppError::localized(
@@ -65,7 +72,7 @@ pub(crate) fn write_pi_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
     }
 
     let existing = read_pi_native_provider(PI_RELAY_PROVIDER_KEY)?;
-    let entry = icodeeasy_provider_entry(existing.as_ref(), api_key);
+    let entry = icodeeasy_provider_entry(existing.as_ref(), api_key, relay_base_url);
     if existing.is_some() {
         replace_pi_provider_if_present(PI_RELAY_PROVIDER_KEY, &entry)?;
     } else {
@@ -81,7 +88,7 @@ pub(crate) fn pi_relay_configured() -> Result<bool, AppError> {
         return Ok(false);
     };
     let base_url_matches = provider_base_url(&entry)
-        .map(|url| url.trim_end_matches('/') == PI_RELAY_BASE_URL)
+        .map(|url| crate::icodeeasy_endpoints::is_known_relay_base_url(&url))
         .unwrap_or(false);
     let has_key = entry
         .get("apiKey")
@@ -96,6 +103,10 @@ mod tests {
     use crate::pi_config::test_support::TestAgentDir;
     use crate::pi_config::{get_pi_models_path, read_pi_native_providers};
     use serial_test::serial;
+
+    /// 主站接入点的中转 base_url：写入调用点统一传这个（生产端点由
+    /// `icodeeasy_endpoints` 派生，测试里钉住字面值）。
+    const PRIMARY_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
 
     fn relay_entry() -> Value {
         read_pi_native_provider(PI_RELAY_PROVIDER_KEY)
@@ -135,11 +146,11 @@ mod tests {
     #[serial]
     fn write_relay_into_missing_models_file_creates_canonical_entry() {
         let _agent = TestAgentDir::new();
-        write_pi_icodeeasy_relay("sk-test-key").expect("write relay");
+        write_pi_icodeeasy_relay("sk-test-key", PRIMARY_RELAY_BASE_URL).expect("write relay");
 
         let entry = relay_entry();
         assert_eq!(entry["name"], PI_RELAY_PROVIDER_NAME);
-        assert_eq!(entry["baseUrl"], PI_RELAY_BASE_URL);
+        assert_eq!(entry["baseUrl"], PRIMARY_RELAY_BASE_URL);
         assert_eq!(entry["api"], "openai-responses");
         assert_eq!(entry["apiKey"], "sk-test-key");
 
@@ -160,11 +171,12 @@ mod tests {
     #[serial]
     fn rewriting_with_same_key_is_a_no_op() {
         let _agent = TestAgentDir::new();
-        write_pi_icodeeasy_relay("sk-test-key").expect("write relay");
+        write_pi_icodeeasy_relay("sk-test-key", PRIMARY_RELAY_BASE_URL).expect("write relay");
         let path = get_pi_models_path().expect("models path");
         let before = std::fs::read(&path).expect("read models file");
 
-        write_pi_icodeeasy_relay("sk-test-key").expect("idempotent rewrite");
+        write_pi_icodeeasy_relay("sk-test-key", PRIMARY_RELAY_BASE_URL)
+            .expect("idempotent rewrite");
 
         let after = std::fs::read(&path).expect("read models file");
         assert_eq!(before, after, "identical rewrite must not touch the file");
@@ -174,8 +186,8 @@ mod tests {
     #[serial]
     fn rewriting_with_new_key_replaces_entry() {
         let _agent = TestAgentDir::new();
-        write_pi_icodeeasy_relay("sk-old-key").expect("write relay");
-        write_pi_icodeeasy_relay("sk-new-key").expect("rewrite relay");
+        write_pi_icodeeasy_relay("sk-old-key", PRIMARY_RELAY_BASE_URL).expect("write relay");
+        write_pi_icodeeasy_relay("sk-new-key", PRIMARY_RELAY_BASE_URL).expect("rewrite relay");
 
         assert_eq!(relay_entry()["apiKey"], "sk-new-key");
         assert!(pi_relay_configured().expect("configured check"));
@@ -200,7 +212,7 @@ mod tests {
             PI_RELAY_PROVIDER_KEY,
             &json!({
                 "name": PI_RELAY_PROVIDER_NAME,
-                "baseUrl": PI_RELAY_BASE_URL,
+                "baseUrl": PRIMARY_RELAY_BASE_URL,
                 "api": "openai-responses",
                 "apiKey": "sk-old-key",
                 "models": [
@@ -211,7 +223,7 @@ mod tests {
         )
         .expect("seed relay provider");
 
-        write_pi_icodeeasy_relay("sk-new-key").expect("rewrite relay");
+        write_pi_icodeeasy_relay("sk-new-key", PRIMARY_RELAY_BASE_URL).expect("rewrite relay");
 
         let providers = read_pi_native_providers().expect("read providers");
         assert_eq!(providers["other-provider"]["apiKey"], "other-key");
@@ -243,11 +255,11 @@ mod tests {
         assert!(!pi_relay_configured().expect("other endpoint"));
 
         // 密钥空白
-        seed_entry(custom_entry(Some(PI_RELAY_BASE_URL), Some(" ")));
+        seed_entry(custom_entry(Some(PRIMARY_RELAY_BASE_URL), Some(" ")));
         assert!(!pi_relay_configured().expect("blank key"));
 
         // 缺 apiKey 字段
-        seed_entry(custom_entry(Some(PI_RELAY_BASE_URL), None));
+        seed_entry(custom_entry(Some(PRIMARY_RELAY_BASE_URL), None));
         assert!(!pi_relay_configured().expect("missing key"));
 
         // 端点带尾斜杠也算匹配
@@ -259,12 +271,15 @@ mod tests {
 
         // 顶层缺 baseUrl 时回落第一个模型的 baseUrl
         let mut fallback = custom_entry(None, Some("sk-test-key"));
-        fallback["models"] = json!([{"id": PI_RELAY_MODEL_ID, "baseUrl": PI_RELAY_BASE_URL}]);
+        fallback["models"] = json!([{"id": PI_RELAY_MODEL_ID, "baseUrl": PRIMARY_RELAY_BASE_URL}]);
         seed_entry(fallback);
         assert!(pi_relay_configured().expect("model-level baseUrl fallback"));
 
         // 完整 canonical 条目
-        seed_entry(custom_entry(Some(PI_RELAY_BASE_URL), Some("sk-test-key")));
+        seed_entry(custom_entry(
+            Some(PRIMARY_RELAY_BASE_URL),
+            Some("sk-test-key"),
+        ));
         assert!(pi_relay_configured().expect("fully configured"));
     }
 
@@ -272,11 +287,24 @@ mod tests {
     #[serial]
     fn write_relay_rejects_blank_key_without_creating_entry() {
         let _agent = TestAgentDir::new();
-        let error = write_pi_icodeeasy_relay("  ").expect_err("blank key must fail");
+        let error = write_pi_icodeeasy_relay("  ", PRIMARY_RELAY_BASE_URL)
+            .expect_err("blank key must fail");
         assert!(matches!(error, AppError::Localized { .. }));
         assert!(read_pi_native_provider(PI_RELAY_PROVIDER_KEY)
             .expect("read relay provider")
             .is_none());
         assert!(!pi_relay_configured().expect("no entry no configure"));
+    }
+
+    #[test]
+    #[serial]
+    fn write_relay_with_japan_endpoint_writes_and_detects() {
+        let _agent = TestAgentDir::new();
+        write_pi_icodeeasy_relay("sk-test-key", "https://jp.icodeeasy.cc/v1")
+            .expect("write relay via japan endpoint");
+
+        let entry = relay_entry();
+        assert_eq!(entry["baseUrl"], "https://jp.icodeeasy.cc/v1");
+        assert!(pi_relay_configured().expect("configured check"));
     }
 }

@@ -10,7 +10,8 @@ use crate::provider::Provider;
 pub const DEFAULT_MODEL: &str = "grok-4.5";
 pub const DEFAULT_API_BACKEND: &str = "responses";
 pub const DEFAULT_CONTEXT_WINDOW: i64 = 500_000;
-pub const ICODEEASY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
+/// 端点不再硬编码：写入时由 `icodeeasy_endpoints` 按当前选定接入点派生，
+/// 「已配置」探测用 `is_known_relay_base_url` 接受任一已知端点。
 pub const ICODEEASY_DEFAULT_MODEL: &str = "grok-4.6";
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -103,7 +104,7 @@ pub fn grok_relay_configured(config_text: &str) -> bool {
     let base_url_matches = profile
         .get("base_url")
         .and_then(Item::as_str)
-        .is_some_and(|url| url.trim_end_matches('/') == ICODEEASY_BASE_URL);
+        .is_some_and(crate::icodeeasy_endpoints::is_known_relay_base_url);
     let backend_matches = profile
         .get("api_backend")
         .and_then(Item::as_str)
@@ -118,7 +119,13 @@ pub fn grok_relay_configured(config_text: &str) -> bool {
 
 /// Upsert the ICodeEasy-owned Grok profile while preserving MCP, CLI, UI and
 /// fallback model entries already present in the user's document.
-pub fn apply_grok_icodeeasy_relay(config_text: &str, api_key: &str) -> Result<String, AppError> {
+///
+/// 端点由调用方按当前选定接入点派生（`icodeeasy_endpoints`）后传入。
+pub fn apply_grok_icodeeasy_relay(
+    config_text: &str,
+    api_key: &str,
+    relay_base_url: &str,
+) -> Result<String, AppError> {
     let mut document = if config_text.trim().is_empty() {
         DocumentMut::new()
     } else {
@@ -144,7 +151,7 @@ pub fn apply_grok_icodeeasy_relay(config_text: &str, api_key: &str) -> Result<St
     let model_profiles = ensure_document_table_like(&mut document, "model");
     let profile = ensure_nested_table_like(model_profiles, ICODEEASY_DEFAULT_MODEL);
     profile.insert("model", toml_edit::value(ICODEEASY_DEFAULT_MODEL));
-    profile.insert("base_url", toml_edit::value(ICODEEASY_BASE_URL));
+    profile.insert("base_url", toml_edit::value(relay_base_url));
     profile.insert("name", toml_edit::value("ICodeEasy Grok 4.6"));
     profile.insert(
         "description",
@@ -160,7 +167,7 @@ pub fn apply_grok_icodeeasy_relay(config_text: &str, api_key: &str) -> Result<St
 
 /// Persist the ICodeEasy Grok profile atomically. The file contains a secret,
 /// so a newly-created config is tightened to owner read/write on Unix.
-pub fn write_grok_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+pub fn write_grok_icodeeasy_relay(api_key: &str, relay_base_url: &str) -> Result<(), AppError> {
     let api_key = api_key.trim();
     if api_key.is_empty() {
         return Err(AppError::localized(
@@ -172,7 +179,7 @@ pub fn write_grok_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
 
     let path = get_grok_config_path();
     let old_text = read_grok_config_text()?;
-    let new_text = apply_grok_icodeeasy_relay(&old_text, api_key)?;
+    let new_text = apply_grok_icodeeasy_relay(&old_text, api_key, relay_base_url)?;
     write_text_file(&path, &new_text)?;
 
     #[cfg(unix)]
@@ -600,7 +607,7 @@ context_window = 500000
 
     #[test]
     fn apply_icodeeasy_relay_writes_current_primary_and_secondary_model() {
-        let text = apply_grok_icodeeasy_relay("", "sk-test-key")
+        let text = apply_grok_icodeeasy_relay("", "sk-test-key", "https://api.icodeeasy.cc/v1")
             .expect("apply ICodeEasy relay on empty config");
         let document = text.parse::<DocumentMut>().expect("valid TOML output");
 
@@ -614,7 +621,10 @@ context_window = 500000
         );
         let profile = &document["model"][ICODEEASY_DEFAULT_MODEL];
         assert_eq!(profile["model"].as_str(), Some(ICODEEASY_DEFAULT_MODEL));
-        assert_eq!(profile["base_url"].as_str(), Some(ICODEEASY_BASE_URL));
+        assert_eq!(
+            profile["base_url"].as_str(),
+            Some("https://api.icodeeasy.cc/v1")
+        );
         assert_eq!(profile["api_key"].as_str(), Some("sk-test-key"));
         assert_eq!(profile["api_backend"].as_str(), Some(DEFAULT_API_BACKEND));
         assert_eq!(
@@ -641,7 +651,8 @@ api_backend = "responses"
 [mcp_servers.echo]
 command = "echo"
 "#;
-        let text = apply_grok_icodeeasy_relay(existing, "sk-new").expect("apply relay");
+        let text = apply_grok_icodeeasy_relay(existing, "sk-new", "https://api.icodeeasy.cc/v1")
+            .expect("apply relay");
         let document = text.parse::<DocumentMut>().expect("valid TOML output");
 
         assert!(text.contains("# keep this comment"));
@@ -663,7 +674,9 @@ command = "echo"
         assert!(!grok_relay_configured(""));
         assert!(!grok_relay_configured("not = [valid"));
 
-        let configured = apply_grok_icodeeasy_relay("", "sk-test-key").expect("relay config");
+        let configured =
+            apply_grok_icodeeasy_relay("", "sk-test-key", "https://api.icodeeasy.cc/v1")
+                .expect("relay config");
         assert!(!grok_relay_configured(&configured.replace(
             "fork_secondary_model = \"grok-4.6\"",
             "fork_secondary_model = \"grok-4.5\""
@@ -671,11 +684,32 @@ command = "echo"
         assert!(!grok_relay_configured(
             &configured.replace("api_key = \"sk-test-key\"", "api_key = \" \"")
         ));
+        assert!(!grok_relay_configured(&configured.replace(
+            "base_url = \"https://api.icodeeasy.cc/v1\"",
+            "base_url = \"https://example.com/v1\""
+        )));
+    }
+
+    #[test]
+    fn relay_follows_selected_endpoint() {
+        let text = apply_grok_icodeeasy_relay("", "sk-k", "https://jp.icodeeasy.cc/v1")
+            .expect("apply with jp endpoint");
+        let document = text.parse::<DocumentMut>().expect("valid TOML");
+        assert_eq!(
+            document["model"][ICODEEASY_DEFAULT_MODEL]["base_url"].as_str(),
+            Some("https://jp.icodeeasy.cc/v1")
+        );
+        assert!(grok_relay_configured(&text));
     }
 
     #[test]
     fn apply_icodeeasy_relay_rejects_invalid_toml() {
-        assert!(apply_grok_icodeeasy_relay("models = [broken", "sk-test-key").is_err());
+        assert!(apply_grok_icodeeasy_relay(
+            "models = [broken",
+            "sk-test-key",
+            "https://api.icodeeasy.cc/v1"
+        )
+        .is_err());
     }
 
     #[test]

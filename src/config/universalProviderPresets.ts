@@ -12,6 +12,7 @@ import type {
   UniversalProviderModels,
 } from "@/types";
 import { deepClone } from "@/utils/deepClone";
+import { normalizeIcodeeasyEndpointOrigin } from "@/config/icodeeasyEndpoints";
 
 /**
  * 统一供应商预设接口
@@ -81,8 +82,9 @@ export const icodeEasyUniversalProviderPreset = universalProviderPresets[0];
 /**
  * 创建或规范化用户侧唯一的 ICodeEasy 供应商。
  *
- * 只保留首次创建时间；名称、端点、模型和启用应用始终回到发行版契约，避免
- * UI 或旧版本把固定供应商漂移为自定义网关。
+ * 只保留首次创建时间与已选的已知接入点；名称、模型和启用应用始终回到发行版
+ * 契约，避免 UI 或旧版本把固定供应商漂移为自定义网关。baseUrl 若为已知接入点
+ * （api/jp/sg）则保留用户选择，否则归位主站。
  */
 export function createICodeEasyUniversalProvider(
   apiKey: string,
@@ -93,7 +95,9 @@ export function createICodeEasyUniversalProvider(
     name: "ICodeEasy",
     providerType: "icodeeasy",
     apps: { ...icodeEasyUniversalProviderPreset.defaultApps },
-    baseUrl: ICODEEASY_API_BASE_URL,
+    baseUrl:
+      normalizeIcodeeasyEndpointOrigin(existing?.baseUrl ?? "") ??
+      ICODEEASY_API_BASE_URL,
     apiKey: apiKey.trim(),
     models: deepClone(icodeEasyUniversalProviderPreset.defaultModels),
     websiteUrl: ICODEEASY_WEBSITE_URL,

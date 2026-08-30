@@ -11,9 +11,9 @@ use toml_edit::{DocumentMut, Item, Table};
 use crate::config::{get_home_dir, write_text_file};
 use crate::error::AppError;
 
-/// ICodeEasy 中转在 Kimi Code 配置里的 provider 名与端点。
+/// ICodeEasy 中转在 Kimi Code 配置里的 provider 名。
+/// 端点不再硬编码：写入时由 `icodeeasy_endpoints` 按当前选定接入点派生。
 pub const KIMI_RELAY_PROVIDER_KEY: &str = "icodeeasy";
-pub const KIMI_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
 /// 配置中转后写入的默认模型（256K 变体；1M 的 `kimi-k3` 条目一并写入，供 `/model` 切换）。
 pub const KIMI_RELAY_DEFAULT_MODEL: &str = "icodeeasy/k3-256k";
 
@@ -57,7 +57,7 @@ pub fn kimi_relay_configured(config_text: &str) -> bool {
         .as_table_like()
         .and_then(|table| table.get("base_url"))
         .and_then(|item| item.as_str())
-        .map(|url| url.trim_end_matches('/') == KIMI_RELAY_BASE_URL)
+        .map(crate::icodeeasy_endpoints::is_known_relay_base_url)
         .unwrap_or(false);
     let has_key = provider
         .as_table_like()
@@ -113,7 +113,11 @@ fn ensure_table_like<'a>(doc: &'a mut DocumentMut, key: &str) -> &'a mut dyn tom
 ///
 /// 覆盖范围：`default_model`、`providers.icodeeasy`、`models."icodeeasy/*"` 两个条目；
 /// 其余内容（OAuth 引用的官方 provider、用户自建 provider/模型、注释）原样保留。
-pub fn apply_kimi_relay_config(config_text: &str, api_key: &str) -> Result<String, AppError> {
+pub fn apply_kimi_relay_config(
+    config_text: &str,
+    api_key: &str,
+    relay_base_url: &str,
+) -> Result<String, AppError> {
     let mut doc = if config_text.trim().is_empty() {
         DocumentMut::new()
     } else {
@@ -126,7 +130,7 @@ pub fn apply_kimi_relay_config(config_text: &str, api_key: &str) -> Result<Strin
 
     let mut provider = Table::new();
     provider["type"] = toml_edit::value("kimi");
-    provider["base_url"] = toml_edit::value(KIMI_RELAY_BASE_URL);
+    provider["base_url"] = toml_edit::value(relay_base_url);
     provider["api_key"] = toml_edit::value(api_key);
     ensure_table_like(&mut doc, "providers").insert(KIMI_RELAY_PROVIDER_KEY, Item::Table(provider));
 
@@ -153,7 +157,7 @@ pub fn apply_kimi_relay_config(config_text: &str, api_key: &str) -> Result<Strin
 
 /// 把 ICodeEasy 中转写入 `~/.kimi-code/config.toml`。`write_text_file` 走
 /// 临时文件 + rename 的原子写，失败不会留下半写状态，无需额外回滚。
-pub fn write_kimi_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+pub fn write_kimi_icodeeasy_relay(api_key: &str, relay_base_url: &str) -> Result<(), AppError> {
     let api_key = api_key.trim();
     if api_key.is_empty() {
         return Err(AppError::localized(
@@ -165,7 +169,7 @@ pub fn write_kimi_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
 
     let path = get_kimi_config_path();
     let old_text = read_kimi_config_text()?;
-    let new_text = apply_kimi_relay_config(&old_text, api_key)?;
+    let new_text = apply_kimi_relay_config(&old_text, api_key, relay_base_url)?;
     write_text_file(&path, &new_text)
 }
 
@@ -175,7 +179,8 @@ mod tests {
 
     #[test]
     fn apply_relay_writes_provider_models_and_default_model() {
-        let text = apply_kimi_relay_config("", "sk-test-key").expect("apply on empty config");
+        let text = apply_kimi_relay_config("", "sk-test-key", "https://api.icodeeasy.cc/v1")
+            .expect("apply on empty config");
         let doc = text.parse::<DocumentMut>().expect("valid TOML output");
 
         assert_eq!(doc["default_model"].as_str(), Some("icodeeasy/k3-256k"));
@@ -220,7 +225,8 @@ provider = "managed:kimi-code"
 model = "k3"
 max_context_size = 1048576
 "#;
-        let text = apply_kimi_relay_config(existing, "sk-new").expect("apply on existing config");
+        let text = apply_kimi_relay_config(existing, "sk-new", "https://api.icodeeasy.cc/v1")
+            .expect("apply on existing config");
         let doc = text.parse::<DocumentMut>().expect("valid TOML output");
 
         // 官方 OAuth provider 与用户自建 provider 原样保留
@@ -245,11 +251,24 @@ type = "kimi"
 base_url = "https://api.icodeeasy.cc/v1"
 api_key = "sk-old"
 "#;
-        let text = apply_kimi_relay_config(existing, "sk-new").expect("re-apply");
+        let text = apply_kimi_relay_config(existing, "sk-new", "https://api.icodeeasy.cc/v1")
+            .expect("re-apply");
         let doc = text.parse::<DocumentMut>().expect("valid TOML output");
         assert_eq!(
             doc["providers"]["icodeeasy"]["api_key"].as_str(),
             Some("sk-new")
+        );
+        assert!(kimi_relay_configured(&text));
+    }
+
+    #[test]
+    fn relay_follows_selected_endpoint() {
+        let text = apply_kimi_relay_config("", "sk-k", "https://jp.icodeeasy.cc/v1")
+            .expect("apply with jp endpoint");
+        let doc = text.parse::<DocumentMut>().expect("valid TOML");
+        assert_eq!(
+            doc["providers"]["icodeeasy"]["base_url"].as_str(),
+            Some("https://jp.icodeeasy.cc/v1")
         );
         assert!(kimi_relay_configured(&text));
     }
@@ -276,8 +295,9 @@ api_key = "sk-x"
 
     #[test]
     fn apply_relay_rejects_invalid_existing_toml() {
-        let err = apply_kimi_relay_config("providers = [broken", "sk-x")
-            .expect_err("invalid TOML must not be overwritten");
+        let err =
+            apply_kimi_relay_config("providers = [broken", "sk-x", "https://api.icodeeasy.cc/v1")
+                .expect_err("invalid TOML must not be overwritten");
         assert!(err.to_string().contains("Invalid Kimi Code config.toml"));
     }
 }

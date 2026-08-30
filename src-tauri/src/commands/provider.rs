@@ -272,7 +272,7 @@ pub fn import_claude_desktop_providers_from_claude(
     Ok(imported)
 }
 
-fn claude_desktop_provider_from_claude(provider: &Provider) -> Option<Provider> {
+pub(crate) fn claude_desktop_provider_from_claude(provider: &Provider) -> Option<Provider> {
     let mut desktop_provider = provider.clone();
     desktop_provider.in_failover_queue = false;
     let meta = desktop_provider.meta.get_or_insert_with(Default::default);

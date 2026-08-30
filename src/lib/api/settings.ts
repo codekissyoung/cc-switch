@@ -30,6 +30,21 @@ export interface WebDavSyncResult {
   status: string;
 }
 
+/** ICodeEasy 接入点延迟探测结果（对应 Rust EndpointLatency） */
+export interface EndpointLatency {
+  origin: string;
+  latencyMs: number | null;
+}
+
+/** 接入点切换结果（对应 Rust EndpointSwitchResult） */
+export interface EndpointSwitchResult {
+  origin: string;
+  universalSynced: boolean;
+  updated: string[];
+  skipped: string[];
+  failed: string[];
+}
+
 export interface AppVersionCheckResult {
   hasUpdate: boolean;
   latestVersion: string | null;
@@ -491,6 +506,16 @@ export const settingsApi = {
 
   async configureZcodeRelay(apiKey: string): Promise<void> {
     await invoke("configure_zcode_relay", { apiKey });
+  },
+
+  /** 切换 ICodeEasy 接入点：写统一供应商 base_url 并重写所有已配置工具的中转 */
+  async setIcodeeasyEndpoint(origin: string): Promise<EndpointSwitchResult> {
+    return await invoke("set_icodeeasy_endpoint", { origin });
+  },
+
+  /** 探测全部 ICodeEasy 接入点的延迟（3 次采样取中位数） */
+  async probeIcodeeasyEndpoints(): Promise<EndpointLatency[]> {
+    return await invoke("probe_icodeeasy_endpoints");
   },
 
   /** 探测各工具安装分布：枚举所有安装、标记冲突、生成锚定升级命令。

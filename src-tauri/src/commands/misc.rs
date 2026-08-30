@@ -942,10 +942,19 @@ pub async fn install_git_bash() -> Result<crate::git_bash::GitBashInstallResult,
 
 /// 把 ICodeEasy 中转（provider + 模型条目 + default_model）upsert 进
 /// `~/.kimi-code/config.toml`，保留用户既有 OAuth 与其他 provider。
+/// 端点按当前选定的 ICodeEasy 接入点派生。
 #[tauri::command]
-pub async fn configure_kimi_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_kimi_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::kimi_config::write_kimi_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        let base_url = crate::icodeeasy_endpoints::relay_api_v1_base(
+            &crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db),
+        );
+        crate::kimi_config::write_kimi_icodeeasy_relay(&api_key, &base_url)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("Kimi relay configure task failed: {e}"))?
@@ -980,9 +989,17 @@ pub async fn get_grok_suite_status() -> Result<GrokSuiteStatus, String> {
 /// Upsert the ICodeEasy Grok profile in `~/.grok/config.toml`, preserving the
 /// user's CLI, UI, MCP and fallback model configuration.
 #[tauri::command]
-pub async fn configure_grok_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_grok_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::grok_config::write_grok_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        let base_url = crate::icodeeasy_endpoints::relay_api_v1_base(
+            &crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db),
+        );
+        crate::grok_config::write_grok_icodeeasy_relay(&api_key, &base_url)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("Grok relay configure task failed: {e}"))?
@@ -1018,9 +1035,17 @@ pub async fn get_opencode_suite_status() -> Result<OpencodeSuiteStatus, String> 
 /// select it as the default model, preserving the user's themes, plugins, MCP
 /// servers and other provider entries.
 #[tauri::command]
-pub async fn configure_opencode_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_opencode_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::opencode_config::write_opencode_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        let base_url = crate::icodeeasy_endpoints::relay_api_v1_base(
+            &crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db),
+        );
+        crate::opencode_config::write_opencode_icodeeasy_relay(&api_key, &base_url)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("OpenCode relay configure task failed: {e}"))?
@@ -1054,9 +1079,17 @@ pub async fn get_pi_suite_status() -> Result<PiSuiteStatus, String> {
 /// preserving the user's other providers and self-added models. Pi's default
 /// model selection lives in `settings.json` and is intentionally left alone.
 #[tauri::command]
-pub async fn configure_pi_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_pi_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::pi_config::relay::write_pi_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        let base_url = crate::icodeeasy_endpoints::relay_api_v1_base(
+            &crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db),
+        );
+        crate::pi_config::relay::write_pi_icodeeasy_relay(&api_key, &base_url)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("Pi relay configure task failed: {e}"))?
@@ -1090,9 +1123,17 @@ pub async fn get_openclaw_suite_status() -> Result<OpenclawSuiteStatus, String> 
 /// (`models.providers.icodeeasy`) and switch `agents.defaults.model.primary`
 /// to `icodeeasy/gpt-5.6-sol`, preserving other providers and fallbacks.
 #[tauri::command]
-pub async fn configure_openclaw_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_openclaw_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::openclaw_config::write_openclaw_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        let base_url = crate::icodeeasy_endpoints::relay_api_v1_base(
+            &crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db),
+        );
+        crate::openclaw_config::write_openclaw_icodeeasy_relay(&api_key, &base_url)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("OpenClaw relay configure task failed: {e}"))?
@@ -1126,9 +1167,17 @@ pub async fn get_hermes_suite_status() -> Result<HermesSuiteStatus, String> {
 /// and switch the top-level default model to it, preserving other providers
 /// and config sections.
 #[tauri::command]
-pub async fn configure_hermes_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_hermes_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::hermes_config::write_hermes_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        let base_url = crate::icodeeasy_endpoints::relay_api_v1_base(
+            &crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db),
+        );
+        crate::hermes_config::write_hermes_icodeeasy_relay(&api_key, &base_url)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("Hermes relay configure task failed: {e}"))?
@@ -1264,12 +1313,213 @@ pub async fn launch_or_install_zcode_desktop(
 /// `~/.zcode/v2/config.json`，保留用户既有的官方渠道与其他 provider。
 /// 运行中的 ZCode 不会自动重载配置，改动需重启 ZCode 生效。
 #[tauri::command]
-pub async fn configure_zcode_relay(api_key: String) -> Result<(), String> {
+pub async fn configure_zcode_relay(
+    state: State<'_, crate::AppState>,
+    api_key: String,
+) -> Result<(), String> {
+    let app_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
-        crate::zcode_config::write_zcode_icodeeasy_relay(&api_key).map_err(|e| e.to_string())
+        // ZCode 的 provider baseURL 用纯 origin（不带 /v1）
+        let origin = crate::icodeeasy_endpoints::current_endpoint_origin(&app_state.db);
+        crate::zcode_config::write_zcode_icodeeasy_relay(&api_key, &origin)
+            .map_err(|e| e.to_string())
     })
     .await
     .map_err(|e| format!("ZCode relay configure task failed: {e}"))?
+}
+
+/// ICodeEasy 接入点切换结果：哪些工具被重写了、哪些跳过、哪些失败。
+#[derive(Debug, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EndpointSwitchResult {
+    origin: String,
+    /// 统一供应商已同步（claude/codex/gemini 子供应商与 live 配置随之重写）
+    universal_synced: bool,
+    /// 已按新端点重写的套件
+    updated: Vec<String>,
+    /// 原本未配置中转、本次未动的套件
+    skipped: Vec<String>,
+    /// 重写失败的套件（附带错误信息）
+    failed: Vec<String>,
+}
+
+/// 切换 ICodeEasy 接入点（主站/日本/新加坡）。
+///
+/// 把选定 origin 写入统一供应商（唯一事实源），随后：①sync 统一供应商
+/// （claude/codex/gemini 的子供应商与 live 配置随之重写）；②对所有「已配置
+/// 中转」的套件按新端点重写各自的配置文件，未配置的不动。未保存 API Key
+/// 时只记录选择，套件首次配置时自然落到新端点。
+#[tauri::command]
+pub async fn set_icodeeasy_endpoint(
+    state: State<'_, crate::AppState>,
+    origin: String,
+) -> Result<EndpointSwitchResult, String> {
+    let app_state = state.inner().clone();
+    tokio::task::spawn_blocking(move || {
+        let origin = crate::icodeeasy_endpoints::normalize_endpoint_origin(&origin)
+            .ok_or_else(|| format!("未知的 ICodeEasy 接入点: {origin}"))?
+            .to_string();
+
+        let db = app_state.db.clone();
+        let universal_id =
+            crate::database::dao::universal_providers::ICODEEASY_UNIVERSAL_PROVIDER_ID;
+        let mut provider = db
+            .get_universal_provider(universal_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "统一供应商不存在，请先在首页保存 API Key".to_string())?;
+        provider.base_url = origin.clone();
+        db.save_universal_provider(&provider)
+            .map_err(|e| e.to_string())?;
+
+        let mut result = EndpointSwitchResult {
+            origin: origin.clone(),
+            universal_synced: false,
+            updated: Vec::new(),
+            skipped: Vec::new(),
+            failed: Vec::new(),
+        };
+
+        let api_key = provider.api_key.trim().to_string();
+        if api_key.is_empty() {
+            return Ok(result);
+        }
+
+        // ① claude/codex/gemini 走统一供应商同步
+        match ProviderService::sync_universal_to_apps(&app_state, universal_id) {
+            Ok(_) => result.universal_synced = true,
+            Err(e) => result.failed.push(format!("claude/codex/gemini: {e}")),
+        }
+
+        // Claude Desktop：从 claude 子供应商重建 desktop 行；若 desktop 当前正
+        // 是该子供应商，则重投影 live 配置
+        let claude_child = format!("universal-claude-{universal_id}");
+        match db.get_provider_by_id(&claude_child, AppType::Claude.as_str()) {
+            Ok(Some(claude_provider)) => {
+                match super::provider::claude_desktop_provider_from_claude(&claude_provider) {
+                    Some(desktop_provider) => {
+                        if let Err(e) =
+                            db.save_provider(AppType::ClaudeDesktop.as_str(), &desktop_provider)
+                        {
+                            result.failed.push(format!("claudeDesktop: {e}"));
+                        } else {
+                            let is_current = crate::settings::get_effective_current_provider(
+                                &db,
+                                &AppType::ClaudeDesktop,
+                            )
+                            .map(|current| current.as_deref() == Some(claude_child.as_str()))
+                            .unwrap_or(false);
+                            if is_current {
+                                match ProviderService::sync_current_provider_for_app(
+                                    &app_state,
+                                    AppType::ClaudeDesktop,
+                                ) {
+                                    Ok(_) => result.updated.push("claudeDesktop".to_string()),
+                                    Err(e) => result.failed.push(format!("claudeDesktop: {e}")),
+                                }
+                            } else {
+                                result.skipped.push("claudeDesktop".to_string());
+                            }
+                        }
+                    }
+                    None => result.skipped.push("claudeDesktop".to_string()),
+                }
+            }
+            _ => result.skipped.push("claudeDesktop".to_string()),
+        }
+
+        // ② 七个独立套件：仅在已配置中转（任一已知端点）时重写
+        let v1_base = crate::icodeeasy_endpoints::relay_api_v1_base(&origin);
+        let rewrite = |tool: &'static str,
+                       configured: bool,
+                       write: &dyn Fn() -> Result<(), crate::error::AppError>,
+                       result: &mut EndpointSwitchResult| {
+            if !configured {
+                result.skipped.push(tool.to_string());
+                return;
+            }
+            match write() {
+                Ok(()) => result.updated.push(tool.to_string()),
+                Err(e) => result.failed.push(format!("{tool}: {e}")),
+            }
+        };
+
+        let kimi_configured = crate::kimi_config::read_kimi_config_text()
+            .map(|text| crate::kimi_config::kimi_relay_configured(&text))
+            .unwrap_or(false);
+        rewrite(
+            "kimi",
+            kimi_configured,
+            &|| crate::kimi_config::write_kimi_icodeeasy_relay(&api_key, &v1_base),
+            &mut result,
+        );
+
+        let grok_configured = crate::grok_config::read_grok_config_text()
+            .map(|text| crate::grok_config::grok_relay_configured(&text))
+            .unwrap_or(false);
+        rewrite(
+            "grok",
+            grok_configured,
+            &|| crate::grok_config::write_grok_icodeeasy_relay(&api_key, &v1_base),
+            &mut result,
+        );
+
+        // ZCode 的 provider baseURL 用纯 origin（不带 /v 1）
+        let zcode_configured = crate::zcode_config::read_zcode_config_text()
+            .map(|text| crate::zcode_config::zcode_relay_configured(&text))
+            .unwrap_or(false);
+        rewrite(
+            "zcode",
+            zcode_configured,
+            &|| crate::zcode_config::write_zcode_icodeeasy_relay(&api_key, &origin),
+            &mut result,
+        );
+
+        let opencode_configured = crate::opencode_config::read_opencode_config()
+            .map(|config| crate::opencode_config::opencode_relay_configured(&config))
+            .unwrap_or(false);
+        rewrite(
+            "opencode",
+            opencode_configured,
+            &|| crate::opencode_config::write_opencode_icodeeasy_relay(&api_key, &v1_base),
+            &mut result,
+        );
+
+        let pi_configured = crate::pi_config::relay::pi_relay_configured().unwrap_or(false);
+        rewrite(
+            "pi",
+            pi_configured,
+            &|| crate::pi_config::relay::write_pi_icodeeasy_relay(&api_key, &v1_base),
+            &mut result,
+        );
+
+        let openclaw_configured =
+            crate::openclaw_config::openclaw_relay_configured().unwrap_or(false);
+        rewrite(
+            "openclaw",
+            openclaw_configured,
+            &|| crate::openclaw_config::write_openclaw_icodeeasy_relay(&api_key, &v1_base),
+            &mut result,
+        );
+
+        let hermes_configured = crate::hermes_config::hermes_relay_configured().unwrap_or(false);
+        rewrite(
+            "hermes",
+            hermes_configured,
+            &|| crate::hermes_config::write_hermes_icodeeasy_relay(&api_key, &v1_base),
+            &mut result,
+        );
+
+        Ok(result)
+    })
+    .await
+    .map_err(|e| format!("Set ICodeEasy endpoint task failed: {e}"))?
+}
+
+/// 探测全部 ICodeEasy 接入点的 /health 延迟（3 次采样取中位数），供首页测速。
+#[tauri::command]
+pub async fn probe_icodeeasy_endpoints(
+) -> Result<Vec<crate::icodeeasy_endpoints::EndpointLatency>, String> {
+    Ok(crate::icodeeasy_endpoints::probe_all_endpoints().await)
 }
 
 const VALID_TOOLS: [&str; 10] = [

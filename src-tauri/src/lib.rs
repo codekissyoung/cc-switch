@@ -17,6 +17,7 @@ mod gemini_mcp;
 mod git_bash;
 mod grok_config;
 pub mod hermes_config;
+mod icodeeasy_endpoints;
 mod init_status;
 mod kimi_config;
 mod lightweight;
@@ -1683,6 +1684,9 @@ pub fn run() {
             commands::stream_check_all_providers,
             commands::get_stream_check_config,
             commands::save_stream_check_config,
+            // ICodeEasy endpoint selection & latency probe
+            commands::set_icodeeasy_endpoint,
+            commands::probe_icodeeasy_endpoints,
             // Session manager
             commands::list_sessions,
             commands::get_session_messages,

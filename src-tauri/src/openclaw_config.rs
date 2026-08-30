@@ -915,9 +915,9 @@ pub fn set_tools_config(tools: &OpenClawToolsConfig) -> Result<OpenClawWriteOutc
 // ICodeEasy Relay（套件页直写配置文件，不走 ProviderService）
 // ============================================================================
 
-/// ICodeEasy 中转在 OpenClaw 配置里的 provider key 与端点。
+/// ICodeEasy 中转在 OpenClaw 配置里的 provider key。
+/// 端点不再硬编码：写入时由 `icodeeasy_endpoints` 按当前选定接入点派生。
 pub(crate) const OPENCLAW_RELAY_PROVIDER_KEY: &str = "icodeeasy";
-pub(crate) const OPENCLAW_RELAY_BASE_URL: &str = "https://api.icodeeasy.cc/v1";
 /// 与 Codex/Grok 套件同一网关模型；元数据与 `opencodeProviderPresets.ts`
 /// 里 `@ai-sdk/openai` 的 gpt-5.6-sol 条目同口径（400K context / 128K output /
 /// text+image）。
@@ -945,7 +945,11 @@ fn icodeeasy_relay_model_definition() -> Value {
 
 /// 组 ICodeEasy 中转 provider 条目：保留用户在条目下自行添加的其它模型，
 /// 默认模型条目每次重写回 canonical 形状并置顶（仿 opencode 套件先例）。
-fn icodeeasy_relay_provider_entry(existing: Option<&Value>, api_key: &str) -> Value {
+fn icodeeasy_relay_provider_entry(
+    existing: Option<&Value>,
+    api_key: &str,
+    relay_base_url: &str,
+) -> Value {
     let mut models: Vec<Value> = existing
         .and_then(|entry| entry.get("models"))
         .and_then(Value::as_array)
@@ -955,7 +959,7 @@ fn icodeeasy_relay_provider_entry(existing: Option<&Value>, api_key: &str) -> Va
     models.insert(0, icodeeasy_relay_model_definition());
 
     json!({
-        "baseUrl": OPENCLAW_RELAY_BASE_URL,
+        "baseUrl": relay_base_url,
         "apiKey": api_key,
         "api": OPENCLAW_RELAY_API,
         "models": models,
@@ -977,7 +981,7 @@ fn openclaw_relay_configured_in(config: &Value) -> bool {
     let base_url_matches = entry
         .get("baseUrl")
         .and_then(Value::as_str)
-        .is_some_and(|url| url.trim_end_matches('/') == OPENCLAW_RELAY_BASE_URL);
+        .is_some_and(crate::icodeeasy_endpoints::is_known_relay_base_url);
     let has_key = entry
         .get("apiKey")
         .and_then(Value::as_str)
@@ -1005,7 +1009,10 @@ pub(crate) fn openclaw_relay_configured() -> Result<bool, AppError> {
 /// `icodeeasy/gpt-5.6-sol`。两次写入都走既有文档级函数（写前备份 +
 /// change-on-disk 冲突检测），用户的其它 provider、fallback 列表与其它
 /// 根节（env/tools 等）连同注释都保留。
-pub(crate) fn write_openclaw_icodeeasy_relay(api_key: &str) -> Result<(), AppError> {
+pub(crate) fn write_openclaw_icodeeasy_relay(
+    api_key: &str,
+    relay_base_url: &str,
+) -> Result<(), AppError> {
     let api_key = api_key.trim();
     if api_key.is_empty() {
         return Err(AppError::localized(
@@ -1018,7 +1025,7 @@ pub(crate) fn write_openclaw_icodeeasy_relay(api_key: &str) -> Result<(), AppErr
     let existing = get_provider(OPENCLAW_RELAY_PROVIDER_KEY)?;
     set_provider(
         OPENCLAW_RELAY_PROVIDER_KEY,
-        icodeeasy_relay_provider_entry(existing.as_ref(), api_key),
+        icodeeasy_relay_provider_entry(existing.as_ref(), api_key, relay_base_url),
     )?;
 
     // 只切 primary，保留用户已配置的 fallback 列表与其它字段。
@@ -1221,13 +1228,13 @@ mod tests {
 "#;
 
         with_test_paths(source, |_| {
-            assert!(write_openclaw_icodeeasy_relay("  ").is_err());
+            assert!(write_openclaw_icodeeasy_relay("  ", "https://api.icodeeasy.cc/v1").is_err());
 
-            write_openclaw_icodeeasy_relay("sk-test-key").unwrap();
+            write_openclaw_icodeeasy_relay("sk-test-key", "https://api.icodeeasy.cc/v1").unwrap();
 
             let config = read_openclaw_config().unwrap();
             let entry = &config["models"]["providers"][OPENCLAW_RELAY_PROVIDER_KEY];
-            assert_eq!(entry["baseUrl"], OPENCLAW_RELAY_BASE_URL);
+            assert_eq!(entry["baseUrl"], "https://api.icodeeasy.cc/v1");
             assert_eq!(entry["apiKey"], "sk-test-key");
             assert_eq!(entry["api"], "openai-responses");
 
@@ -1260,8 +1267,8 @@ mod tests {
 "#;
 
         with_test_paths(source, |_| {
-            write_openclaw_icodeeasy_relay("sk-old-key").unwrap();
-            write_openclaw_icodeeasy_relay("sk-new-key").unwrap();
+            write_openclaw_icodeeasy_relay("sk-old-key", "https://api.icodeeasy.cc/v1").unwrap();
+            write_openclaw_icodeeasy_relay("sk-new-key", "https://api.icodeeasy.cc/v1").unwrap();
 
             let config = read_openclaw_config().unwrap();
             let entry = &config["models"]["providers"][OPENCLAW_RELAY_PROVIDER_KEY];
@@ -1316,7 +1323,7 @@ mod tests {
 "#;
 
         with_test_paths(source, |_| {
-            write_openclaw_icodeeasy_relay("sk-new-key").unwrap();
+            write_openclaw_icodeeasy_relay("sk-new-key", "https://api.icodeeasy.cc/v1").unwrap();
 
             let config = read_openclaw_config().unwrap();
             assert_eq!(
@@ -1367,7 +1374,7 @@ mod tests {
         with_test_paths(source, |_| {
             assert!(!openclaw_relay_configured().unwrap());
 
-            write_openclaw_icodeeasy_relay("sk-test-key").unwrap();
+            write_openclaw_icodeeasy_relay("sk-test-key", "https://api.icodeeasy.cc/v1").unwrap();
             let configured = read_openclaw_config().unwrap();
             assert!(openclaw_relay_configured_in(&configured));
 
@@ -1397,6 +1404,28 @@ mod tests {
         // 配置文件损坏时读失败 → 视为未配置
         with_test_paths("{ this is not : valid json5", |_| {
             assert!(!openclaw_relay_configured().unwrap());
+        });
+    }
+
+    #[test]
+    #[serial]
+    fn relay_write_and_detect_follow_selected_endpoint() {
+        let source = r#"{
+  models: {
+    mode: 'merge',
+    providers: {},
+  },
+}
+"#;
+
+        with_test_paths(source, |_| {
+            write_openclaw_icodeeasy_relay("sk-jp-key", "https://jp.icodeeasy.cc/v1").unwrap();
+
+            let config = read_openclaw_config().unwrap();
+            let entry = &config["models"]["providers"][OPENCLAW_RELAY_PROVIDER_KEY];
+            assert_eq!(entry["baseUrl"], "https://jp.icodeeasy.cc/v1");
+            assert_eq!(entry["apiKey"], "sk-jp-key");
+            assert!(openclaw_relay_configured().unwrap());
         });
     }
 }
