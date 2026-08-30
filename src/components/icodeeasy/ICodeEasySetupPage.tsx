@@ -33,6 +33,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { ICodeEasyAppInfoCard } from "@/components/icodeeasy/ICodeEasyAppInfoCard";
 import { providersApi, settingsApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
@@ -396,6 +397,8 @@ export function ICodeEasySetupPage({ onNavigate }: ICodeEasySetupPageProps) {
           })}
         </CardContent>
       </Card>
+
+      <ICodeEasyAppInfoCard />
     </div>
   );
 }

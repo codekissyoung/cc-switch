@@ -14,7 +14,6 @@
     "close": "Close",
     "done": "Done",
     "settings": "Settings",
-    "about": "About",
     "version": "Version",
     "loading": "Loading...",
     "notInstalled": "Not installed",
@@ -57,8 +56,7 @@
     "opencode": "OpenCode",
     "pi": "Pi",
     "openclaw": "OpenClaw",
-    "hermes": "Hermes",
-    "statistics": "Statistics"
+    "hermes": "Hermes"
   },
   "firstRunNotice": {
     "title": "Welcome to ICodeEasy",
@@ -785,6 +783,7 @@
     "tabAuth": "Auth",
     "tabAdvanced": "Advanced",
     "tabProxy": "Routing",
+    "tabEnvironment": "Environment",
     "authCenter": {
       "title": "OAuth Authentication Center",
       "description": "Use your other subscriptions in Claude Code — please be mindful of compliance risks.",
@@ -808,10 +807,6 @@
         "running": "Running",
         "stopped": "Stopped"
       },
-      "connectivityCheck": {
-        "title": "Connectivity Check Settings",
-        "description": "Configure timeout, retries, and the slow-response threshold for provider reachability checks"
-      },
       "failover": {
         "title": "Auto Failover",
         "description": "Configure failover queue and circuit breaker strategy"
@@ -831,10 +826,6 @@
       "backup": {
         "title": "Backup & Restore",
         "description": "Manage automatic backups, view and restore database snapshots"
-      },
-      "cloudSync": {
-        "title": "Cloud Sync",
-        "description": "Sync data across devices via WebDAV"
       },
       "rectifier": {
         "title": "Rectifier",
@@ -1245,7 +1236,6 @@
     "updateTo": "Update to v{{version}}",
     "checking": "Checking...",
     "upToDate": "Up to Date",
-    "aboutHint": "View version information and update status.",
     "portableMode": "Portable mode: updates require manual download.",
     "updateAvailable": "New version available: {{version}}",
     "checkUpdateFailed": "Failed to check for updates, please try again later.",

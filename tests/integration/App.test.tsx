@@ -246,11 +246,12 @@ describe("App integration with MSW", () => {
     expect(
       screen.getByRole("button", { name: "icodeeasyNavigation.home" }),
     ).toHaveAttribute("aria-current", "page");
+    // 统计 Tab 已隐藏（官网控制台已有用量统计），不应出现在导航里
     expect(
-      screen.getByRole("button", {
+      screen.queryByRole("button", {
         name: "icodeeasyNavigation.statistics",
       }),
-    ).toBeInTheDocument();
+    ).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "settings.tabProxy" }));
     expect(await screen.findByTestId("settings-page")).toBeInTheDocument();

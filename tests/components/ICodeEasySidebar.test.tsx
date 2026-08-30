@@ -66,6 +66,10 @@ describe("ICodeEasySidebar", () => {
     expect(
       ICODEEASY_SETTINGS_NAV_ITEMS.map((item) => item.id as string),
     ).not.toContain("auth");
+    // 统计 Tab 已隐藏（官网控制台已有用量统计），后台采集代码保留
+    expect(
+      ICODEEASY_SETTINGS_NAV_ITEMS.map((item) => item.id as string),
+    ).not.toContain("usage");
 
     renderSidebar();
 
@@ -84,8 +88,10 @@ describe("ICodeEasySidebar", () => {
     expect(screen.getByText("settings.tabGeneral")).toBeVisible();
     expect(screen.getByText("settings.tabProxy")).toBeVisible();
     expect(screen.getByText("settings.tabAdvanced")).toBeVisible();
-    expect(screen.getByText("icodeeasyNavigation.statistics")).toBeVisible();
-    expect(screen.getByText("common.about")).toBeVisible();
+    expect(
+      screen.queryByText("icodeeasyNavigation.statistics"),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText("settings.tabEnvironment")).toBeVisible();
     expect(screen.queryByText("settings.tabAuth")).not.toBeInTheDocument();
   });
 

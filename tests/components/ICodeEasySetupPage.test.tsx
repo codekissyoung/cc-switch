@@ -48,6 +48,10 @@ vi.mock("sonner", () => ({
   },
 }));
 
+vi.mock("@/components/icodeeasy/ICodeEasyAppInfoCard", () => ({
+  ICodeEasyAppInfoCard: () => <div data-testid="app-info-card" />,
+}));
+
 const emptyProvider: UniversalProvider = {
   id: "icodeeasy",
   name: "ICodeEasy",
@@ -109,6 +113,7 @@ describe("ICodeEasySetupPage", () => {
     expect(
       await screen.findByLabelText("icodeeasySetup.apiKeyLabel"),
     ).toBeInTheDocument();
+    expect(screen.getByTestId("app-info-card")).toBeInTheDocument();
     for (const nameKey of TOOL_NAME_KEYS) {
       expect(screen.getByText(nameKey)).toBeVisible();
     }

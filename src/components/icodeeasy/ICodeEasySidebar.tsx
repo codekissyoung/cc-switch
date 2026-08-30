@@ -1,11 +1,10 @@
 import type { CSSProperties } from "react";
 import {
-  BarChart3,
   Home,
-  Info,
   Route,
   Settings2,
   SlidersHorizontal,
+  Wrench,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import appIcon from "@/assets/icons/app-icon.png";
@@ -27,8 +26,7 @@ export type ICodeEasySettingsSection =
   | "general"
   | "proxy"
   | "advanced"
-  | "usage"
-  | "about";
+  | "environment";
 
 export const ICODEEASY_SIDEBAR_WIDTH = 224;
 
@@ -49,14 +47,9 @@ export const ICODEEASY_SETTINGS_NAV_ITEMS = [
     icon: SlidersHorizontal,
   },
   {
-    id: "usage",
-    labelKey: "icodeeasyNavigation.statistics",
-    icon: BarChart3,
-  },
-  {
-    id: "about",
-    labelKey: "common.about",
-    icon: Info,
+    id: "environment",
+    labelKey: "settings.tabEnvironment",
+    icon: Wrench,
   },
 ] as const satisfies ReadonlyArray<{
   id: ICodeEasySettingsSection;

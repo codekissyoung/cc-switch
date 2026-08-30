@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Download,
   Copy,
-  Globe,
-  Info,
   Loader2,
   RefreshCw,
   Terminal,
@@ -23,28 +21,19 @@ import {
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { getVersion } from "@tauri-apps/api/app";
 import { settingsApi } from "@/lib/api";
 import type {
-  AppVersionCheckResult,
   ToolInstallation,
   ToolInstallationReport,
 } from "@/lib/api/settings";
-import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
-import appIcon from "@/assets/icons/app-icon.png";
 import { APP_ICON_MAP } from "@/config/appConfig";
-import { DOWNLOAD_PAGE_URL } from "@/config/constants";
 import type { AppId } from "@/lib/api/types";
 import { extractErrorMessage } from "@/utils/errorUtils";
 import { isWindows } from "@/lib/platform";
 import { isUpdateAvailable } from "@/lib/version";
 import { ToolUpgradeConfirmDialog } from "./ToolUpgradeConfirmDialog";
 import { ToolInstallRow } from "./ToolInstallRow";
-
-interface AboutSectionProps {
-  isPortable: boolean;
-}
 
 interface ToolVersion {
   name: string;
@@ -192,15 +181,13 @@ const TOOL_APP_IDS: Record<ToolName, AppId> = {
 };
 
 // 工具版本探测代价高：每个工具一次 `--version` 子进程 + 一次 npm/github/pypi 网络请求。
-// 设置页用 Radix Tabs，非激活 Tab 会被卸载——每次切回「关于」都重挂 AboutSection，若都
+// 设置页用 Radix Tabs，非激活 Tab 会被卸载——每次切回「环境」都重挂 EnvironmentSection，若都
 // 全量重查纯属浪费。用「模块级」缓存（生命周期 = JS 模块 = 应用会话，不随组件卸载销毁）
 // 跨重挂存活：重挂时若缓存仍新鲜（距上次全量加载 < TTL）直接复用、跳过探测；超期或用户
 // 手动「刷新」才强制重查。at = 最近一次「全量加载」完成时刻；单工具刷新（切 shell / 升级
 // 后）只更新数据、不重置 at，避免一次局部刷新把整体 TTL 续命。
 const TOOL_VERSIONS_CACHE_TTL_MS = 10 * 60 * 1000; // 10 分钟
 let toolVersionsCache: { data: ToolVersion[]; at: number } | null = null;
-// 应用自身版本（getVersion，本地毫秒级、无网络）也缓存一份，纯为重挂时免去 loading 闪烁。
-let appVersionCache: string | null = null;
 
 // 把探测结果按 name 合并进已有列表：替换同名项、追加新项；空列表时直接采用新结果。
 // 组件 state 与模块缓存共用同一套合并语义（单工具与全量探测都经此函数）。
@@ -218,40 +205,8 @@ function mergeToolVersions(
   return merged;
 }
 
-export function AboutSection({ isPortable }: AboutSectionProps) {
-  // ... (use hooks as before) ...
+export function EnvironmentSection() {
   const { t } = useTranslation();
-  // 惰性初始化自模块缓存：重挂时首帧即渲染上次的值，避免 loading 闪烁；首次挂载缓存
-  // 为空则回退到原始初值（null / loading）。
-  const [version, setVersion] = useState<string | null>(() => appVersionCache);
-  const [isLoadingVersion, setIsLoadingVersion] = useState(
-    () => appVersionCache === null,
-  );
-  // 轻量版本检查结果（fork 分发版：无自动更新，只提示去下载页手动更新）
-  const [appUpdate, setAppUpdate] = useState<AppVersionCheckResult | null>(
-    null,
-  );
-  const [isCheckingUpdate, setIsCheckingUpdate] = useState(false);
-
-  const checkAppVersion = useCallback(
-    async (silent: boolean) => {
-      setIsCheckingUpdate(true);
-      try {
-        const result = await settingsApi.checkAppVersion();
-        setAppUpdate(result);
-        if (!silent && !result.hasUpdate) {
-          toast.success(t("settings.upToDate"), { closeButton: true });
-        }
-      } catch (error) {
-        // 后端已对任何失败兜底返回 hasUpdate=false，这里是极端情况
-        console.error("[AboutSection] Check app version failed", error);
-        if (!silent) toast.error(t("settings.checkUpdateFailed"));
-      } finally {
-        setIsCheckingUpdate(false);
-      }
-    },
-    [t],
-  );
   const [toolVersions, setToolVersions] = useState<ToolVersion[]>(
     () => toolVersionsCache?.data ?? [],
   );
@@ -344,7 +299,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
         // 返回刷新结果，调用方可据此判断版本是否真的探到（避免读 state 撞 stale closure）。
         return updated;
       } catch (error) {
-        console.error("[AboutSection] Failed to refresh tools", error);
+        console.error("[EnvironmentSection] Failed to refresh tools", error);
         return [];
       } finally {
         setLoadingTools((prev) => {
@@ -360,7 +315,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
   const loadAllToolVersions = useCallback(
     async (options?: { force?: boolean }) => {
       const force = options?.force ?? false;
-      // 命中新鲜缓存：切回「关于」Tab 触发的重挂直接复用上次结果，跳过 6 个 `--version`
+      // 命中新鲜缓存：切回「环境」Tab 触发的重挂直接复用上次结果，跳过 6 个 `--version`
       // 子进程 + 6 个 latest 版本网络请求。手动「刷新」传 force 绕过缓存强制重查。
       if (
         !force &&
@@ -418,67 +373,22 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
   };
 
   useEffect(() => {
-    let active = true;
-
-    // 本软件自身版本走本地调用（getVersion，无网络，毫秒级），与工具版本探测彼此独立。
-    // 之前两者被塞进同一个 Promise.all，导致 setVersion / setIsLoadingVersion 被压在
-    // 「全部工具检查完成」之后——图标下方的版本徽标因此要干等 6 个工具全检完才显示。
-    // 拆成两条独立链路：应用版本一拿到就立刻显示，工具探测各自渐进刷新，互不阻塞。
-    const loadAppVersion = async () => {
-      try {
-        const appVersion = await getVersion();
-        appVersionCache = appVersion;
-        if (active) {
-          setVersion(appVersion);
-        }
-      } catch (error) {
-        console.error("[AboutSection] Failed to load app version", error);
-        if (active) {
-          setVersion(null);
-        }
-      } finally {
-        if (active) {
-          setIsLoadingVersion(false);
-        }
-      }
-    };
-
-    void loadAppVersion();
     void loadAllToolVersions();
-    // 静默版本检查：失败不提示，有新版本时更新按钮变为下载入口
-    void checkAppVersion(true);
-    return () => {
-      active = false;
-    };
     // Mount-only: loadAllToolVersions is intentionally excluded to avoid
     // re-fetching all tools whenever wslShellByTool changes. Single-tool
     // refreshes are handled by refreshToolVersions in the shell/flag handlers.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ... (handlers like handleOpenReleaseNotes, handleCheckUpdate) ...
-
-  const handleCheckUpdate = useCallback(async () => {
-    if (appUpdate?.hasUpdate) {
-      // 已有检查结果且存在新版本：直接打开下载页
-      try {
-        await settingsApi.openExternal(
-          appUpdate.downloadUrl ?? DOWNLOAD_PAGE_URL,
-        );
-      } catch (error) {
-        console.error("[AboutSection] Failed to open download page", error);
-      }
-      return;
-    }
-    await checkAppVersion(false);
-  }, [appUpdate, checkAppVersion]);
-
   const handleCopyInstallCommands = useCallback(async () => {
     try {
       await navigator.clipboard.writeText(ONE_CLICK_INSTALL_COMMANDS);
       toast.success(t("settings.installCommandsCopied"), { closeButton: true });
     } catch (error) {
-      console.error("[AboutSection] Failed to copy install commands", error);
+      console.error(
+        "[EnvironmentSection] Failed to copy install commands",
+        error,
+      );
       toast.error(t("settings.installCommandsCopyFailed"));
     }
   }, [t]);
@@ -501,7 +411,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
       });
     } catch (error) {
       console.error(
-        `[AboutSection] Auto-diagnose failed for ${toolName}`,
+        `[EnvironmentSection] Auto-diagnose failed for ${toolName}`,
         error,
       );
     }
@@ -526,7 +436,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
         toast.info(t("settings.toolDiagnoseNoConflict"), { closeButton: true });
       }
     } catch (error) {
-      console.error("[AboutSection] Diagnose all failed", error);
+      console.error("[EnvironmentSection] Diagnose all failed", error);
       toast.error(t("settings.toolDiagnoseFailed"), {
         description: extractErrorMessage(error) || undefined,
         closeButton: true,
@@ -619,7 +529,7 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           }
         } catch (error) {
           console.error(
-            `[AboutSection] Failed to run tool action for ${toolName}`,
+            `[EnvironmentSection] Failed to run tool action for ${toolName}`,
             error,
           );
           const detail = extractErrorMessage(error) || String(error);
@@ -757,7 +667,10 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
           reports = await settingsApi.probeToolInstallations(toolNames);
         } catch (error) {
           // 探测失败不应阻断升级：退回直接执行（等同旧行为）。
-          console.error("[AboutSection] probeToolInstallations failed", error);
+          console.error(
+            "[EnvironmentSection] probeToolInstallations failed",
+            error,
+          );
           await executeRun(toolNames, action);
           return;
         }
@@ -800,8 +713,6 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
 
   const handleCancelUpgrade = useCallback(() => setPendingUpgrade(null), []);
 
-  const displayVersion = version ?? t("common.unknown");
-
   // 任一安装/升级进行中（批量或单工具）即视为忙碌：用于禁用所有操作按钮，
   // 避免并发触发多个 npm/pip 全局写入造成冲突。
   // preflightTools 覆盖升级前的 probe 阶段——那段在 executeRun 之前、toolActions
@@ -818,119 +729,6 @@ export function AboutSection({ isPortable }: AboutSectionProps) {
       transition={{ duration: 0.3 }}
       className="space-y-6"
     >
-      <header className="space-y-1">
-        <h3 className="text-sm font-medium">{t("common.about")}</h3>
-        <p className="text-xs text-muted-foreground">
-          {t("settings.aboutHint")}
-        </p>
-      </header>
-
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3, delay: 0.1 }}
-        className="rounded-xl border border-border bg-gradient-to-br from-card/80 to-card/40 p-6 space-y-5 shadow-sm"
-      >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-8">
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center gap-2">
-                <img src={appIcon} alt="ICodeEasy" className="h-5 w-5" />
-                <h4 className="text-lg font-semibold text-foreground">
-                  ICodeEasy
-                </h4>
-              </div>
-              <div className="flex items-center gap-2">
-                <Badge variant="outline" className="gap-1.5 bg-background/80">
-                  <span className="text-muted-foreground">
-                    {t("common.version")}
-                  </span>
-                  {isLoadingVersion ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <span className="font-medium">{`v${displayVersion}`}</span>
-                  )}
-                </Badge>
-                {isPortable && (
-                  <Badge variant="secondary" className="gap-1.5">
-                    <Info className="h-3 w-3" />
-                    {t("settings.portableMode")}
-                  </Badge>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => settingsApi.openExternal("https://icodeeasy.cc")}
-              className="h-8 gap-1.5 text-xs"
-            >
-              <Globe className="h-3.5 w-3.5" />
-              {t("settings.officialWebsite")}
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => settingsApi.openExternal(DOWNLOAD_PAGE_URL)}
-              className="h-8 gap-1.5 text-xs"
-            >
-              <Download className="h-3.5 w-3.5" />
-              {t("settings.releaseNotes")}
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleCheckUpdate}
-              disabled={isCheckingUpdate}
-              className="h-8 gap-1.5 text-xs"
-            >
-              {isCheckingUpdate ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  {t("settings.checking")}
-                </>
-              ) : appUpdate?.hasUpdate ? (
-                <>
-                  <Download className="h-3.5 w-3.5" />
-                  {t("settings.updateTo", {
-                    version: appUpdate.latestVersion ?? "",
-                  })}
-                </>
-              ) : (
-                <>
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  {t("settings.checkForUpdates")}
-                </>
-              )}
-            </Button>
-          </div>
-        </div>
-
-        {appUpdate?.hasUpdate && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            className="rounded-lg bg-primary/10 border border-primary/20 px-4 py-3 text-sm"
-          >
-            <p className="font-medium text-primary mb-1">
-              {t("settings.updateAvailable", {
-                version: appUpdate.latestVersion ?? "",
-              })}
-            </p>
-            {appUpdate.notes && (
-              <p className="text-muted-foreground line-clamp-3 leading-relaxed">
-                {appUpdate.notes}
-              </p>
-            )}
-          </motion.div>
-        )}
-      </motion.div>
-
       <div className="space-y-3">
         <div className="flex flex-col gap-2 px-1 sm:flex-row sm:items-center sm:justify-between">
           <h3 className="text-sm font-medium">{t("settings.localEnvCheck")}</h3>

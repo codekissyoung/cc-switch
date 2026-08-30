@@ -14,7 +14,6 @@
     "close": "关闭",
     "done": "完成",
     "settings": "设置",
-    "about": "关于",
     "version": "版本",
     "loading": "加载中...",
     "notInstalled": "未安装",
@@ -57,8 +56,7 @@
     "opencode": "OpenCode",
     "pi": "Pi",
     "openclaw": "OpenClaw",
-    "hermes": "Hermes",
-    "statistics": "统计"
+    "hermes": "Hermes"
   },
   "firstRunNotice": {
     "title": "欢迎使用 ICodeEasy",
@@ -785,6 +783,7 @@
     "tabAuth": "认证",
     "tabAdvanced": "高级",
     "tabProxy": "路由",
+    "tabEnvironment": "环境",
     "authCenter": {
       "title": "OAuth 认证中心",
       "description": "在 Claude Code 中使用您的其他订阅，请注意合规风险。",
@@ -808,10 +807,6 @@
         "running": "运行中",
         "stopped": "已停止"
       },
-      "connectivityCheck": {
-        "title": "连通检测配置",
-        "description": "配置供应商地址探测的超时、重试和较慢阈值"
-      },
       "failover": {
         "title": "自动故障转移",
         "description": "配置故障转移队列和熔断策略"
@@ -831,10 +826,6 @@
       "backup": {
         "title": "备份与恢复",
         "description": "管理自动备份，查看和恢复数据库快照"
-      },
-      "cloudSync": {
-        "title": "云同步",
-        "description": "通过 WebDAV 在多设备间同步数据"
       },
       "rectifier": {
         "title": "整流器",
@@ -1245,7 +1236,6 @@
     "updateTo": "更新到 v{{version}}",
     "checking": "检查中...",
     "upToDate": "已是最新",
-    "aboutHint": "查看版本信息与更新状态。",
     "portableMode": "当前为便携版，更新需手动下载。",
     "updateAvailable": "检测到新版本：{{version}}",
     "checkUpdateFailed": "检查更新失败，请稍后重试。",

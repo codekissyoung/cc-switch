@@ -12,10 +12,8 @@ import {
   Save,
   FolderSearch,
   Database,
-  Cloud,
   ScrollText,
   HardDriveDownload,
-  FlaskConical,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,11 +42,8 @@ import { TerminalSettings } from "@/components/settings/TerminalSettings";
 import { DirectorySettings } from "@/components/settings/DirectorySettings";
 import { ImportExportSection } from "@/components/settings/ImportExportSection";
 import { BackupListSection } from "@/components/settings/BackupListSection";
-import { WebdavSyncSection } from "@/components/settings/WebdavSyncSection";
-import { AboutSection } from "@/components/settings/AboutSection";
+import { EnvironmentSection } from "@/components/settings/EnvironmentSection";
 import { ProxyTabContent } from "@/components/settings/ProxyTabContent";
-import { ConnectivityCheckConfigPanel } from "@/components/usage/ConnectivityCheckConfigPanel";
-import { UsageDashboard } from "@/components/usage/UsageDashboard";
 import { LogConfigPanel } from "@/components/settings/LogConfigPanel";
 import { CodexAuthSettings } from "@/components/settings/CodexAuthSettings";
 import { useInstalledSkills } from "@/hooks/useSkills";
@@ -77,7 +72,6 @@ export function SettingsPage({
     settings,
     isLoading,
     isSaving,
-    isPortable,
     appConfigDir,
     resolvedDirs,
     updateSettings,
@@ -228,7 +222,7 @@ export function SettingsPage({
           className="flex flex-col h-full"
         >
           {showTabNavigation && (
-            <TabsList className="grid w-full grid-cols-5 mb-6 glass rounded-lg">
+            <TabsList className="grid w-full grid-cols-4 mb-6 glass rounded-lg">
               <TabsTrigger value="general">
                 {t("settings.tabGeneral")}
               </TabsTrigger>
@@ -236,10 +230,9 @@ export function SettingsPage({
               <TabsTrigger value="advanced">
                 {t("settings.tabAdvanced")}
               </TabsTrigger>
-              <TabsTrigger value="usage">
-                {t("icodeeasyNavigation.statistics")}
+              <TabsTrigger value="environment">
+                {t("settings.tabEnvironment")}
               </TabsTrigger>
-              <TabsTrigger value="about">{t("common.about")}</TabsTrigger>
             </TabsList>
           )}
 
@@ -423,57 +416,6 @@ export function SettingsPage({
                       </AccordionItem>
 
                       <AccordionItem
-                        value="cloudSync"
-                        className="rounded-xl glass-card overflow-hidden"
-                      >
-                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <Cloud className="h-5 w-5 text-blue-500" />
-                            <div className="text-left">
-                              <h3 className="text-base font-semibold">
-                                {t("settings.advanced.cloudSync.title")}
-                              </h3>
-                              <p className="text-sm text-muted-foreground font-normal">
-                                {t("settings.advanced.cloudSync.description")}
-                              </p>
-                            </div>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-6 pb-6 pt-4 border-t border-border/50">
-                          <WebdavSyncSection
-                            config={settings?.webdavSync}
-                            s3Config={settings?.s3Sync}
-                            settings={settings}
-                            onAutoSave={handleAutoSave}
-                          />
-                        </AccordionContent>
-                      </AccordionItem>
-
-                      <AccordionItem
-                        value="connectivityCheck"
-                        className="rounded-xl glass-card overflow-hidden"
-                      >
-                        <AccordionTrigger className="px-6 py-4 hover:no-underline hover:bg-muted/50 data-[state=open]:bg-muted/50">
-                          <div className="flex items-center gap-3">
-                            <FlaskConical className="h-5 w-5 text-emerald-500" />
-                            <div className="text-left">
-                              <h3 className="text-base font-semibold">
-                                {t("settings.advanced.connectivityCheck.title")}
-                              </h3>
-                              <p className="text-sm text-muted-foreground font-normal">
-                                {t(
-                                  "settings.advanced.connectivityCheck.description",
-                                )}
-                              </p>
-                            </div>
-                          </div>
-                        </AccordionTrigger>
-                        <AccordionContent className="px-6 pb-6 pt-4 border-t border-border/50">
-                          <ConnectivityCheckConfigPanel />
-                        </AccordionContent>
-                      </AccordionItem>
-
-                      <AccordionItem
                         value="logConfig"
                         className="rounded-xl glass-card overflow-hidden"
                       >
@@ -499,17 +441,8 @@ export function SettingsPage({
                 ) : null}
               </TabsContent>
 
-              <TabsContent value="about" className="mt-0">
-                <AboutSection isPortable={isPortable} />
-              </TabsContent>
-
-              <TabsContent value="usage" className="mt-0">
-                <UsageDashboard
-                  refreshIntervalMs={settings?.usageDashboardRefreshIntervalMs}
-                  onRefreshIntervalChange={(usageDashboardRefreshIntervalMs) =>
-                    handleAutoSave({ usageDashboardRefreshIntervalMs })
-                  }
-                />
+              <TabsContent value="environment" className="mt-0">
+                <EnvironmentSection />
               </TabsContent>
             </div>
 
