@@ -50,7 +50,7 @@ const ICODEEASY_DEFAULT_MODELS: UniversalProviderModels = {
   claude: {},
   codex: {
     model: "gpt-5.6-sol",
-    reasoningEffort: "high",
+    reasoningEffort: "xhigh",
   },
   gemini: {
     model: "gemini-3.6-flash",

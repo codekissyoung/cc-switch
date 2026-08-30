@@ -21,7 +21,7 @@ describe("ICodeEasy universal provider contract", () => {
         gemini: true,
       },
       defaultModels: {
-        codex: { model: "gpt-5.6-sol", reasoningEffort: "high" },
+        codex: { model: "gpt-5.6-sol", reasoningEffort: "xhigh" },
         gemini: { model: "gemini-3.6-flash" },
       },
     });
@@ -48,7 +48,7 @@ describe("ICodeEasy universal provider contract", () => {
       apiKey: "new-key",
       models: {
         claude: {},
-        codex: { model: "gpt-5.6-sol", reasoningEffort: "high" },
+        codex: { model: "gpt-5.6-sol", reasoningEffort: "xhigh" },
         gemini: { model: "gemini-3.6-flash" },
       },
       websiteUrl: ICODEEASY_WEBSITE_URL,

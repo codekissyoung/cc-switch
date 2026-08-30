@@ -852,15 +852,21 @@ impl UniversalProvider {
 
         // 生成 Codex 的 config.toml 内容
         let config_toml = if self.provider_type == "icodeeasy" {
+            // ICodeEasy 发行版契约：推理档固定 xhigh（不随 models 里的历史值漂移，
+            // 老用户在下次写入时也被拉回契约值）；gpt-5.6-sol 网关支持 1M 上下文，
+            // 自动压缩阈值 900K。
             format!(
                 r#"model_provider = "icodeeasy"
 model = "{model}"
-model_reasoning_effort = "{reasoning_effort}"
+model_reasoning_effort = "xhigh"
+plan_mode_reasoning_effort = "xhigh"
+model_context_window = 1000000
+model_auto_compact_token_limit = 900000
 disable_response_storage = true
 preferred_auth_method = "apikey"
 
 [model_providers.icodeeasy]
-name = "ICodeEasy"
+name = "OpenAI"
 base_url = "{codex_base_url}"
 wire_api = "responses"
 requires_openai_auth = true"#
@@ -1392,6 +1398,8 @@ mod tests {
         universal.apps.codex = true;
         universal.models.codex = Some(CodexModelConfig {
             model: Some("gpt-5.6-sol".to_string()),
+            // 故意传入与契约不同的值：icodeeasy 模板推理档固定 xhigh，
+            // 不随存量 DB 里的旧值漂移。
             reasoning_effort: Some("high".to_string()),
         });
 
@@ -1404,7 +1412,13 @@ mod tests {
 
         assert!(config.contains("model_provider = \"icodeeasy\""));
         assert!(config.contains("model = \"gpt-5.6-sol\""));
+        assert!(config.contains("model_reasoning_effort = \"xhigh\""));
+        assert!(config.contains("plan_mode_reasoning_effort = \"xhigh\""));
+        assert!(config.contains("model_context_window = 1000000"));
+        assert!(config.contains("model_auto_compact_token_limit = 900000"));
         assert!(config.contains("[model_providers.icodeeasy]"));
+        // 显示名固定为 OpenAI（对用户更原生；选择供应商靠 model_provider 键，不是 name）
+        assert!(config.contains("name = \"OpenAI\""));
         assert!(config.contains("base_url = \"https://api.icodeeasy.cc\""));
         assert!(!config.contains("https://api.icodeeasy.cc/v1"));
         assert!(!config.contains("env_key"));

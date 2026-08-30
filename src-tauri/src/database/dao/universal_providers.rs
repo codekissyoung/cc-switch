@@ -32,7 +32,7 @@ fn default_icodeeasy_universal_provider() -> UniversalProvider {
         claude: None,
         codex: Some(CodexModelConfig {
             model: Some("gpt-5.6-sol".to_string()),
-            reasoning_effort: Some("high".to_string()),
+            reasoning_effort: Some("xhigh".to_string()),
         }),
         gemini: Some(GeminiModelConfig {
             model: Some("gemini-3.6-flash".to_string()),
