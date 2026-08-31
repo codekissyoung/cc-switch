@@ -4,7 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { CodexIcon } from "@/components/BrandIcons";
 import { ICodeEasyClientSuiteCard } from "@/components/icodeeasy/ICodeEasyClientSuiteCard";
-import { providersApi, universalProvidersApi } from "@/lib/api";
+import { providersApi, settingsApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
   createICodeEasyUniversalProvider,
@@ -31,6 +31,7 @@ export function ICodeEasyCodexPage() {
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
   const [launchingDesktop, setLaunchingDesktop] = useState(false);
+  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -138,6 +139,26 @@ export function ICodeEasyCodexPage() {
     }
   };
 
+  // 打开系统首选终端（落在用户家目录）；中转配置已在 ~/.codex 里，无需注入
+  const handleOpenTerminal = async () => {
+    if (openingTerminal) return;
+
+    setOpeningTerminal(true);
+    try {
+      await settingsApi.openHomeTerminal();
+      toast.success(t("icodeeasyCodex.cli.terminalOpened"));
+    } catch (error) {
+      console.error("[ICodeEasyCodex] Failed to open terminal", error);
+      toast.error(
+        t("icodeeasyCodex.cli.terminalOpenFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setOpeningTerminal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -165,6 +186,8 @@ export function ICodeEasyCodexPage() {
         launchingDesktop={launchingDesktop}
         onCliAction={(action) => void handleInstallCli(action)}
         onLaunchDesktop={() => void handleLaunchDesktop()}
+        launchingCli={openingTerminal}
+        onLaunchCli={() => void handleOpenTerminal()}
       />
     </div>
   );

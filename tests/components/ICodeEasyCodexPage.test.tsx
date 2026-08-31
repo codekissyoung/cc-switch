@@ -15,6 +15,7 @@ const apiMocks = vi.hoisted(() => ({
   installNativeCodexCli: vi.fn(),
   launchOrInstallCodexDesktop: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastWarning: vi.fn(),
   toastError: vi.fn(),
@@ -35,6 +36,7 @@ vi.mock("@/lib/api", () => ({
     installNativeCodexCli: apiMocks.installNativeCodexCli,
     launchOrInstallCodexDesktop: apiMocks.launchOrInstallCodexDesktop,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -85,6 +87,7 @@ describe("ICodeEasyCodexPage", () => {
       method: "codex-app",
       desktopWasInstalled: true,
     });
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "codex",
@@ -238,17 +241,36 @@ describe("ICodeEasyCodexPage", () => {
     );
   });
 
-  it("shows no CLI update or terminal launch when the CLI is up to date", async () => {
+  it("shows no CLI update when up to date; terminal launch stays disabled until relay is configured", async () => {
     render(<ICodeEasyCodexPage />);
 
     expect(await screen.findByText("icodeeasyCodex.cli.name")).toBeVisible();
     expect(
       screen.queryByRole("button", { name: "icodeeasyCodex.cli.update" }),
     ).not.toBeInTheDocument();
+    // 中转未配置时启动按钮禁用（getCurrent 默认返回 ""）
     expect(
-      screen.queryByRole("button", {
+      screen.getByRole("button", {
         name: "icodeeasyCodex.cli.launchTerminal",
       }),
-    ).not.toBeInTheDocument();
+    ).toBeDisabled();
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getCurrent.mockResolvedValue(CODEX_PROVIDER_ID);
+    render(<ICodeEasyCodexPage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyCodex.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyCodex.cli.terminalOpened",
+    );
   });
 });

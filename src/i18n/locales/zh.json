@@ -123,7 +123,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Codex CLI 已就绪",
-      "installFailed": "Codex CLI 安装失败：{{error}}"
+      "installFailed": "Codex CLI 安装失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "desktop": {
       "name": "ChatGPT Codex",

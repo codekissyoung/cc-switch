@@ -6,6 +6,7 @@ import {
   KeyRound,
   LoaderCircle,
   Monitor,
+  Play,
   Terminal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,9 @@ interface ICodeEasyClientSuiteCardProps {
   onLaunchDesktop?: () => void;
   /** 无 CLI 的产品（ZCode）不传此 prop，CLI 行整体不渲染。 */
   onCliAction?: (action: "install" | "update") => void;
+  /** 「在终端启动」按钮（当前仅 Codex 页接线）：终端落在用户家目录，不带目录选择。 */
+  launchingCli?: boolean;
+  onLaunchCli?: () => void;
   /** 额外的第三个 CLI 行（如 Google 页的 agy）：只提供安装/修复，无更新入口。 */
   extraCli?: {
     name: string;
@@ -75,6 +79,8 @@ export function ICodeEasyClientSuiteCard({
   launchingDesktop = false,
   onLaunchDesktop,
   onCliAction,
+  launchingCli = false,
+  onLaunchCli,
   extraCli,
 }: ICodeEasyClientSuiteCardProps) {
   const { t } = useTranslation();
@@ -245,6 +251,25 @@ export function ICodeEasyClientSuiteCard({
                   <ArrowUpCircle className="mr-1.5 h-4 w-4" />
                 )}
                 {t(`${i18nPrefix}.cli.update`)}
+              </Button>
+            )}
+            {onLaunchCli && cliReady && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={
+                  !suiteSupported ||
+                  launchingCli ||
+                  Boolean(relay && !relay.configured)
+                }
+                onClick={onLaunchCli}
+              >
+                {launchingCli ? (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="mr-1.5 h-4 w-4" />
+                )}
+                {t(`${i18nPrefix}.cli.launchTerminal`)}
               </Button>
             )}
           </div>

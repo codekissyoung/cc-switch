@@ -123,7 +123,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Codex CLI is ready",
-      "installFailed": "Failed to install Codex CLI: {{error}}"
+      "installFailed": "Failed to install Codex CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "desktop": {
       "name": "ChatGPT Codex",

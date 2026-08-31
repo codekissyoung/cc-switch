@@ -5226,6 +5226,127 @@ fn wsl_distro_from_path(path: &Path) -> Option<String> {
     }
 }
 
+/// 打开系统首选终端（落在用户家目录）。
+///
+/// 套件页「在终端启动」用：中转配置已落在各 CLI 自己的配置文件里
+///（如 `~/.codex/config.toml` + `auth.json`），终端无需注入任何环境变量
+/// ——打开终端，剩下的交给用户。
+#[tauri::command]
+pub async fn open_home_terminal() -> Result<(), String> {
+    let home = crate::config::get_home_dir();
+    let preferred = crate::settings::get_preferred_terminal();
+    open_terminal_app(preferred.as_deref(), &home)
+}
+
+/// macOS：用 `open` 拉起首选终端 App。Ghostty/Alacritty/kitty/WezTerm 需要
+/// `--args --working-directory=` 形式；Terminal/iTerm/Warp 直接吃目录参数。
+/// 首选终端启动失败（比如未安装）时回退 Terminal.app。
+#[cfg(target_os = "macos")]
+fn open_terminal_app(preferred: Option<&str>, home: &Path) -> Result<(), String> {
+    let home = home.to_string_lossy();
+    let open = |app: &str, wd_args: bool| -> std::io::Result<std::process::ExitStatus> {
+        let mut cmd = std::process::Command::new("open");
+        cmd.arg("-na").arg(app);
+        if wd_args {
+            cmd.arg("--args").arg(format!("--working-directory={home}"));
+        } else {
+            cmd.arg(home.as_ref());
+        }
+        cmd.status()
+    };
+
+    let (app, wd_args) = match preferred.unwrap_or("terminal") {
+        "iterm2" => ("iTerm", false),
+        "warp" => ("Warp", false),
+        "ghostty" => ("Ghostty", true),
+        "alacritty" => ("Alacritty", true),
+        "kitty" => ("kitty", true),
+        "wezterm" => ("WezTerm", true),
+        _ => ("Terminal", false),
+    };
+
+    match open(app, wd_args) {
+        Ok(status) if status.success() => Ok(()),
+        first => {
+            if app != "Terminal" {
+                log::warn!("首选终端 {app} 打开失败，回退 Terminal.app: {first:?}");
+                return match open("Terminal", false) {
+                    Ok(status) if status.success() => Ok(()),
+                    Ok(status) => Err(format!("打开终端失败（退出码 {:?}）", status.code())),
+                    Err(e) => Err(format!("打开终端失败: {e}")),
+                };
+            }
+            match first {
+                Ok(status) => Err(format!("打开终端失败（退出码 {:?}）", status.code())),
+                Err(e) => Err(format!("打开终端失败: {e}")),
+            }
+        }
+    }
+}
+
+/// Windows：启动首选终端，未设置时默认 PowerShell。cmd/PowerShell 默认落在
+/// 用户目录；wt 需要 `-d`。失败回退 cmd。
+#[cfg(target_os = "windows")]
+fn open_terminal_app(preferred: Option<&str>, home: &Path) -> Result<(), String> {
+    let home_arg = home.to_string_lossy().to_string();
+    let terminal = preferred.unwrap_or("powershell");
+    let result = match terminal {
+        "wt" => run_windows_start_command(&["wt", "-d", &home_arg], "Windows Terminal"),
+        "powershell" => run_windows_start_command(&["powershell"], "PowerShell"),
+        _ => run_windows_start_command(&["cmd"], "cmd"),
+    };
+    if result.is_err() && terminal != "cmd" {
+        log::warn!(
+            "首选终端 {terminal} 打开失败，回退 cmd: {:?}",
+            result.as_ref().err()
+        );
+        return run_windows_start_command(&["cmd"], "cmd");
+    }
+    result
+}
+
+/// Linux：按常见终端的工作目录参数逐个尝试。
+#[cfg(target_os = "linux")]
+fn open_terminal_app(preferred: Option<&str>, home: &Path) -> Result<(), String> {
+    let home = home.to_string_lossy();
+    let table: Vec<(&str, Vec<String>)> = vec![
+        (
+            "gnome-terminal",
+            vec![format!("--working-directory={home}")],
+        ),
+        ("konsole", vec![format!("--workdir={home}")]),
+        (
+            "xfce4-terminal",
+            vec![format!("--working-directory={home}")],
+        ),
+        ("mate-terminal", vec![format!("--working-directory={home}")]),
+        ("alacritty", vec![format!("--working-directory={home}")]),
+        ("kitty", vec![format!("--directory={home}")]),
+        ("ghostty", vec![format!("--working-directory={home}")]),
+    ];
+
+    let mut candidates: Vec<(&str, Vec<String>)> = Vec::new();
+    if let Some(pref) = preferred {
+        if let Some(entry) = table.iter().find(|(name, _)| *name == pref) {
+            candidates.push((entry.0, entry.1.clone()));
+        }
+    }
+    for entry in &table {
+        if Some(entry.0) != preferred {
+            candidates.push((entry.0, entry.1.clone()));
+        }
+    }
+
+    let mut last_error = String::from("未找到可用的终端");
+    for (name, args) in candidates {
+        match std::process::Command::new(name).args(&args).spawn() {
+            Ok(_) => return Ok(()),
+            Err(e) => last_error = format!("启动 {name} 失败: {e}"),
+        }
+    }
+    Err(last_error)
+}
+
 /// 打开指定提供商的终端
 ///
 /// 根据提供商配置的环境变量启动一个带有该提供商特定设置的终端

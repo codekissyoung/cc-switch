@@ -1687,6 +1687,8 @@ pub fn run() {
             // ICodeEasy endpoint selection & latency probe
             commands::set_icodeeasy_endpoint,
             commands::probe_icodeeasy_endpoints,
+            // Open the user's preferred terminal at the home directory
+            commands::open_home_terminal,
             // Session manager
             commands::list_sessions,
             commands::get_session_messages,

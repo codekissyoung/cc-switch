@@ -518,6 +518,11 @@ export const settingsApi = {
     return await invoke("probe_icodeeasy_endpoints");
   },
 
+  /** 打开系统首选终端（落在用户家目录） */
+  async openHomeTerminal(): Promise<void> {
+    await invoke("open_home_terminal");
+  },
+
   /** 探测各工具安装分布：枚举所有安装、标记冲突、生成锚定升级命令。
    *  诊断按钮、升级前确认、升级后补诊共用此命令，各取所需字段。 */
   async probeToolInstallations(
