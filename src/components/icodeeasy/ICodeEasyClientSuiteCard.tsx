@@ -53,10 +53,10 @@ interface ICodeEasyClientSuiteCardProps {
   onLaunchDesktop?: () => void;
   /** 无 CLI 的产品（ZCode）不传此 prop，CLI 行整体不渲染。 */
   onCliAction?: (action: "install" | "update") => void;
-  /** 「在终端启动」按钮（当前仅 Codex 页接线）：终端落在用户家目录，不带目录选择。 */
+  /** 「在终端启动」按钮：终端落在用户家目录，不带目录选择。 */
   launchingCli?: boolean;
   onLaunchCli?: () => void;
-  /** 额外的第三个 CLI 行（如 Google 页的 agy）：只提供安装/修复，无更新入口。 */
+  /** 额外的第三个 CLI 行（如 Google 页的 agy）：安装/修复 + 可选的终端启动，无更新入口。 */
   extraCli?: {
     name: string;
     version: string | null;
@@ -64,6 +64,9 @@ interface ICodeEasyClientSuiteCardProps {
     installing: boolean;
     blocked: boolean;
     onInstall: () => void;
+    /** 可选「在终端启动」按钮；agy 这类不走中转的工具不受 relay 配置状态门控。 */
+    launching?: boolean;
+    onLaunch?: () => void;
   };
 }
 
@@ -312,6 +315,21 @@ export function ICodeEasyClientSuiteCard({
                     ? `${i18nPrefix}.cli.repair`
                     : `${i18nPrefix}.cli.install`,
                 )}
+              </Button>
+            )}
+            {extraCli.onLaunch && extraCli.version && (
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={!suiteSupported || extraCli.launching}
+                onClick={extraCli.onLaunch}
+              >
+                {extraCli.launching ? (
+                  <LoaderCircle className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Play className="mr-1.5 h-4 w-4" />
+                )}
+                {t(`${i18nPrefix}.cli.launchTerminal`)}
               </Button>
             )}
           </div>

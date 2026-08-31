@@ -10,6 +10,7 @@ const apiMocks = vi.hoisted(() => ({
   configureGrokRelay: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -24,6 +25,7 @@ vi.mock("@/lib/api", () => ({
     configureGrokRelay: apiMocks.configureGrokRelay,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -66,6 +68,7 @@ describe("ICodeEasyGrokPage", () => {
     apiMocks.getGrokSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.configureGrokRelay.mockResolvedValue(undefined);
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "grok",
@@ -151,6 +154,27 @@ describe("ICodeEasyGrokPage", () => {
     );
     expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
       "icodeeasyGrok.cli.installSuccess",
+    );
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getGrokSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      relayConfigured: true,
+    });
+    render(<ICodeEasyGrokPage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyGrok.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyGrok.cli.terminalOpened",
     );
   });
 });

@@ -40,6 +40,7 @@ export function ICodeEasyKimiPage() {
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
   const [installingGitBash, setInstallingGitBash] = useState(false);
+  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -140,6 +141,26 @@ export function ICodeEasyKimiPage() {
     }
   };
 
+  // 打开系统首选终端（落在用户家目录）；中转配置已写入 CLI 配置，无需注入环境变量
+  const handleOpenTerminal = async () => {
+    if (openingTerminal) return;
+
+    setOpeningTerminal(true);
+    try {
+      await settingsApi.openHomeTerminal();
+      toast.success(t("icodeeasyKimi.cli.terminalOpened"));
+    } catch (error) {
+      console.error("[ICodeEasyKimi] Failed to open terminal", error);
+      toast.error(
+        t("icodeeasyKimi.cli.terminalOpenFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setOpeningTerminal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -164,6 +185,8 @@ export function ICodeEasyKimiPage() {
         }}
         installingCli={installingCli}
         onCliAction={(action) => void handleCliAction(action)}
+        launchingCli={openingTerminal}
+        onLaunchCli={() => void handleOpenTerminal()}
       />
 
       {suiteStatus?.platform === "windows" && suiteStatus.gitBash.supported && (

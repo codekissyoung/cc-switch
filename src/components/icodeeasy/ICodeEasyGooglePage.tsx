@@ -38,6 +38,7 @@ export function ICodeEasyGooglePage() {
   const [launchingDesktop, setLaunchingDesktop] = useState(false);
   const [agy, setAgy] = useState<AgyState | null>(null);
   const [installingAgy, setInstallingAgy] = useState(false);
+  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   const refreshAgy = useCallback(async (): Promise<AgyState | null> => {
     try {
@@ -186,6 +187,26 @@ export function ICodeEasyGooglePage() {
     }
   };
 
+  // 打开系统首选终端（落在用户家目录）；Gemini 中转与 agy 的登录态都不需要注入环境变量
+  const handleOpenTerminal = async () => {
+    if (openingTerminal) return;
+
+    setOpeningTerminal(true);
+    try {
+      await settingsApi.openHomeTerminal();
+      toast.success(t("icodeeasyGoogle.cli.terminalOpened"));
+    } catch (error) {
+      console.error("[ICodeEasyGoogle] Failed to open terminal", error);
+      toast.error(
+        t("icodeeasyGoogle.cli.terminalOpenFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setOpeningTerminal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -213,6 +234,8 @@ export function ICodeEasyGooglePage() {
         launchingDesktop={launchingDesktop}
         onCliAction={(action) => void handleCliAction(action)}
         onLaunchDesktop={() => void handleLaunchDesktop()}
+        launchingCli={openingTerminal}
+        onLaunchCli={() => void handleOpenTerminal()}
         extraCli={{
           name: t("icodeeasyGoogle.agy.name"),
           version: agy?.version ?? null,
@@ -220,6 +243,8 @@ export function ICodeEasyGooglePage() {
           installing: installingAgy,
           blocked: false,
           onInstall: () => void handleInstallAgy(),
+          launching: openingTerminal,
+          onLaunch: () => void handleOpenTerminal(),
         }}
       />
     </div>

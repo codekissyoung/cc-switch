@@ -11,6 +11,7 @@ const apiMocks = vi.hoisted(() => ({
   installGitBash: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -26,6 +27,7 @@ vi.mock("@/lib/api", () => ({
     installGitBash: apiMocks.installGitBash,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -88,6 +90,7 @@ describe("ICodeEasyKimiPage", () => {
       alreadyInstalled: false,
     });
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "kimi",
@@ -236,5 +239,26 @@ describe("ICodeEasyKimiPage", () => {
     expect(
       screen.queryByRole("button", { name: "icodeeasyKimi.gitbash.install" }),
     ).toBeNull();
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getKimiSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      relayConfigured: true,
+    });
+    render(<ICodeEasyKimiPage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyKimi.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyKimi.cli.terminalOpened",
+    );
   });
 });

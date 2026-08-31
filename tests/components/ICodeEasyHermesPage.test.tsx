@@ -10,6 +10,7 @@ const apiMocks = vi.hoisted(() => ({
   configureHermesRelay: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -24,6 +25,7 @@ vi.mock("@/lib/api", () => ({
     configureHermesRelay: apiMocks.configureHermesRelay,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -66,6 +68,7 @@ describe("ICodeEasyHermesPage", () => {
     apiMocks.getHermesSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.configureHermesRelay.mockResolvedValue(undefined);
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "hermes",
@@ -151,6 +154,27 @@ describe("ICodeEasyHermesPage", () => {
     );
     expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
       "icodeeasyHermes.cli.installSuccess",
+    );
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getHermesSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      relayConfigured: true,
+    });
+    render(<ICodeEasyHermesPage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyHermes.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyHermes.cli.terminalOpened",
     );
   });
 });

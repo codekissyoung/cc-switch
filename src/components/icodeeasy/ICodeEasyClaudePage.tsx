@@ -4,7 +4,7 @@ import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
 import { ClaudeIcon } from "@/components/BrandIcons";
 import { ICodeEasyClientSuiteCard } from "@/components/icodeeasy/ICodeEasyClientSuiteCard";
-import { providersApi, universalProvidersApi } from "@/lib/api";
+import { providersApi, settingsApi, universalProvidersApi } from "@/lib/api";
 import type { UniversalProvider } from "@/types";
 import {
   createICodeEasyUniversalProvider,
@@ -28,6 +28,7 @@ export function ICodeEasyClaudePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
+  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -132,6 +133,26 @@ export function ICodeEasyClaudePage() {
     }
   };
 
+  // 打开系统首选终端（落在用户家目录）；中转配置已写入 CLI 配置，无需注入环境变量
+  const handleOpenTerminal = async () => {
+    if (openingTerminal) return;
+
+    setOpeningTerminal(true);
+    try {
+      await settingsApi.openHomeTerminal();
+      toast.success(t("icodeeasyClaude.cli.terminalOpened"));
+    } catch (error) {
+      console.error("[ICodeEasyClaude] Failed to open terminal", error);
+      toast.error(
+        t("icodeeasyClaude.cli.terminalOpenFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setOpeningTerminal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -156,6 +177,8 @@ export function ICodeEasyClaudePage() {
         }}
         installingCli={installingCli}
         onCliAction={(action) => void handleCliAction(action)}
+        launchingCli={openingTerminal}
+        onLaunchCli={() => void handleOpenTerminal()}
       />
     </div>
   );

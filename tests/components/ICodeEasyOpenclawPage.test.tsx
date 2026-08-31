@@ -10,6 +10,7 @@ const apiMocks = vi.hoisted(() => ({
   configureOpenclawRelay: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -24,6 +25,7 @@ vi.mock("@/lib/api", () => ({
     configureOpenclawRelay: apiMocks.configureOpenclawRelay,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -66,6 +68,7 @@ describe("ICodeEasyOpenclawPage", () => {
     apiMocks.getOpenclawSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.configureOpenclawRelay.mockResolvedValue(undefined);
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "openclaw",
@@ -153,6 +156,27 @@ describe("ICodeEasyOpenclawPage", () => {
     );
     expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
       "icodeeasyOpenclaw.cli.installSuccess",
+    );
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getOpenclawSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      relayConfigured: true,
+    });
+    render(<ICodeEasyOpenclawPage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyOpenclaw.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyOpenclaw.cli.terminalOpened",
     );
   });
 });

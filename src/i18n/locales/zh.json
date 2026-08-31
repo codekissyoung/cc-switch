@@ -169,7 +169,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Claude Code 已就绪",
-      "installFailed": "Claude Code 安装或更新失败：{{error}}"
+      "installFailed": "Claude Code 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "suite": {
       "notInstalled": "未安装",
@@ -203,7 +206,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Gemini CLI 已就绪",
-      "installFailed": "Gemini CLI 安装或更新失败：{{error}}"
+      "installFailed": "Gemini CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "agy": {
       "name": "Antigravity CLI（agy）",
@@ -250,7 +256,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Kimi Code CLI 已就绪",
-      "installFailed": "Kimi Code CLI 安装或更新失败：{{error}}"
+      "installFailed": "Kimi Code CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "gitbash": {
       "title": "运行环境（Git Bash）",
@@ -296,7 +305,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Grok Build CLI 已就绪",
-      "installFailed": "Grok Build CLI 安装或更新失败：{{error}}"
+      "installFailed": "Grok Build CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "suite": {
       "installed": "已安装",
@@ -361,7 +373,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "OpenCode CLI 已就绪",
-      "installFailed": "OpenCode CLI 安装或更新失败：{{error}}"
+      "installFailed": "OpenCode CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "suite": {
       "installed": "已安装",
@@ -427,7 +442,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Pi CLI 已就绪",
-      "installFailed": "Pi CLI 安装或更新失败：{{error}}"
+      "installFailed": "Pi CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "suite": {
       "notInstalled": "未安装",
@@ -461,7 +479,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "OpenClaw CLI 已就绪",
-      "installFailed": "OpenClaw CLI 安装或更新失败：{{error}}"
+      "installFailed": "OpenClaw CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "suite": {
       "notInstalled": "未安装",
@@ -495,7 +516,10 @@
       "repair": "修复重装",
       "update": "更新",
       "installSuccess": "Hermes CLI 已就绪",
-      "installFailed": "Hermes CLI 安装或更新失败：{{error}}"
+      "installFailed": "Hermes CLI 安装或更新失败：{{error}}",
+      "launchTerminal": "在终端启动",
+      "terminalOpened": "终端已打开",
+      "terminalOpenFailed": "打开终端失败：{{error}}"
     },
     "suite": {
       "notInstalled": "未安装",

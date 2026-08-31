@@ -15,6 +15,7 @@ const apiMocks = vi.hoisted(() => ({
   getClaudeSuiteStatus: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -34,6 +35,7 @@ vi.mock("@/lib/api", () => ({
     getClaudeSuiteStatus: apiMocks.getClaudeSuiteStatus,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -79,6 +81,7 @@ describe("ICodeEasyClaudePage", () => {
     apiMocks.syncClaudeProviderToDesktop.mockResolvedValue(true);
     apiMocks.getClaudeSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "claude",
@@ -181,6 +184,24 @@ describe("ICodeEasyClaudePage", () => {
     );
     expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
       "icodeeasyClaude.cli.installSuccess",
+    );
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getCurrent.mockResolvedValue(CLAUDE_PROVIDER_ID);
+    render(<ICodeEasyClaudePage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyClaude.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyClaude.cli.terminalOpened",
     );
   });
 });

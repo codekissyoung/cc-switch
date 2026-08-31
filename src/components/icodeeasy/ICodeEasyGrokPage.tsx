@@ -26,6 +26,7 @@ export function ICodeEasyGrokPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
+  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -106,6 +107,26 @@ export function ICodeEasyGrokPage() {
     }
   };
 
+  // 打开系统首选终端（落在用户家目录）；中转配置已写入 CLI 配置，无需注入环境变量
+  const handleOpenTerminal = async () => {
+    if (openingTerminal) return;
+
+    setOpeningTerminal(true);
+    try {
+      await settingsApi.openHomeTerminal();
+      toast.success(t("icodeeasyGrok.cli.terminalOpened"));
+    } catch (error) {
+      console.error("[ICodeEasyGrok] Failed to open terminal", error);
+      toast.error(
+        t("icodeeasyGrok.cli.terminalOpenFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setOpeningTerminal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -130,6 +151,8 @@ export function ICodeEasyGrokPage() {
         }}
         installingCli={installingCli}
         onCliAction={(action) => void handleCliAction(action)}
+        launchingCli={openingTerminal}
+        onLaunchCli={() => void handleOpenTerminal()}
       />
     </div>
   );

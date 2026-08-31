@@ -10,6 +10,7 @@ const apiMocks = vi.hoisted(() => ({
   configurePiRelay: vi.fn(),
   runToolLifecycleAction: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -24,6 +25,7 @@ vi.mock("@/lib/api", () => ({
     configurePiRelay: apiMocks.configurePiRelay,
     runToolLifecycleAction: apiMocks.runToolLifecycleAction,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -66,6 +68,7 @@ describe("ICodeEasyPiPage", () => {
     apiMocks.getPiSuiteStatus.mockResolvedValue(readySuite);
     apiMocks.configurePiRelay.mockResolvedValue(undefined);
     apiMocks.runToolLifecycleAction.mockResolvedValue(undefined);
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockResolvedValue([
       {
         name: "pi",
@@ -171,6 +174,27 @@ describe("ICodeEasyPiPage", () => {
     );
     expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
       "icodeeasyPi.cli.installSuccess",
+    );
+  });
+
+  it("opens a terminal at the home directory once the relay is configured", async () => {
+    apiMocks.getPiSuiteStatus.mockResolvedValue({
+      ...readySuite,
+      relayConfigured: true,
+    });
+    render(<ICodeEasyPiPage />);
+
+    const launchButton = await screen.findByRole("button", {
+      name: "icodeeasyPi.cli.launchTerminal",
+    });
+    expect(launchButton).toBeEnabled();
+    fireEvent.click(launchButton);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyPi.cli.terminalOpened",
     );
   });
 });

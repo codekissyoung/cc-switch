@@ -169,7 +169,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Claude Code is ready",
-      "installFailed": "Failed to install or update Claude Code: {{error}}"
+      "installFailed": "Failed to install or update Claude Code: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "suite": {
       "notInstalled": "Not installed",
@@ -203,7 +206,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Gemini CLI is ready",
-      "installFailed": "Failed to install or update Gemini CLI: {{error}}"
+      "installFailed": "Failed to install or update Gemini CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "agy": {
       "name": "Antigravity CLI (agy)",
@@ -250,7 +256,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Kimi Code CLI is ready",
-      "installFailed": "Failed to install or update Kimi Code CLI: {{error}}"
+      "installFailed": "Failed to install or update Kimi Code CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "gitbash": {
       "title": "Runtime (Git Bash)",
@@ -296,7 +305,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Grok Build CLI is ready",
-      "installFailed": "Failed to install or update Grok Build CLI: {{error}}"
+      "installFailed": "Failed to install or update Grok Build CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "suite": {
       "installed": "Installed",
@@ -361,7 +373,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "OpenCode CLI is ready",
-      "installFailed": "Failed to install or update the OpenCode CLI: {{error}}"
+      "installFailed": "Failed to install or update the OpenCode CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "suite": {
       "installed": "Installed",
@@ -427,7 +442,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Pi CLI is ready",
-      "installFailed": "Failed to install or update Pi CLI: {{error}}"
+      "installFailed": "Failed to install or update Pi CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "suite": {
       "notInstalled": "Not installed",
@@ -461,7 +479,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "OpenClaw CLI is ready",
-      "installFailed": "Failed to install or update OpenClaw CLI: {{error}}"
+      "installFailed": "Failed to install or update OpenClaw CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "suite": {
       "notInstalled": "Not installed",
@@ -495,7 +516,10 @@
       "repair": "Repair and reinstall",
       "update": "Update",
       "installSuccess": "Hermes CLI is ready",
-      "installFailed": "Failed to install or update Hermes CLI: {{error}}"
+      "installFailed": "Failed to install or update Hermes CLI: {{error}}",
+      "launchTerminal": "Launch in terminal",
+      "terminalOpened": "Terminal opened",
+      "terminalOpenFailed": "Failed to open the terminal: {{error}}"
     },
     "suite": {
       "notInstalled": "Not installed",

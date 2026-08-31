@@ -26,6 +26,7 @@ export function ICodeEasyOpenCodePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [installingCli, setInstallingCli] = useState(false);
+  const [openingTerminal, setOpeningTerminal] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -109,6 +110,26 @@ export function ICodeEasyOpenCodePage() {
     }
   };
 
+  // 打开系统首选终端（落在用户家目录）；中转配置已写入 CLI 配置，无需注入环境变量
+  const handleOpenTerminal = async () => {
+    if (openingTerminal) return;
+
+    setOpeningTerminal(true);
+    try {
+      await settingsApi.openHomeTerminal();
+      toast.success(t("icodeeasyOpencode.cli.terminalOpened"));
+    } catch (error) {
+      console.error("[ICodeEasyOpenCode] Failed to open terminal", error);
+      toast.error(
+        t("icodeeasyOpencode.cli.terminalOpenFailed", {
+          error: extractErrorMessage(error),
+        }),
+      );
+    } finally {
+      setOpeningTerminal(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -133,6 +154,8 @@ export function ICodeEasyOpenCodePage() {
         }}
         installingCli={installingCli}
         onCliAction={(action) => void handleCliAction(action)}
+        launchingCli={openingTerminal}
+        onLaunchCli={() => void handleOpenTerminal()}
       />
     </div>
   );

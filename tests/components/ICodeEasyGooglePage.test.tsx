@@ -15,6 +15,7 @@ const apiMocks = vi.hoisted(() => ({
   runToolLifecycleAction: vi.fn(),
   launchOrInstallAntigravityDesktop: vi.fn(),
   getToolVersions: vi.fn(),
+  openHomeTerminal: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
 }));
@@ -35,6 +36,7 @@ vi.mock("@/lib/api", () => ({
     launchOrInstallAntigravityDesktop:
       apiMocks.launchOrInstallAntigravityDesktop,
     getToolVersions: apiMocks.getToolVersions,
+    openHomeTerminal: apiMocks.openHomeTerminal,
   },
 }));
 
@@ -95,6 +97,7 @@ describe("ICodeEasyGooglePage", () => {
       method: "antigravity-app",
       desktopWasInstalled: true,
     });
+    apiMocks.openHomeTerminal.mockResolvedValue(undefined);
     apiMocks.getToolVersions.mockImplementation(async (tools?: string[]) =>
       toolVersionsFor(tools),
     );
@@ -235,6 +238,27 @@ describe("ICodeEasyGooglePage", () => {
       expect(apiMocks.launchOrInstallAntigravityDesktop).toHaveBeenCalledTimes(
         1,
       ),
+    );
+  });
+
+  it("opens a terminal from either CLI row once the relay is configured", async () => {
+    apiMocks.getCurrent.mockResolvedValue(GEMINI_PROVIDER_ID);
+    render(<ICodeEasyGooglePage />);
+
+    const launchButtons = await screen.findAllByRole("button", {
+      name: "icodeeasyGoogle.cli.launchTerminal",
+    });
+    expect(launchButtons).toHaveLength(2);
+    for (const button of launchButtons) {
+      expect(button).toBeEnabled();
+    }
+    fireEvent.click(launchButtons[1]);
+
+    await waitFor(() =>
+      expect(apiMocks.openHomeTerminal).toHaveBeenCalledTimes(1),
+    );
+    expect(apiMocks.toastSuccess).toHaveBeenCalledWith(
+      "icodeeasyGoogle.cli.terminalOpened",
     );
   });
 });
